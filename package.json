@@ -5,12 +5,15 @@
   "type": "module",
   "exports": "./index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "author": "DenkiYagi Inc.",
   "license": "ISC",
   "dependencies": {
     "@xmldom/xmldom": "^0.8.10",
     "xpath": "^0.0.33"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   }
 }
