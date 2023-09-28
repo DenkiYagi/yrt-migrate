@@ -2,7 +2,8 @@
   "name": "yagisan-reports-layoutxml-migration",
   "version": "1.0.0",
   "description": "yagisan-reportsのレイアウトXMLを最新の仕様にマイグレーションするツールです。 破壊的変更により廃止や非推奨になったコンポーネントを最新の仕様で置き換えます。",
-  "main": "index.js",
+  "type": "module",
+  "exports": "./index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
