@@ -1,11 +1,15 @@
-import { DOMParser, XMLSerializer } from '@xmldom/xmldom'
-import { readFileSync } from 'fs'
-import * as direction_attribute from './direction_attribute.mjs'
+import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
+import * as fs from 'fs/promises';
+import * as direction_attribute from './direction_attribute.mjs';
 
-const inputFile = readFileSync(process.argv[2], 'utf-8')
+const fileName = process.argv[2];
+await fs.copyFile(fileName, `${fileName}.old`);
 
-const doc = new DOMParser().parseFromString(inputFile, 'text/xml')
+const inputFile = await fs.readFile(fileName, 'utf-8');
 
-direction_attribute.migrate(doc)
+const doc = new DOMParser().parseFromString(inputFile, 'text/xml');
 
-console.log(new XMLSerializer().serializeToString(doc))
+direction_attribute.migrate(doc);
+
+const output = new XMLSerializer().serializeToString(doc);
+fs.writeFile(fileName, output);
