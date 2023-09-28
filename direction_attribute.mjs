@@ -49,7 +49,7 @@ function convert(node, attrName, attr1, attr2, attr3, attr4) {
     }
 }
 
-function convertAttribute(doc, expression, attrName, attr1, attr2, attr3, attr4) {
+export function convertAttribute(doc, expression, attrName, attr1, attr2, attr3, attr4) {
     const result = xpath.select(expression, doc);
     if (xpath.isArrayOfNodes(result)) {
         for (let i = 0; i < result.length; i++) {
