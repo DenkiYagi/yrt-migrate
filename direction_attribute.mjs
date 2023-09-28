@@ -1,5 +1,10 @@
 import xpath from 'xpath'
 
+/**
+ * スペースで区切られた属性値を分解して配列にして返します
+ * @param {string} value 
+ * @returns {string[]}
+ */
 export function splitAttributeValue(value) {
     const result = value.match(/_|[\w+-,.]+(\((\s|[\w+-,.])*\))?/g);
     if (result) {
@@ -49,6 +54,17 @@ function convert(node, attrName, attr1, attr2, attr3, attr4) {
     }
 }
 
+/**
+ * 4方向指定できる属性に `_` が含まれている場合に方向別の属性に変換します。
+ * `_` が含まれていない場合は変換しません。
+ * @param {Document} doc 
+ * @param {string} expression 対象とするノードのxpath
+ * @param {string} attrName 対象とする属性の名前
+ * @param {string} attr1 方向1(top)の属性名
+ * @param {string} attr2 方向2(right)の属性名
+ * @param {string} attr3 方向3(bottom)の属性名
+ * @param {string} attr4 方向4(left)の属性名
+ */
 export function convertAttribute(doc, expression, attrName, attr1, attr2, attr3, attr4) {
     const result = xpath.select(expression, doc);
     if (xpath.isArrayOfNodes(result)) {
@@ -90,6 +106,10 @@ function convertBorderStyle(doc, expression) {
         "borderTopStyle", "borderRightStyle", "borderBottomStyle", "borderLeftStyle");
 }
 
+/**
+ * v1.0.0-alpha.9での `_` 廃止に伴い、`_` が使用されている場合に方向毎の属性に変換します。
+ * @param {Document} doc 
+ */
 export function migrate(doc) {
     convertOuterBorderThickness(doc, "//Grid");
     convertOuterBorderColor(doc, "//Grid");
