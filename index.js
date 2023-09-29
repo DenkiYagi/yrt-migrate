@@ -1,15 +1,43 @@
 import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
 import * as fs from 'fs/promises';
 import * as direction_attribute from './direction_attribute.mjs';
+import * as path from 'path';
+import * as msgpack from '@msgpack/msgpack';
 
 const fileName = process.argv[2];
-await fs.copyFile(fileName, `${fileName}.old`);
+const ext = path.extname(fileName);
 
-const inputFile = await fs.readFile(fileName, 'utf-8');
+if (ext == ".xml") {
+    await fs.copyFile(fileName, `${fileName}.old`);
 
-const doc = new DOMParser().parseFromString(inputFile, 'text/xml');
+    const inputLayoutXml = await fs.readFile(fileName, 'utf-8');
 
-direction_attribute.migrate(doc);
+    const doc = new DOMParser().parseFromString(inputLayoutXml, 'text/xml');
+    direction_attribute.migrate(doc);
 
-const output = new XMLSerializer().serializeToString(doc);
-fs.writeFile(fileName, output);
+    const outputLayoutXml = new XMLSerializer().serializeToString(doc);
+    
+    fs.writeFile(fileName, outputLayoutXml);
+    process.exit(0);
+} else if (ext == ".yrt") {
+    await fs.copyFile(fileName, `${fileName}.old`);
+
+    const inputFile = await fs.readFile(fileName);
+    const yrtFile = msgpack.decode(inputFile);
+    const inputLayoutXml = yrtFile[0]
+
+    const doc = new DOMParser().parseFromString(inputLayoutXml, 'text/xml');
+    direction_attribute.migrate(doc);
+
+    const outputLayoutXml = new XMLSerializer().serializeToString(doc);
+    yrtFile[0] = outputLayoutXml;
+    const outputFile = msgpack.encode(yrtFile);
+
+    await fs.writeFile(fileName, Buffer.from(outputFile));
+    process.exit(0);
+} else {
+    console.error("非対応のファイル形式です")
+    process.exit(1);
+}
+
+
