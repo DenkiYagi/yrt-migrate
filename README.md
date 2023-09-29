@@ -1,4 +1,4 @@
-# yagisan-reports LayoutXml migration
+# yyrt-migrate
 yagisan-reportsのレイアウトXMLを最新の仕様にマイグレーションするツールです。
 破壊的変更により廃止や非推奨になったコンポーネントを最新の仕様で置き換えます。
 
