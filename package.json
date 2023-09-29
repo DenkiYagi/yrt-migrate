@@ -8,7 +8,7 @@
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "author": "DenkiYagi Inc.",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "dependencies": {
     "@msgpack/msgpack": "^2.8.0",
     "@xmldom/xmldom": "^0.8.10",
