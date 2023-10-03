@@ -1,6 +1,6 @@
 {
   "name": "yrt-migrate",
-  "version": "1.0.0",
+  "version": "2023.1.0",
   "description": "yagisan-reportsのレイアウトXMLを最新の仕様にマイグレーションするツールです。 破壊的変更により廃止や非推奨になったコンポーネントを最新の仕様で置き換えます。",
   "type": "module",
   "bin": {
