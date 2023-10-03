@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
 import * as fs from 'fs/promises';
 import * as direction_attribute from './direction_attribute.mjs';
@@ -15,7 +16,7 @@ function migrate(inputLayoutXml) {
 }
 
 function printHelp() {
-    console.log(`Usage: node index.js [options...] [input_file]
+    console.log(`Usage: npx yrt-migrate [options...] [input_file]
     -i, --input <input_file>   入力ファイル名を指定します。このオプションを使用した場合は末尾のファイル名は省略できます
     -o, --output <output_file> 出力ファイル名を指定します。省略した場合は入力ファイルを上書きします
     -b, --backup <backpu_file> バックアップファイル名を指定します。省略した場合は {input_file}.old を使用します
