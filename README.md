@@ -5,15 +5,17 @@ yagisan-reportsのレイアウトXMLを最新の仕様にマイグレーショ�
 パッケージされたテンプレートファイル(.yrt)と、レイアウトXML(.xml)に対応しています。
 
 ## 使い方
+
 ### インストール
-最初にこのリポジトリをローカルにチェックアウトします。
-次に、下記コマンドで依存ライブラリをインストールします。
+
 ```
-npm ci
+npm install git+https://github.com/DenkiYagi/yrt-migrate.git --save-dev
 ```
 
 ### 実行
+
 下記コマンドで実行します。実行後はマイグレーションの結果でファイルが更新されて、バックアップファイルが作成されます。
+
 ```
-node index.js input.xml
+npx yrt-migrate input.xml
 ```
