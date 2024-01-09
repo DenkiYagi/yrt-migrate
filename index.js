@@ -17,6 +17,7 @@
 import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
 import * as fs from 'fs/promises';
 import * as direction_attribute from './direction_attribute.mjs';
+import * as deprecated_border_style from './deprecated_border_style.mjs';
 import * as path from 'path';
 import * as msgpack from '@msgpack/msgpack';
 import * as util from 'util';
@@ -25,6 +26,7 @@ function migrate(inputLayoutXml) {
     const doc = new DOMParser().parseFromString(inputLayoutXml, 'text/xml');
     
     direction_attribute.migrate(doc);
+    deprecated_border_style.migrate(doc);
 
     const outputLayoutXml = new XMLSerializer().serializeToString(doc);
     return outputLayoutXml;
