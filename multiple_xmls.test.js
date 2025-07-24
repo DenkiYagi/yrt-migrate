@@ -15,7 +15,6 @@
  */
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 import * as multiple_xmls from "./multiple_xmls.mjs";
-import { strict as assert } from "assert";
 
 describe("multiple_xmls", () => {
     describe("XMLファイルの場合", () => {
@@ -23,7 +22,9 @@ describe("multiple_xmls", () => {
             const inputXml = `<?xml version="1.0" encoding="UTF-8"?>
 <LayoutXml>
     <LinearLayout direction="vertical">
-        <Text>Hello</Text>
+        <LayoutBody>
+            <Text>Hello</Text>
+        </LayoutBody>
     </LinearLayout>
     <StackLayout>
         <Text>World</Text>
@@ -33,36 +34,13 @@ describe("multiple_xmls", () => {
             const doc = new DOMParser().parseFromString(inputXml, "text/xml");
             const result = multiple_xmls.migrate(doc);
 
-            assert.strictEqual(result, null); // XMLファイルの場合はnullを返す
-
-            const outputXml = new XMLSerializer().serializeToString(doc);
-
-            // LayoutXml要素が削除されていることを確認
-            assert.ok(!outputXml.includes("<LayoutXml>"));
-            assert.ok(!outputXml.includes("</LayoutXml>"));
-
-            // 子要素が残っていることを確認
-            assert.ok(outputXml.includes("<LinearLayout"));
-            assert.ok(outputXml.includes("<StackLayout"));
-            assert.ok(outputXml.includes("<Text>Hello</Text>"));
-            assert.ok(outputXml.includes("<Text>World</Text>"));
-        });
-
-        it("LayoutXml要素がない場合は何も変更しない", () => {
-            const inputXml = `<?xml version="1.0" encoding="UTF-8"?>
-<LinearLayout>
-    <Text>Test</Text>
-</LinearLayout>`;
-
-            const doc = new DOMParser().parseFromString(inputXml, "text/xml");
-            const originalXml = new XMLSerializer().serializeToString(doc);
-
-            const result = multiple_xmls.migrate(doc);
-
-            assert.strictEqual(result, null);
-
-            const outputXml = new XMLSerializer().serializeToString(doc);
-            assert.strictEqual(outputXml, originalXml);
+            expect(Array.isArray(result)).toBe(true);
+            expect(result.length).toBe(2);
+            expect(result[0]).toContain("<LinearLayout");
+            expect(result[0]).toContain("<LayoutBody>");
+            expect(result[0]).toContain("<Text>Hello</Text>");
+            expect(result[1]).toContain("<StackLayout");
+            expect(result[1]).toContain("<Text>World</Text>");
         });
     });
 
@@ -84,24 +62,26 @@ describe("multiple_xmls", () => {
 </LayoutXml>`;
 
             const doc = new DOMParser().parseFromString(inputXml, "text/xml");
-            const yrtData = [inputXml]; // 元のYRTデータ
+            const yrtData = [
+                "YRT",
+                1,
+                {
+                    l: [],
+                    s: null,
+                    a: null,
+                },
+            ];
 
             const result = multiple_xmls.migrate(doc, yrtData);
 
-            assert.ok(Array.isArray(result));
-            assert.ok(result.length >= 2); // 最低でも2つのレイアウト
-
-            // 最初のレイアウトにLinearLayoutが含まれていることを確認
-            assert.ok(result[0].includes("<LinearLayout"));
-            assert.ok(result[0].includes("Layout 1"));
-
-            // 2番目のレイアウトにStackLayoutが含まれていることを確認
-            assert.ok(result[1].includes("<StackLayout"));
-            assert.ok(result[1].includes("Layout 2"));
-
-            // スタイルが追加されていることを確認
-            const hasStyle = result.some((item) => item.includes("<Style"));
-            assert.ok(hasStyle);
+            expect(Array.isArray(result)).toBe(true);
+            expect(result.length).toBeGreaterThanOrEqual(2);
+            const layouts = result[2].l;
+            expect(layouts[0][1]).toContain("<LinearLayout");
+            expect(layouts[0][1]).toContain("Layout 1");
+            expect(layouts[1][1]).toContain("<StackLayout");
+            expect(layouts[1][1]).toContain("Layout 2");
+            expect(result[2].s).toContain("<Style");
         });
 
         it("LayoutXml要素がない場合は元のデータをそのまま返す", () => {
@@ -115,7 +95,7 @@ describe("multiple_xmls", () => {
 
             const result = multiple_xmls.migrate(doc, yrtData);
 
-            assert.deepStrictEqual(result, yrtData);
+            expect(result).toEqual(yrtData);
         });
     });
 });

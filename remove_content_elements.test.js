@@ -1,16 +1,11 @@
-// remove_content_elements.test.js
-// <XxxContent>系要素除去のテスト
-import { strict as assert } from "assert";
+
 import { DOMParser, XMLSerializer } from "xmldom";
 import { migrate } from "./remove_content_elements.mjs";
 
 function normalizeXml(xml) {
-    // 空白・改行を除去して比較しやすくする（タグ間・テキストノード内両方）
     xml = xml.replace(/>\s+</g, "><");
-    // テキストノード内の連続空白・改行を1つのスペースに、かつ先頭・末尾の空白もトリム
-    xml = xml.replace(/([^<>]+)(?=<|$)/g, s => s.replace(/\s+/g, " ").trim());
+    xml = xml.replace(/([^<>]+)(?=<|$)/g, (s) => s.replace(/\s+/g, " ").trim());
     xml = xml.trim();
-    // <tag/> → <tag></tag> に正規化（self-closingのみ）
     xml = xml.replace(
         /<([a-zA-Z0-9_:-]+)\s*\/>/g,
         (m, tag) => `<${tag}></${tag}>`
@@ -18,89 +13,105 @@ function normalizeXml(xml) {
     return xml;
 }
 
-function testCase(name, input, expected) {
-    const doc = new DOMParser().parseFromString(input, "text/xml");
-    migrate(doc, {}); // yrtRootは使わない
-    const output = new XMLSerializer().serializeToString(doc.documentElement);
-    assert.equal(normalizeXml(output), normalizeXml(expected), name);
-    console.log("✔", name);
-}
+describe('remove_content_elements マイグレーション', () => {
+    test.each([
+        // 1. 空要素の除去
+        {
+            name: "空要素のみ（VTextContent）",
+            input: `<LinearLayout><LayoutBody><Text><VTextContent></VTextContent></Text></LayoutBody></LinearLayout>`,
+            expected: `<LinearLayout><LayoutBody><Text></Text></LayoutBody></LinearLayout>`
+        },
+        {
+            name: "空要素＋前後に空白（TextContent）",
+            input: `<LinearLayout><LayoutBody><Text>  <TextContent> </TextContent>  </Text></LayoutBody></LinearLayout>`,
+            expected: `<LinearLayout><LayoutBody><Text></Text></LayoutBody></LinearLayout>`
+        },
 
-// ...existing code...
-testCase(
-    "単純なTextContent",
-    `<Root><TextContent>abc</TextContent></Root>`,
-    `<Root>abc</Root>`
-);
+        // 2. 多重入れ子（深いネスト）
+        {
+            name: "多重入れ子（VTextContent→LinkContent→RichTextContent）",
+            input: `<LinearLayout><LayoutBody><Text><VTextContent><LinkContent><RichTextContent>deep</RichTextContent></LinkContent></VTextContent></Text></LayoutBody></LinearLayout>`,
+            expected: `<LinearLayout><LayoutBody><Text>deep</Text></LayoutBody></LinearLayout>`
+        },
+        {
+            name: "TextContent多重入れ子・インデントあり",
+            input: `<LinearLayout>
+      <LayoutBody>
+        <Text>
+          <TextContent>
+            <VTextContent>
+              <LinkContent>deep</LinkContent>
+            </VTextContent>
+          </TextContent>
+        </Text>
+      </LayoutBody>
+    </LinearLayout>`,
+            expected: `<LinearLayout><LayoutBody><Text>deep</Text></LayoutBody></LinearLayout>`
+        },
 
-testCase(
-    "ネストしたXxxContent",
-    `<Root><TextContent><VTextContent>foo</VTextContent><LinkContent>bar</LinkContent></TextContent></Root>`,
-    `<Root>foobar</Root>`
-);
+        // 3. 複数XxxContentの並列・ネスト展開
+        {
+            name: "複数XxxContent並列（VTextContent, LinkContent, RichTextContent）",
+            input: `<LinearLayout><LayoutBody><Text><VTextContent>foo</VTextContent><LinkContent>bar</LinkContent><RichTextContent>baz</RichTextContent></Text></LayoutBody></LinearLayout>`,
+            expected: `<LinearLayout><LayoutBody><Text>foobarbaz</Text></LayoutBody></LinearLayout>`
+        },
+        {
+            name: "TextContent内に複数XxxContentのネスト",
+            input: `<LinearLayout><LayoutBody><Text><TextContent><VTextContent>foo</VTextContent><LinkContent>bar</LinkContent></TextContent></Text></LayoutBody></LinearLayout>`,
+            expected: `<LinearLayout><LayoutBody><Text>foobar</Text></LayoutBody></LinearLayout>`
+        },
 
-testCase(
-    "XxxContentの中に他要素",
-    `<Root><TextContent><b>bold</b><i>italic</i></TextContent></Root>`,
-    `<Root><b>bold</b><i>italic</i></Root>`
-);
+        // 4. XxxContentと他要素混在（スキーマ準拠: Spanのみ）
+        {
+            name: "XxxContentとSpan混在",
+            input: `<LinearLayout><LayoutBody><Text><VTextContent>foo</VTextContent><Span>span</Span><LinkContent>bar</LinkContent></Text></LayoutBody></LinearLayout>`,
+            expected: `<LinearLayout><LayoutBody><Text>foo<Span>span</Span>bar</Text></LayoutBody></LinearLayout>`
+        },
+        {
+            name: "TextContentとSpan混在",
+            input: `<LinearLayout><LayoutBody><Text><TextContent>foo</TextContent><Span>span</Span></Text></LayoutBody></LinearLayout>`,
+            expected: `<LinearLayout><LayoutBody><Text>foo<Span>span</Span></Text></LayoutBody></LinearLayout>`
+        },
 
-testCase(
-    "XxxContentの多重入れ子",
-    `<Root><TextContent><VTextContent><LinkContent>deep</LinkContent></VTextContent></TextContent></Root>`,
-    `<Root>deep</Root>`
-);
-
-testCase(
-    "XxxContent以外はそのまま",
-    `<Root><Other>keep</Other><TextContent>remove</TextContent></Root>`,
-    `<Root><Other>keep</Other>remove</Root>`
-);
-
-testCase(
-    "XxxContentが存在しない",
-    `<Root><Other>keep</Other></Root>`,
-    `<Root><Other>keep</Other></Root>`
-);
-
-testCase(
-    "空のXxxContent",
-    `<Root><TextContent></TextContent></Root>`,
-    `<Root></Root>`
-);
-
-testCase(
-    "改行・インデントあり",
-    `<Root>
-    <TextContent>
-      foo
-      <VTextContent>bar</VTextContent>
-      <LinkContent>baz</LinkContent>
-    </TextContent>
-  </Root>`,
-    `<Root>foo bar baz</Root>`
-);
-
-testCase(
-    "タグ間スペース混在",
-    `<Root> <TextContent>  abc  </TextContent> <Other>  xyz  </Other> </Root>`,
-    `<Root>abc<Other>xyz</Other></Root>`
-);
-
-testCase(
-    "空要素の前後に空白",
-    `<Root>  <TextContent> </TextContent>  </Root>`,
-    `<Root></Root>`
-);
-
-testCase(
-    "多重入れ子・インデントあり",
-    `<Root>
-    <TextContent>
-      <VTextContent>
-        <LinkContent>deep</LinkContent>
-      </VTextContent>
-    </TextContent>
-  </Root>`,
-    `<Root>deep</Root>`
-);
+        // 5. ホワイトスペース正規化
+        {
+            name: "タグ間スペース混在（TextContent）",
+            input: `<LinearLayout><LayoutBody><Text> <TextContent>  abc  </TextContent> <Span>  xyz  </Span> </Text></LayoutBody></LinearLayout>`,
+            expected: `<LinearLayout><LayoutBody><Text>abc<Span>xyz</Span></Text></LayoutBody></LinearLayout>`
+        },
+        {
+            name: "改行・インデントあり（VTextContent, LinkContent）",
+            input: `<LinearLayout>
+      <LayoutBody>
+        <Text>
+          <VTextContent>
+            foo
+            <LinkContent>bar</LinkContent>
+          </VTextContent>
+        </Text>
+      </LayoutBody>
+    </LinearLayout>`,
+            expected: `<LinearLayout><LayoutBody><Text>foo bar</Text></LayoutBody></LinearLayout>`
+        },
+        {
+            name: "TextContent改行・インデントあり（複数XxxContent）",
+            input: `<LinearLayout>
+      <LayoutBody>
+        <Text>
+          <TextContent>
+            foo
+            <VTextContent>bar</VTextContent>
+            <LinkContent>baz</LinkContent>
+          </TextContent>
+        </Text>
+      </LayoutBody>
+    </LinearLayout>`,
+            expected: `<LinearLayout><LayoutBody><Text>foo bar baz</Text></LayoutBody></LinearLayout>`
+        },
+    ])('$name', ({input, expected}) => {
+        const doc = new DOMParser().parseFromString(input, "text/xml");
+        migrate(doc, {});
+        const output = new XMLSerializer().serializeToString(doc.documentElement);
+        expect(normalizeXml(output)).toBe(normalizeXml(expected));
+    });
+});

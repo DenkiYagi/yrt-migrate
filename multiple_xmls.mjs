@@ -105,17 +105,21 @@ function migrateYrtFile(doc, yrtRoot, layoutXmlElements) {
  * @returns {null}
  */
 function migrateXmlFile(doc, layoutXmlElements) {
+    // LayoutXml直下のレイアウト要素をすべて抽出し、各レイアウトごとに新しいXML文字列として返す
+    const results = [];
     layoutXmlElements.forEach(layoutXmlElement => {
-        const parent = layoutXmlElement.parentNode;
-        if (parent) {
-            // LayoutXml の子要素をすべて親に移動
-            while (layoutXmlElement.firstChild) {
-                parent.insertBefore(layoutXmlElement.firstChild, layoutXmlElement);
-            }
-            // LayoutXml 要素自体を削除
-            parent.removeChild(layoutXmlElement);
+        // LayoutXml直下の要素（Elementノードのみ）
+        const layoutChildren = [];
+        for (let node = layoutXmlElement.firstChild; node; node = node.nextSibling) {
+            if (node.nodeType === 1) layoutChildren.push(node);
         }
+        if (layoutChildren.length === 0) return;
+        layoutChildren.forEach(child => {
+            const newDoc = doc.implementation.createDocument(null, null, null);
+            newDoc.appendChild(child.cloneNode(true));
+            const serializer = new XMLSerializer();
+            results.push(serializer.serializeToString(newDoc));
+        });
     });
-
-    return null;
+    return results;
 }
