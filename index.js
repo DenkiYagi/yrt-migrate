@@ -24,13 +24,17 @@ import * as msgpack from "@msgpack/msgpack";
 import * as util from "util";
 import { yrtRootToPackage, packageToYrtRoot, isYrtRoot } from "./yrt_format.js";
 import { formatXml } from "./utils.js";
+import { migrate as removeContentElements } from "./remove_content_elements.mjs";
+import { migrate as styleElementMigrate } from "./style_element.mjs";
 
 // dry-run時のXML整形出力を制御
 const DO_FORMAT_XML = true;
 
 function migrate(inputLayoutXml, yrtRoot = null) {
     const doc = new DOMParser().parseFromString(inputLayoutXml, "text/xml");
-    const newYrtRoot = multiple_xmls.migrate(doc, yrtRoot);
+    let newYrtRoot = multiple_xmls.migrate(doc, yrtRoot);
+    newYrtRoot = styleElementMigrate(doc, newYrtRoot);
+    newYrtRoot = removeContentElements(doc, newYrtRoot);
     return newYrtRoot;
 }
 
