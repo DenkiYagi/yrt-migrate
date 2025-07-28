@@ -26,6 +26,11 @@ import { yrtRootToPackage, packageToYrtRoot, isYrtRoot } from "./yrt_format.js";
 import { formatXml } from "./utils.js";
 import { migrate as removeContentElements } from "./remove_content_elements.mjs";
 import { migrate as styleElementMigrate } from "./style_element.mjs";
+import { migrate as foreachHiddenToLogicMigrate } from "./foreach_hidden_to_logic.mjs";
+import { migrate as removeDeprecatedLayoutAttrs } from "./remove_deprecated_layout_attrs.mjs";
+import { migrate as addLayoutBody } from "./add_layout_body.mjs";
+import { migrate as renameTableFrameElements } from "./rename_tableframe_elements.mjs";
+import { migrate as imageWidthRequiredMigrate } from "./image_width_required.mjs";
 
 // dry-run時のXML整形出力を制御
 const DO_FORMAT_XML = true;
@@ -35,6 +40,11 @@ function migrate(inputLayoutXml, yrtRoot = null) {
     let newYrtRoot = multiple_xmls.migrate(doc, yrtRoot);
     newYrtRoot = styleElementMigrate(doc, newYrtRoot);
     newYrtRoot = removeContentElements(doc, newYrtRoot);
+    newYrtRoot = foreachHiddenToLogicMigrate(doc, newYrtRoot);
+    newYrtRoot = removeDeprecatedLayoutAttrs(doc, newYrtRoot);
+    newYrtRoot = addLayoutBody(doc, newYrtRoot);
+    newYrtRoot = renameTableFrameElements(doc, newYrtRoot);
+    newYrtRoot = imageWidthRequiredMigrate(doc, newYrtRoot);
     return newYrtRoot;
 }
 
