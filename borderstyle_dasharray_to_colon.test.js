@@ -1,0 +1,46 @@
+import { DOMParser } from "@xmldom/xmldom";
+import { migrate } from "./borderstyle_dasharray_to_colon.mjs";
+import { toYrtRoot, fromYrtRoot } from "./utils.js";
+
+describe("borderStyle属性 dasharray()→コロン区切り変換マイグレーション", () => {
+    it("スペースありのカンマ区切り2値がコロン区切りに変換される", () => {
+        const xml = '<Rectangle borderStyle="dasharray(5, 2)" />';
+        const yrtRoot = toYrtRoot({ layouts: [xml] });
+        const migrated = migrate(yrtRoot);
+        const { layouts } = fromYrtRoot(migrated);
+        const doc = new DOMParser().parseFromString(layouts[0], "text/xml");
+        expect(doc.documentElement.getAttribute("borderStyle")).toBe("5:2");
+    });
+    it("スペースなしのカンマ区切り2値がコロン区切りに変換される", () => {
+        const xml = '<Rectangle borderStyle="dasharray(10,2)" />';
+        const yrtRoot = toYrtRoot({ layouts: [xml] });
+        const migrated = migrate(yrtRoot);
+        const { layouts } = fromYrtRoot(migrated);
+        const doc = new DOMParser().parseFromString(layouts[0], "text/xml");
+        expect(doc.documentElement.getAttribute("borderStyle")).toBe("10:2");
+    });
+    it("カンマ区切り4値がコロン区切りに変換される", () => {
+        const xml = '<Rectangle borderStyle="dasharray(1,2,3,4)" />';
+        const yrtRoot = toYrtRoot({ layouts: [xml] });
+        const migrated = migrate(yrtRoot);
+        const { layouts } = fromYrtRoot(migrated);
+        const doc = new DOMParser().parseFromString(layouts[0], "text/xml");
+        expect(doc.documentElement.getAttribute("borderStyle")).toBe("1:2:3:4");
+    });
+    it("dasharray() でなければ何もしない", () => {
+        const xml = '<Rectangle borderStyle="solid" />';
+        const yrtRoot = toYrtRoot({ layouts: [xml] });
+        const migrated = migrate(yrtRoot);
+        const { layouts } = fromYrtRoot(migrated);
+        const doc = new DOMParser().parseFromString(layouts[0], "text/xml");
+        expect(doc.documentElement.getAttribute("borderStyle")).toBe("solid");
+    });
+    it("borderStyle属性がなければ何もしない", () => {
+        const xml = '<Rectangle />';
+        const yrtRoot = toYrtRoot({ layouts: [xml] });
+        const migrated = migrate(yrtRoot);
+        const { layouts } = fromYrtRoot(migrated);
+        const doc = new DOMParser().parseFromString(layouts[0], "text/xml");
+        expect(doc.documentElement.hasAttribute("borderStyle")).toBe(false);
+    });
+});

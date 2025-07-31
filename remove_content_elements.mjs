@@ -1,3 +1,5 @@
+import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
+
 // remove_content_elements.mjs
 // <XxxContent>系要素（TextContent, VTextContent, LinkContent, RichTextContent, ColumnTextContent）を削除し中身だけ残す
 
@@ -40,12 +42,20 @@ function removeContentElements(node) {
 }
 
 /**
- * マイグレーション本体
- * @param {Document} doc
- * @param {any} yrtRoot
- * @returns {any} yrtRoot（変更なし、docのみ書き換え）
+ * マイグレーション本体（YRT構造対応）
+ * @param {any} yrtRoot YRT構造
+ * @returns {any} 新しいYRT構造
  */
-export function migrate(doc, yrtRoot) {
-    removeContentElements(doc);
-    return yrtRoot;
+export function migrate(yrtRoot) {
+    // deep copyして壊さないようにする
+    const newRoot = JSON.parse(JSON.stringify(yrtRoot));
+    const layouts = newRoot[2].l;
+    for (let i = 0; i < layouts.length; i++) {
+        const [name, xml] = layouts[i];
+        const doc = new DOMParser().parseFromString(xml, "text/xml");
+        removeContentElements(doc);
+        const newXml = new XMLSerializer().serializeToString(doc.documentElement);
+        layouts[i][1] = newXml;
+    }
+    return newRoot;
 }

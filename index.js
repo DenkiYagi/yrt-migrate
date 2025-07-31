@@ -16,7 +16,6 @@
  * limitations under the License.
  */
 
-import { DOMParser } from "@xmldom/xmldom";
 import * as fs from "fs/promises";
 import * as multiple_xmls from "./multiple_xmls.mjs";
 import * as path from "path";
@@ -36,27 +35,35 @@ import { migrate as mergeDirectionalAttrsMigrate } from "./merge_directional_att
 import { migrate as widthAutoRangeWarnMigrate } from "./width_auto_range_warn.mjs";
 import { migrate as colorNotationIllustratorMigrate } from "./color_notation_illustrator.mjs";
 import { migrate as bindingRequiredWarnMigrate } from "./binding_required_warn.mjs";
-import { migrate as spanColorBindingWarnMigrate } from "./span_color_binding_warn.mjs";
+import { migrate as gridColsRowsRequiredWarnMigrate } from "./grid_cols_rows_required_warn.mjs";
+import { migrate as rectangleBorderRadiusMultiWarnMigrate } from "./rectangle_border_radius_multi_warn.mjs";
+import { migrate as sizeCommaToSpaceMigrate } from "./size_comma_to_space.mjs";
+import { migrate as borderstyleDasharrayToColonMigrate } from "./borderstyle_dasharray_to_colon.mjs";
+import { migrate as borderAdjacentLineWarning } from "./border_adjacent_line_warning.mjs";
 
 // dry-run時のXML整形出力を制御
 const DO_FORMAT_XML = true;
 
-function migrate(inputLayoutXml, yrtRoot = null) {
-    const doc = new DOMParser().parseFromString(inputLayoutXml, "text/xml");
-    let newYrtRoot = multiple_xmls.migrate(doc, yrtRoot);
-    newYrtRoot = styleElementMigrate(doc, newYrtRoot);
-    newYrtRoot = removeContentElements(doc, newYrtRoot);
-    newYrtRoot = foreachHiddenToLogicMigrate(doc, newYrtRoot);
-    newYrtRoot = removeDeprecatedLayoutAttrs(doc, newYrtRoot);
-    newYrtRoot = addLayoutBody(doc, newYrtRoot);
-    newYrtRoot = renameTableFrameElements(doc, newYrtRoot);
-    newYrtRoot = imageWidthRequiredMigrate(doc, newYrtRoot);
-    newYrtRoot = renameAttrsMigrate(doc, newYrtRoot);
-    newYrtRoot = mergeDirectionalAttrsMigrate(doc, newYrtRoot);
-    widthAutoRangeWarnMigrate(doc, newYrtRoot); // 警告のみ
-    newYrtRoot = colorNotationIllustratorMigrate(doc, newYrtRoot);
-    bindingRequiredWarnMigrate(doc, newYrtRoot); // バインド変数必須化警告（副作用型）
-    spanColorBindingWarnMigrate(doc, newYrtRoot); // <Span> color属性バインド変数警告（副作用型）
+function migrate(newYrtRoot) {
+    newYrtRoot = multiple_xmls.migrate(newYrtRoot);
+    newYrtRoot = styleElementMigrate(newYrtRoot);
+    newYrtRoot = removeContentElements(newYrtRoot);
+    newYrtRoot = foreachHiddenToLogicMigrate(newYrtRoot);
+    newYrtRoot = removeDeprecatedLayoutAttrs(newYrtRoot);
+    newYrtRoot = addLayoutBody(newYrtRoot);
+    newYrtRoot = renameTableFrameElements(newYrtRoot);
+    newYrtRoot = imageWidthRequiredMigrate(newYrtRoot);
+    newYrtRoot = renameAttrsMigrate(newYrtRoot);
+    newYrtRoot = mergeDirectionalAttrsMigrate(newYrtRoot);
+    widthAutoRangeWarnMigrate(newYrtRoot); // 警告のみ
+    newYrtRoot = colorNotationIllustratorMigrate(newYrtRoot);
+    bindingRequiredWarnMigrate(newYrtRoot); // 警告のみ
+    spanColorBindingWarnMigrate(newYrtRoot); // 警告のみ
+    gridColsRowsRequiredWarnMigrate(newYrtRoot); // 警告のみ
+    rectangleBorderRadiusMultiWarnMigrate(newYrtRoot); // 警告のみ
+    newYrtRoot = sizeCommaToSpaceMigrate(newYrtRoot);
+    newYrtRoot = borderstyleDasharrayToColonMigrate(newYrtRoot);
+    borderAdjacentLineWarning(newYrtRoot); // 警告のみ
     return newYrtRoot;
 }
 
@@ -160,7 +167,7 @@ async function main() {
             process.exit(1);
         }
 
-        const migratedYrtRoot = migrate(inputYrtRoot[2].l[0][1], inputYrtRoot);
+        const migratedYrtRoot = migrate(inputYrtRoot);
         const migratedPkg = yrtRootToPackage(migratedYrtRoot);
         const outputFile = msgpack.encode(migratedYrtRoot);
 

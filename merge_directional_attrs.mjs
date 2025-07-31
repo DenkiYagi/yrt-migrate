@@ -1,5 +1,4 @@
-// 4方向属性を一括指定属性に統合する
-// 未指定部分は数値なら0、borderStyleはnone、borderColorはtransparentで補完
+import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
 const ATTR_MAP = [
     {
@@ -145,8 +144,24 @@ function traverseAndMerge(el) {
     mergeDirectionalAttributes(el);
 }
 
-export function migrate(doc, yrtRoot) {
-    if (!doc || !doc.documentElement) return yrtRoot;
-    traverseAndMerge(doc.documentElement);
-    return yrtRoot;
+export function migrate(yrtRoot) {
+    if (!yrtRoot || !Array.isArray(yrtRoot) || yrtRoot.length < 3 || !Array.isArray(yrtRoot[2]?.l)) {
+        return yrtRoot;
+    }
+    const layouts = yrtRoot[2].l.map(layout => {
+        if (!layout) return layout;
+        // [null, xmlString] 形式の場合は2番目のみ変換
+        if (Array.isArray(layout) && layout.length === 2 && layout[1]) {
+            const doc = new DOMParser().parseFromString(layout[1], "text/xml");
+            traverseAndMerge(doc.documentElement);
+            return [null, new XMLSerializer().serializeToString(doc)];
+        } else if (typeof layout === "string") {
+            const doc = new DOMParser().parseFromString(layout, "text/xml");
+            traverseAndMerge(doc.documentElement);
+            return new XMLSerializer().serializeToString(doc);
+        }
+        return layout;
+    });
+    const next = [yrtRoot[0], yrtRoot[1], { ...yrtRoot[2], l: layouts }];
+    return next;
 }

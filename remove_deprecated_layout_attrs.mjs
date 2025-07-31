@@ -1,14 +1,22 @@
-// レイアウト変更の可能性のある属性の廃止
-// - LinearLayout: borderThickness, borderColor, borderStyle
-// - StackLayout: borderThickness, borderColor, borderStyle, padding
-// - StackBlock: padding
-// 削除時は警告を出す
-
 import { getXPath } from "./utils.js";
+import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
-export function migrate(doc, yrtRoot) {
-    removeAttrsAndWarn(doc.documentElement);
-    return yrtRoot;
+/**
+ * YRT構造対応: 全レイアウトXMLに対して属性削除・警告を適用
+ * @param {any} yrtRoot YRT構造
+ * @returns {any} 新しいYRT構造
+ */
+export function migrate(yrtRoot) {
+    const newRoot = JSON.parse(JSON.stringify(yrtRoot));
+    const layouts = newRoot[2].l;
+    for (let i = 0; i < layouts.length; i++) {
+        const [name, xml] = layouts[i];
+        const doc = new DOMParser().parseFromString(xml, "text/xml");
+        removeAttrsAndWarn(doc.documentElement);
+        const newXml = new XMLSerializer().serializeToString(doc.documentElement);
+        layouts[i][1] = newXml;
+    }
+    return newRoot;
 }
 
 function removeAttrsAndWarn(node) {

@@ -1,5 +1,32 @@
 import xmlFormat from "xml-formatter";
 
+/**
+ * YRT構造から { layouts, styleXml, assets } を抽出するユーティリティ
+ * @param {any[]} yrtRoot
+ * @returns {{ layouts: string[], styleXml: string|null, assets: any|null }}
+ */
+export function fromYrtRoot(yrtRoot) {
+    if (!Array.isArray(yrtRoot) || yrtRoot.length < 3 || !yrtRoot[2]) {
+        throw new Error("fromYrtRoot: 入力がYRT構造ではありません");
+    }
+    const layouts = (yrtRoot[2].l || []).map(pair => pair[1]);
+    const styleXml = yrtRoot[2].s ?? null;
+    const assets = yrtRoot[2].a ?? null;
+    return { layouts, styleXml, assets };
+}
+
+/**
+ * YRT構造を生成するユーティリティ関数
+ * @param {Object} params
+ * @param {string[]} params.layouts - レイアウトXML文字列の配列
+ * @param {string|null} [params.styleXml=null] - スタイルXML文字列（省略可）
+ * @param {any} [params.assets=null] - アセット（省略可）
+ * @returns {any[]} YRT構造
+ */
+export function toYrtRoot({ layouts, styleXml = null, assets = null }) {
+    return ["YRT", 1, { l: layouts.map(xml => [null, xml]), s: styleXml, a: assets }];
+}
+
 // XMLノードのXPathを取得するユーティリティ
 export function getXPath(node) {
     let path = '';

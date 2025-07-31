@@ -1,5 +1,4 @@
-// Illustrator寄りのカラー記法に変換するマイグレーション
-// color, borderColor, outerBorderColor, backgroundColor属性を対象
+import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
 const COLOR_ATTRS = [
     "color",
@@ -52,7 +51,24 @@ function migrateNode(node) {
     }
 }
 
-export function migrate(doc) {
-    if (!doc || !doc.documentElement) return;
-    migrateNode(doc.documentElement);
+export function migrate(yrtRoot) {
+    if (!yrtRoot || !Array.isArray(yrtRoot) || yrtRoot.length < 3 || !Array.isArray(yrtRoot[2]?.l)) {
+        return yrtRoot;
+    }
+    const layouts = yrtRoot[2].l.map(layout => {
+        if (!layout) return layout;
+        // [null, xmlString] 形式の場合は2番目のみ変換
+        if (Array.isArray(layout) && layout.length === 2 && layout[1]) {
+            const doc = new DOMParser().parseFromString(layout[1], "text/xml");
+            migrateNode(doc.documentElement);
+            return [null, new XMLSerializer().serializeToString(doc)];
+        } else if (typeof layout === "string") {
+            const doc = new DOMParser().parseFromString(layout, "text/xml");
+            migrateNode(doc.documentElement);
+            return new XMLSerializer().serializeToString(doc);
+        }
+        return layout;
+    });
+    const next = [yrtRoot[0], yrtRoot[1], { ...yrtRoot[2], l: layouts }];
+    return next;
 }

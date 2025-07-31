@@ -1,28 +1,37 @@
-import { DOMParser } from "@xmldom/xmldom";
+import { jest } from "@jest/globals";
 import { migrate } from "./image_width_required.mjs";
+import { toYrtRoot, fromYrtRoot } from "./utils.js";
 
 describe("<Image> width属性必須化マイグレーション", () => {
+    let warnSpy;
+    beforeEach(() => {
+        warnSpy = jest.spyOn(console, "warn").mockImplementation(() => { });
+    });
+    afterEach(() => {
+        warnSpy.mockRestore();
+    });
+
     it("width属性がある場合は警告なし", () => {
-        const xml = `<Image width="100" />`;
-        const doc = new DOMParser().parseFromString(xml, "text/xml");
-        const warnings = [];
-        migrate(doc, null, warnings);
-        expect(warnings.length).toBe(0);
+        const input = `<Image width="100" />`;
+        const yrtRoot = toYrtRoot({ layouts: [input] });
+        migrate(yrtRoot);
+        expect(warnSpy).not.toHaveBeenCalled();
     });
 
     it("width属性がない場合は警告が出る", () => {
-        const xml = `<Image />`;
-        const doc = new DOMParser().parseFromString(xml, "text/xml");
-        const warnings = [];
-        migrate(doc, null, warnings);
-        expect(warnings.some(w => w.includes("Image要素にwidth属性がありません"))).toBe(true);
+        const input = `<Image />`;
+        const yrtRoot = toYrtRoot({ layouts: [input] });
+        migrate(yrtRoot);
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Image要素にwidth属性がありません"));
     });
 
     it("複数Image要素でwidth属性なしが混在する場合、警告が出る", () => {
-        const xml = `<root><Image width="100" /><Image /><Image width="200" /><Image /></root>`;
-        const doc = new DOMParser().parseFromString(xml, "text/xml");
-        const warnings = [];
-        migrate(doc, null, warnings);
-        expect(warnings.filter(w => w.includes("Image要素にwidth属性がありません")).length).toBe(2);
+        const input = `<root><Image width="100" /><Image /><Image width="200" /><Image /></root>`;
+        const yrtRoot = toYrtRoot({ layouts: [input] });
+        migrate(yrtRoot);
+        // 2回警告が出ることを検証
+        expect(warnSpy).toHaveBeenCalledTimes(2);
+        expect(warnSpy).toHaveBeenNthCalledWith(1, expect.stringContaining("Image要素にwidth属性がありません"));
+        expect(warnSpy).toHaveBeenNthCalledWith(2, expect.stringContaining("Image要素にwidth属性がありません"));
     });
 });

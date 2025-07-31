@@ -12,8 +12,15 @@
 
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
-export function migrate(doc, yrtData = null) {
-    // 1レイアウト1XMLまたは配列で受け取る
+/**
+ * YrtRootのみを受け取り、layouts配列のxmlを変換し、sプロパティにStyle XMLを格納して返す
+ * @param {Array} yrtRoot
+ * @returns {Array} 変換後のYrtRoot
+ */
+export function migrate(yrtRoot) {
+    if (!Array.isArray(yrtRoot) || yrtRoot.length < 3 || !yrtRoot[2] || !Array.isArray(yrtRoot[2].l)) {
+        throw new Error("style_element.mjs: 入力がYRT構造ではありません");
+    }
     const STYLE_TARGETS = [
         { tag: "Grid", styleTag: "GridStyle" },
         { tag: "Table", styleTag: "TableStyle" },
@@ -26,10 +33,12 @@ export function migrate(doc, yrtData = null) {
     );
     const styleRoot = styleDoc.documentElement;
 
-    const docs = Array.isArray(doc) ? doc : [doc];
-    for (const d of docs) {
+    const layouts = [];
+    for (let i = 0; i < yrtRoot[2].l.length; i++) {
+        const [name, xml] = yrtRoot[2].l[i];
+        const doc = new DOMParser().parseFromString(xml, "text/xml");
         for (const { tag, styleTag } of STYLE_TARGETS) {
-            const targets = Array.from(d.getElementsByTagName(tag));
+            const targets = Array.from(doc.getElementsByTagName(tag));
             for (const target of targets) {
                 const styleElem = target.getElementsByTagName(styleTag)[0];
                 if (styleElem) {
@@ -39,8 +48,8 @@ export function migrate(doc, yrtData = null) {
                     const styleTargetElem = styleDoc.createElement(tag);
                     styleTargetElem.setAttribute("key", styleId);
                     const cellRange = styleDoc.createElement("CellRange");
-                    for (let i = 0; i < styleElem.attributes.length; i++) {
-                        const attr = styleElem.attributes[i];
+                    for (let j = 0; j < styleElem.attributes.length; j++) {
+                        const attr = styleElem.attributes[j];
                         cellRange.setAttribute(attr.name, attr.value);
                     }
                     styleTargetElem.appendChild(cellRange);
@@ -49,18 +58,11 @@ export function migrate(doc, yrtData = null) {
                 }
             }
         }
+        // 変換後のXMLをlayouts配列にpush
+        layouts.push([name, new XMLSerializer().serializeToString(doc.documentElement)]);
     }
-
-    // YRTデータ形式の場合はsプロパティにStyle XMLを格納
-    if (yrtData && Array.isArray(yrtData) && yrtData.length > 2 && yrtData[2]) {
-        yrtData[2].s = new XMLSerializer().serializeToString(styleRoot);
-        return yrtData;
-    }
-
-    // それ以外は { layouts: [XML文字列...], styleXml: XML文字列 } を返す
-    const layouts = docs.map((d) =>
-        new XMLSerializer().serializeToString(d.documentElement)
-    );
-    const styleXml = new XMLSerializer().serializeToString(styleRoot);
-    return { layouts, styleXml };
+    // YRT構造に反映
+    yrtRoot[2].l = layouts;
+    yrtRoot[2].s = new XMLSerializer().serializeToString(styleRoot);
+    return yrtRoot;
 }

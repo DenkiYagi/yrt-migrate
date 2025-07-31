@@ -1,9 +1,4 @@
-// foreach/hidden属性→logic属性マイグレーション
-// - foreach属性: logic="foreach:..."に変換。バインド変数でなければlogic="foreach:[]"にし警告。
-// - hidden属性: logic="if:..."に変換。バインド変数でなければlogic="if:true"にし警告。
-// - 既にlogic属性がある場合は警告し、変換しない。
-// - foreach/hidden両方ある場合はforeachのみlogic化、hiddenは警告のみ。
-
+import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 import { getXPath } from "./utils.js";
 
 function isBindingVariable(val) {
@@ -66,13 +61,30 @@ function migrateElement(el, warnings) {
     }
 }
 
-export function migrate(doc, yrtRoot) {
-    const warnings = [];
-    if (doc && doc.documentElement) {
-        migrateElement(doc.documentElement, warnings);
+/**
+ * YRT構造対応: 全レイアウトXMLに対してforeach/hidden→logic変換を適用
+ * @param {any} yrtRoot YRT構造
+ * @returns {any} 新しいYRT構造
+ */
+export function migrate(yrtRoot) {
+    const newRoot = JSON.parse(JSON.stringify(yrtRoot));
+    const layouts = newRoot[2].l;
+    let allWarnings = [];
+    for (let i = 0; i < layouts.length; i++) {
+        const [name, xml] = layouts[i];
+        const doc = new DOMParser().parseFromString(xml, "text/xml");
+        const warnings = [];
+        if (doc && doc.documentElement) {
+            migrateElement(doc.documentElement, warnings);
+        }
+        if (warnings.length > 0) {
+            allWarnings = allWarnings.concat(warnings);
+        }
+        const newXml = new XMLSerializer().serializeToString(doc.documentElement);
+        layouts[i][1] = newXml;
     }
-    if (warnings.length > 0) {
-        console.warn('[foreach_hidden_to_logic] 警告:', warnings.join('\n'));
+    if (allWarnings.length > 0) {
+        console.warn('[foreach_hidden_to_logic] 警告:', allWarnings.join('\n'));
     }
-    return yrtRoot;
+    return newRoot;
 }

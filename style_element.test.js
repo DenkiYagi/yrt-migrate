@@ -1,11 +1,12 @@
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 import { migrate } from "./style_element.mjs";
+import { toYrtRoot, fromYrtRoot } from "./utils.js";
 
 describe("style_element", () => {
     it("GridStyle要素がStyle XMLに移行し、レイアウトXMLから削除される", () => {
         const inputXml = `<?xml version="1.0" encoding="UTF-8"?>\n<LayoutXml>\n  <Grid>\n    <GridStyle borderColor=\"red\" foreach=\"item\"/>\n    <Text>test</Text>\n  </Grid>\n</LayoutXml>`;
-        const doc = new DOMParser().parseFromString(inputXml, "text/xml");
-        const { layouts, styleXml } = migrate([doc]);
+        const yrt = migrate(toYrtRoot({ layouts: [inputXml] }));
+        const { layouts, styleXml } = fromYrtRoot(yrt);
         expect(layouts[0]).toContain('style="styleelement-1"');
         expect(layouts[0]).not.toContain("<GridStyle");
         const gridMatch = layouts[0].match(/<Grid([^>]*)>/);
@@ -21,17 +22,16 @@ describe("style_element", () => {
 
     it("GridStyleのcol/row範囲指定がCellRangeに正しく移行される", () => {
         const inputXml = `<?xml version="1.0" encoding="UTF-8"?>\n<LayoutXml>\n  <Grid>\n    <GridStyle borderColor=\"red\" col=\"1\" row=\"2\"/>\n    <Text>test</Text>\n  </Grid>\n</LayoutXml>`;
-        const doc = new DOMParser().parseFromString(inputXml, "text/xml");
-        const { styleXml } = migrate([doc]);
-        expect(styleXml).toContain(
+        const yrt = migrate(toYrtRoot({ layouts: [inputXml] }));
+        expect(yrt[2].s).toContain(
             '<CellRange borderColor="red" col="1" row="2"'
         );
     });
 
     it("TableStyle要素がStyle XMLに移行し、レイアウトXMLから削除される", () => {
         const inputXml = `<?xml version="1.0" encoding="UTF-8"?>\n<LayoutXml>\n  <Table>\n    <TableStyle borderColor=\"blue\"/>\n    <TableColumn>\n      <TableColumnTemplate>\n        <Text>row</Text>\n      </TableColumnTemplate>\n    </TableColumn>\n  </Table>\n</LayoutXml>`;
-        const doc = new DOMParser().parseFromString(inputXml, "text/xml");
-        const { layouts, styleXml } = migrate([doc]);
+        const yrt = migrate(toYrtRoot({ layouts: [inputXml] }));
+        const { layouts, styleXml } = fromYrtRoot(yrt);
         expect(layouts[0]).toContain('style="styleelement-1"');
         expect(layouts[0]).not.toContain("<TableStyle");
         const tableMatch = layouts[0].match(/<Table([^>]*)>/);
@@ -44,17 +44,18 @@ describe("style_element", () => {
 
     it("TableStyleのcol/row範囲指定がCellRangeに正しく移行される", () => {
         const inputXml = `<?xml version="1.0" encoding="UTF-8"?>\n<LayoutXml>\n  <Table>\n    <TableStyle borderColor=\"blue\" col=\"1\" row=\"2\"/>\n    <TableColumn>\n      <TableColumnTemplate>\n        <Text>row</Text>\n      </TableColumnTemplate>\n    </TableColumn>\n  </Table>\n</LayoutXml>`;
-        const doc = new DOMParser().parseFromString(inputXml, "text/xml");
-        const { styleXml } = migrate([doc]);
-        expect(styleXml).toContain(
+        const yrt = migrate(toYrtRoot({ layouts: [inputXml] }));
+        expect(yrt[2].s).toContain(
             '<CellRange borderColor="blue" col="1" row="2"'
         );
     });
 
+
+
     it("ColumnTextStyle要素がStyle XMLに移行し、レイアウトXMLから削除される", () => {
         const inputXml = `<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<LayoutXml>\n  <ColumnText>\n    <ColumnTextStyle borderColor=\"green\"/>\n    <ColumnTextContent>abc</ColumnTextContent>\n  </ColumnText>\n</LayoutXml>`;
-        const doc = new DOMParser().parseFromString(inputXml, "text/xml");
-        const { layouts, styleXml } = migrate([doc]);
+        const yrt = migrate(toYrtRoot({ layouts: [inputXml] }));
+        const { layouts, styleXml } = fromYrtRoot(yrt);
         expect(layouts[0]).toContain('style="styleelement-1"');
         expect(layouts[0]).not.toContain("<ColumnTextStyle");
         const colMatch = layouts[0].match(/<ColumnText([^>]*)>/);
@@ -68,9 +69,8 @@ describe("style_element", () => {
 
     it("ColumnTextStyleのcol範囲指定がCellRangeに正しく移行される", () => {
         const inputXml = `<?xml version="1.0" encoding="UTF-8"?>\n<LayoutXml>\n  <ColumnText>\n    <ColumnTextStyle borderColor=\"green\" col=\"2\"/>\n    <ColumnTextContent>abc</ColumnTextContent>\n  </ColumnText>\n</LayoutXml>`;
-        const doc = new DOMParser().parseFromString(inputXml, "text/xml");
-        const { styleXml } = migrate([doc]);
-        expect(styleXml).toContain('<CellRange borderColor="green" col="2"');
+        const yrt = migrate(toYrtRoot({ layouts: [inputXml] }));
+        expect(yrt[2].s).toContain('<CellRange borderColor="green" col="2"');
     });
 
     it("複数のXxxStyle要素が複数レイアウトXMLに存在した場合に、1つのスタイルXMLに正しく集約される", () => {
@@ -79,10 +79,8 @@ describe("style_element", () => {
             `<?xml version="1.0" encoding="UTF-8"?>\n<Grid>\n  <GridStyle borderColor="red"/>\n  <Text>test</Text>\n</Grid>`,
             `<?xml version="1.0" encoding="UTF-8"?>\n<Table>\n  <TableStyle borderColor="blue"/>\n  <TableColumn>\n    <TableColumnTemplate>\n      <Text>row</Text>\n    </TableColumnTemplate>\n  </TableColumn>\n</Table>`,
         ];
-        const layoutDocs = inputXmls.map((xml) =>
-            new DOMParser().parseFromString(xml, "text/xml")
-        );
-        const { layouts, styleXml } = migrate(layoutDocs);
+        const yrt = migrate(toYrtRoot({ layouts: inputXmls }));
+        const { layouts, styleXml } = fromYrtRoot(yrt);
         expect(layouts[0]).toContain('style="styleelement-1"');
         expect(layouts[0]).not.toContain("<GridStyle");
         expect(layouts[1]).toContain('style="styleelement-2"');

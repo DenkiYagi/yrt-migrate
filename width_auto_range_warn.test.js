@@ -1,13 +1,13 @@
 import { jest } from '@jest/globals';
-import { DOMParser } from "@xmldom/xmldom";
 import { migrate } from "./width_auto_range_warn.mjs";
+import { toYrtRoot, fromYrtRoot } from "./utils.js";
 
 describe("<Grid> cols属性のauto/range廃止マイグレーション 警告出力", () => {
     it("cols='auto' で警告が出る", () => {
         const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
         const xml = `<Grid cols="auto"></Grid>`;
-        const doc = new DOMParser().parseFromString(xml, "text/xml");
-        migrate(doc);
+        const yrtRoot = toYrtRoot({ layouts: [xml] });
+        migrate(yrtRoot);
         expect(spy).toHaveBeenCalledWith(
             expect.stringContaining("[width_auto_range_warn] 警告:"),
             expect.stringContaining("Grid")
@@ -19,8 +19,8 @@ describe("<Grid> cols属性のauto/range廃止マイグレーション 警告出
     it("cols='10:20' で警告が出る", () => {
         const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
         const xml = `<Grid cols="10:20"></Grid>`;
-        const doc = new DOMParser().parseFromString(xml, "text/xml");
-        migrate(doc);
+        const yrtRoot = toYrtRoot({ layouts: [xml] });
+        migrate(yrtRoot);
         expect(spy.mock.calls.flat().join("\n")).toMatch(/cols.*10:20/);
         spy.mockRestore();
     });
@@ -29,10 +29,10 @@ describe("<Grid> cols属性のauto/range廃止マイグレーション 警告出
         const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
         const xml1 = `<Grid cols=":20"></Grid>`;
         const xml2 = `<Grid cols="10:"></Grid>`;
-        const doc1 = new DOMParser().parseFromString(xml1, "text/xml");
-        const doc2 = new DOMParser().parseFromString(xml2, "text/xml");
-        migrate(doc1);
-        migrate(doc2);
+        const yrtRoot1 = toYrtRoot({ layouts: [xml1] });
+        const yrtRoot2 = toYrtRoot({ layouts: [xml2] });
+        migrate(yrtRoot1);
+        migrate(yrtRoot2);
         expect(spy.mock.calls.flat().join("\n")).toMatch(/cols.*:20/);
         expect(spy.mock.calls.flat().join("\n")).toMatch(/cols.*10:/);
         spy.mockRestore();
@@ -41,8 +41,8 @@ describe("<Grid> cols属性のauto/range廃止マイグレーション 警告出
     it("正常な値では警告が出ない", () => {
         const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
         const xml = `<Grid cols="3"></Grid>`;
-        const doc = new DOMParser().parseFromString(xml, "text/xml");
-        migrate(doc);
+        const yrtRoot = toYrtRoot({ layouts: [xml] });
+        migrate(yrtRoot);
         expect(spy).not.toHaveBeenCalled();
 
         spy.mockRestore();
@@ -53,8 +53,8 @@ describe("<TableColumn> width属性のauto/range廃止マイグレーション �
     it("width='auto' で警告が出る", () => {
         const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
         const xml = `<TableColumn width="auto"></TableColumn>`;
-        const doc = new DOMParser().parseFromString(xml, "text/xml");
-        migrate(doc);
+        const yrtRoot = toYrtRoot({ layouts: [xml] });
+        migrate(yrtRoot);
         expect(spy.mock.calls.flat().join("\n")).toMatch(/TableColumn.*width.*auto/);
         spy.mockRestore();
     });
@@ -62,8 +62,8 @@ describe("<TableColumn> width属性のauto/range廃止マイグレーション �
     it("width='5:10' で警告が出る", () => {
         const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
         const xml = `<TableColumn width="5:10"></TableColumn>`;
-        const doc = new DOMParser().parseFromString(xml, "text/xml");
-        migrate(doc);
+        const yrtRoot = toYrtRoot({ layouts: [xml] });
+        migrate(yrtRoot);
         expect(spy.mock.calls.flat().join("\n")).toMatch(/width.*5:10/);
         spy.mockRestore();
     });
@@ -71,8 +71,8 @@ describe("<TableColumn> width属性のauto/range廃止マイグレーション �
     it("正常な値では警告が出ない", () => {
         const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
         const xml = `<TableColumn width="100"></TableColumn>`;
-        const doc = new DOMParser().parseFromString(xml, "text/xml");
-        migrate(doc);
+        const yrtRoot = toYrtRoot({ layouts: [xml] });
+        migrate(yrtRoot);
         expect(spy).not.toHaveBeenCalled();
         spy.mockRestore();
     });
