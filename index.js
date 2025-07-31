@@ -31,6 +31,12 @@ import { migrate as removeDeprecatedLayoutAttrs } from "./remove_deprecated_layo
 import { migrate as addLayoutBody } from "./add_layout_body.mjs";
 import { migrate as renameTableFrameElements } from "./rename_tableframe_elements.mjs";
 import { migrate as imageWidthRequiredMigrate } from "./image_width_required.mjs";
+import { migrate as renameAttrsMigrate } from "./rename_attrs.mjs";
+import { migrate as mergeDirectionalAttrsMigrate } from "./merge_directional_attrs.mjs";
+import { migrate as widthAutoRangeWarnMigrate } from "./width_auto_range_warn.mjs";
+import { migrate as colorNotationIllustratorMigrate } from "./color_notation_illustrator.mjs";
+import { migrate as bindingRequiredWarnMigrate } from "./binding_required_warn.mjs";
+import { migrate as spanColorBindingWarnMigrate } from "./span_color_binding_warn.mjs";
 
 // dry-run時のXML整形出力を制御
 const DO_FORMAT_XML = true;
@@ -45,6 +51,12 @@ function migrate(inputLayoutXml, yrtRoot = null) {
     newYrtRoot = addLayoutBody(doc, newYrtRoot);
     newYrtRoot = renameTableFrameElements(doc, newYrtRoot);
     newYrtRoot = imageWidthRequiredMigrate(doc, newYrtRoot);
+    newYrtRoot = renameAttrsMigrate(doc, newYrtRoot);
+    newYrtRoot = mergeDirectionalAttrsMigrate(doc, newYrtRoot);
+    widthAutoRangeWarnMigrate(doc, newYrtRoot); // 警告のみ
+    newYrtRoot = colorNotationIllustratorMigrate(doc, newYrtRoot);
+    bindingRequiredWarnMigrate(doc, newYrtRoot); // バインド変数必須化警告（副作用型）
+    spanColorBindingWarnMigrate(doc, newYrtRoot); // <Span> color属性バインド変数警告（副作用型）
     return newYrtRoot;
 }
 

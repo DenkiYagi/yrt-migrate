@@ -4,6 +4,8 @@
 // - StackBlock: padding
 // 削除時は警告を出す
 
+import { getXPath } from "./utils.js";
+
 export function migrate(doc, yrtRoot) {
     removeAttrsAndWarn(doc.documentElement);
     return yrtRoot;
