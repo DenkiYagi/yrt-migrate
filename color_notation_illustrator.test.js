@@ -75,7 +75,7 @@ describe("カラー記法のIllustrator寄り変換マイグレーション", ()
             expect(out).toContain('color="K80"');
         });
     });
-    describe("全属性網羅", () => {
+    describe("全属性網羅（一般）", () => {
         it("borderColor, outerBorderColor, backgroundColorも変換", () => {
             const xml = `<Rectangle borderColor="grayscale(0.5)" outerBorderColor="rgb(1.0,0,0)" backgroundColor="cmyk(0,0,0,1.0)"/>`;
             const yrtRoot = toYrtRoot({ layouts: [xml] });
@@ -86,6 +86,19 @@ describe("カラー記法のIllustrator寄り変換マイグレーション", ()
             expect(out).toContain('borderColor="K50"');
             expect(out).toContain('outerBorderColor="R100G0B0"');
             expect(out).toContain('backgroundColor="C0M0Y0K100"');
+        });
+    });
+
+    describe("全属性網羅（Table系特殊）", () => {
+        it("headerBackgroundColor, footerBackgroundColorも変換", () => {
+            const xml = `<Table headerBackgroundColor="grayscale(0.2)" footerBackgroundColor="rgb(0.1,0.2,0.3)"/>`;
+            const yrtRoot = toYrtRoot({ layouts: [xml] });
+            const migrated = migrate(yrtRoot);
+            const { layouts } = fromYrtRoot(migrated);
+            const doc = new DOMParser().parseFromString(layouts[0], "text/xml");
+            const out = new XMLSerializer().serializeToString(doc.documentElement);
+            expect(out).toContain('headerBackgroundColor="K80"');
+            expect(out).toContain('footerBackgroundColor="R10G20B30"');
         });
     });
 });

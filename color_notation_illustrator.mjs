@@ -5,6 +5,8 @@ const COLOR_ATTRS = [
     "borderColor",
     "outerBorderColor",
     "backgroundColor",
+    "headerBackgroundColor",
+    "footerBackgroundColor",
 ];
 
 function toK(val) {
