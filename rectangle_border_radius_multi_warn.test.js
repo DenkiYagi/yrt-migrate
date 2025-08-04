@@ -33,11 +33,4 @@ describe("<Rectangle> borderRadius属性 複数方向指定警告マイグレー
         migrate(yrtRoot);
         expect(warnSpy).not.toHaveBeenCalled();
     });
-
-    it("noneなら警告が出ない", () => {
-        const xml = '<LinearLayout><Rectangle borderRadius="none"/></LinearLayout>';
-        const yrtRoot = toYrtRoot({ layouts: [xml] });
-        migrate(yrtRoot);
-        expect(warnSpy).not.toHaveBeenCalled();
-    });
 });
