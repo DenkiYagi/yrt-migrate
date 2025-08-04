@@ -19,12 +19,12 @@ const ATTR_MAP = [
     {
         base: 'borderStyle',
         keys: ['borderTopStyle', 'borderRightStyle', 'borderBottomStyle', 'borderLeftStyle'],
-        default: 'none',
+        default: 'solid',
     },
     {
         base: 'borderColor',
         keys: ['borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor'],
-        default: 'transparent',
+        default: 'black',
     },
     {
         base: 'outerBorderThickness',
@@ -34,12 +34,12 @@ const ATTR_MAP = [
     {
         base: 'outerBorderStyle',
         keys: ['outerBorderTopStyle', 'outerBorderRightStyle', 'outerBorderBottomStyle', 'outerBorderLeftStyle'],
-        default: 'none',
+        default: 'solid',
     },
     {
         base: 'outerBorderColor',
         keys: ['outerBorderTopColor', 'outerBorderRightColor', 'outerBorderBottomColor', 'outerBorderLeftColor'],
-        default: 'transparent',
+        default: 'black',
     },
     {
         base: 'borderRadius',

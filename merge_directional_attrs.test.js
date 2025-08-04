@@ -148,9 +148,9 @@ describe('mergeDirectionalAttributes', () => {
         assert.equal(output, expected);
     });
 
-    it('borderStyle の未指定部分はスキーマで許されている none で補完して4値で統合', () => {
-        const input = '<Grid borderTopStyle="solid" borderLeftStyle="dotted"/>';
-        const expected = '<Grid borderStyle="solid none none dotted"/>';
+    it('borderStyle の未指定部分はスキーマで許されている solid で補完して4値で統合', () => {
+        const input = '<Grid borderTopStyle="none" borderLeftStyle="dotted"/>';
+        const expected = '<Grid borderStyle="none solid solid dotted"/>';
         const yrtRoot = toYrtRoot({ layouts: [input] });
         const migrated = migrate(yrtRoot);
         const { layouts } = fromYrtRoot(migrated);
@@ -159,9 +159,9 @@ describe('mergeDirectionalAttributes', () => {
         assert.equal(output, expected);
     });
 
-    it('borderColor の未指定部分はスキーマで許されている transparent で補完して4値で統合', () => {
+    it('borderColor の未指定部分はスキーマで許されている black で補完して4値で統合', () => {
         const input = '<Grid borderTopColor="#111" borderLeftColor="#444"/>';
-        const expected = '<Grid borderColor="#111 transparent transparent #444"/>';
+        const expected = '<Grid borderColor="#111 black black #444"/>';
         const yrtRoot = toYrtRoot({ layouts: [input] });
         const migrated = migrate(yrtRoot);
         const { layouts } = fromYrtRoot(migrated);
