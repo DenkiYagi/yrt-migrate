@@ -8,9 +8,19 @@ function isBindingVariable(val) {
 
 function migrateElement(el, warnings) {
     if (!el || !el.getAttribute) return;
-    const foreach = el.getAttribute('foreach');
-    const hidden = el.getAttribute('hidden');
-    const logic = el.getAttribute('logic');
+    let foreach = el.getAttribute('foreach')?.trim();
+    let hidden = el.getAttribute('hidden')?.trim();
+    const logic = el.getAttribute('logic')?.trim();
+
+    // まず値なしのパターンを処理
+    if (foreach === "") {
+        el.removeAttribute('foreach');
+        foreach = null;
+    }
+    if (hidden === "") {
+        el.removeAttribute('hidden');
+        hidden = null;
+    }
 
     // foreachとhidden両方ある場合はforeachのみlogic化、hiddenは警告のみ
     if (foreach && hidden && !logic) {

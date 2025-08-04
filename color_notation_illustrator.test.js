@@ -41,6 +41,16 @@ describe("カラー記法のIllustrator寄り変換マイグレーション", ()
             const out = new XMLSerializer().serializeToString(doc.documentElement);
             expect(out).toContain('color="K88"');
         });
+
+        it("color='grayscale( 0.5 )'（空白あり）→ color='K50'", () => {
+            const xml = `<Text color="grayscale(  0.5  )"/>`;
+            const yrtRoot = toYrtRoot({ layouts: [xml] });
+            const migrated = migrate(yrtRoot);
+            const { layouts } = fromYrtRoot(migrated);
+            const doc = new DOMParser().parseFromString(layouts[0], "text/xml");
+            const out = new XMLSerializer().serializeToString(doc.documentElement);
+            expect(out).toContain('color="K50"');
+        });
     });
     describe("rgb → RxGxBx記法", () => {
         it("color='rgb(0.0,0.5,1.0)' → color='R0G50B100'", () => {
@@ -52,10 +62,30 @@ describe("カラー記法のIllustrator寄り変換マイグレーション", ()
             const out = new XMLSerializer().serializeToString(doc.documentElement);
             expect(out).toContain('color="R0G50B100"');
         });
+
+        it("color='rgb( 0.0 , 0.5 , 1.0 )'（空白あり）→ color='R0G50B100'", () => {
+            const xml = `<Text color="rgb( 0.0 , 0.5 , 1.0 )"/>`;
+            const yrtRoot = toYrtRoot({ layouts: [xml] });
+            const migrated = migrate(yrtRoot);
+            const { layouts } = fromYrtRoot(migrated);
+            const doc = new DOMParser().parseFromString(layouts[0], "text/xml");
+            const out = new XMLSerializer().serializeToString(doc.documentElement);
+            expect(out).toContain('color="R0G50B100"');
+        });
     });
     describe("cmyk → CxMxYxKx記法", () => {
         it("color='cmyk(0.0,0.5,1.0,0.25)' → color='C0M50Y100K25'", () => {
             const xml = `<Text color="cmyk(0.0,0.5,1.0,0.25)"/>`;
+            const yrtRoot = toYrtRoot({ layouts: [xml] });
+            const migrated = migrate(yrtRoot);
+            const { layouts } = fromYrtRoot(migrated);
+            const doc = new DOMParser().parseFromString(layouts[0], "text/xml");
+            const out = new XMLSerializer().serializeToString(doc.documentElement);
+            expect(out).toContain('color="C0M50Y100K25"');
+        });
+
+        it("color='cmyk( 0.0 , 0.5 , 1.0 , 0.25 )'（空白あり）→ color='C0M50Y100K25'", () => {
+            const xml = `<Text color="cmyk( 0.0 , 0.5 , 1.0 , 0.25 )"/>`;
             const yrtRoot = toYrtRoot({ layouts: [xml] });
             const migrated = migrate(yrtRoot);
             const { layouts } = fromYrtRoot(migrated);

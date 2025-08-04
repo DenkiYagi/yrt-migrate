@@ -91,7 +91,7 @@ function getUnifiedValue(element, base) {
 
 function mergeValues(attr, unified, individual) {
     let merged = [];
-    if (unified !== null && unified !== '') {
+    if (unified !== null && unified.trim() !== '') {
         const arr = unified.split(' ');
         for (let i = 0; i < attr.keys.length; i++) {
             merged[i] = arr[i] !== undefined ? arr[i] : arr[0];
@@ -102,7 +102,7 @@ function mergeValues(attr, unified, individual) {
         }
     }
     for (let i = 0; i < attr.keys.length; i++) {
-        if (individual[i] !== null && individual[i] !== '') merged[i] = individual[i];
+        if (individual[i] !== null && individual[i].trim() !== '') merged[i] = individual[i];
     }
     for (let i = 0; i < attr.keys.length; i++) {
         if (!merged[i]) merged[i] = attr.default;
@@ -121,7 +121,7 @@ function mergeDirectionalAttributes(element) {
     for (const attr of ATTR_MAP) {
         const individual = getIndividualValues(element, attr.keys);
         const unified = getUnifiedValue(element, attr.base);
-        const hasAnyIndividual = individual.some(v => v !== null && v !== '');
+        const hasAnyIndividual = individual.some(v => v !== null && v.trim() !== '');
         if (!hasAnyIndividual) continue;
         const merged = mergeValues(attr, unified, individual);
         if (isAllDefaultOrEmpty(merged, attr.default)) {
@@ -129,7 +129,7 @@ function mergeDirectionalAttributes(element) {
             continue;
         }
         removeDirectionalAttributes(element, attr);
-        element.setAttribute(attr.base, merged.join(' '));
+        element.setAttribute(attr.base, merged.map(s => s.trim()).join(' '));
     }
 }
 

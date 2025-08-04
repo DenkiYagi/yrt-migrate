@@ -20,12 +20,12 @@ export function migrate(yrtRoot) {
         for (const table of tables) {
             const xpath = getXPath(table);
             // items属性
-            const items = table.getAttribute("items");
+            const items = table.getAttribute("items")?.trim();
             if (items && !/^\$\{[^}]+\}$/.test(items)) {
                 console.warn(`items属性はバインド変数で指定してください: ${items} (${xpath})`);
             }
             // breakCondition属性
-            const breakCond = table.getAttribute("breakCondition");
+            const breakCond = table.getAttribute("breakCondition")?.trim();
             if (breakCond && !/^\$\{[^}]+\}$/.test(breakCond)) {
                 console.warn(`breakCondition属性はバインド変数で指定してください: ${breakCond} (${xpath})`);
             }

@@ -18,6 +18,13 @@ describe("<Span> color属性バインド変数警告マイグレーション", (
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("<Span>のcolor属性にバインド変数は指定できません"));
     });
 
+    it("color属性値に前後空白があってもバインド変数なら警告が出る", () => {
+        const xml = '<RichText><Span color="   ${foo}   ">text</Span></RichText>';
+        const doc = new DOMParser().parseFromString(xml, "text/xml");
+        migrate(doc);
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("<Span>のcolor属性にバインド変数は指定できません"));
+    });
+
     it("color属性が静的値の場合は警告が出ない", () => {
         const xml = `<RichText><Span color="#FF0000">text</Span></RichText>`;
         const doc = new DOMParser().parseFromString(xml, "text/xml");

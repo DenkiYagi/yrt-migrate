@@ -15,6 +15,18 @@ describe('mergeDirectionalAttributes', () => {
         assert.equal(output, expected);
     });
 
+    it('margin の統合（値に前後空白あり）', () => {
+        const input = '<StackLayout marginTop=" 1 " marginRight=" 2 " marginBottom=" 3 " marginLeft=" 4 "/>';
+        const expected = '<StackLayout margin="1 2 3 4"/>';
+        const yrtRoot = toYrtRoot({ layouts: [input] });
+        const migrated = migrate(yrtRoot);
+        const { layouts } = fromYrtRoot(migrated);
+        const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
+        const output = new XMLSerializer().serializeToString(doc.documentElement);
+        assert.equal(output, expected);
+        // 他の属性については、同一ロジックであるため同種のテストは省略します。
+    });
+
     it('borderColor の統合', () => {
         const input = '<LinearLayout borderTopColor="#111" borderRightColor="#222" borderBottomColor="#333" borderLeftColor="#444"/>';
         const expected = '<LinearLayout borderColor="#111 #222 #333 #444"/>';
