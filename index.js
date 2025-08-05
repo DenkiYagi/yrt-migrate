@@ -40,6 +40,7 @@ import { migrate as rectangleBorderRadiusMultiWarnMigrate } from "./rectangle_bo
 import { migrate as sizeCommaToSpaceMigrate } from "./size_comma_to_space.mjs";
 import { migrate as borderstyleDasharrayToColonMigrate } from "./borderstyle_dasharray_to_colon.mjs";
 import { migrate as borderAdjacentLineWarning } from "./border_adjacent_line_warning.mjs";
+import { migrate as warnSpanColorBinding } from "./span_color_binding_warn.mjs";
 
 // dry-run時のXML整形出力を制御
 const DO_FORMAT_XML = true;
@@ -58,7 +59,7 @@ function migrate(newYrtRoot) {
     widthAutoRangeWarnMigrate(newYrtRoot); // 警告のみ
     newYrtRoot = colorNotationIllustratorMigrate(newYrtRoot);
     bindingRequiredWarnMigrate(newYrtRoot); // 警告のみ
-    spanColorBindingWarnMigrate(newYrtRoot); // 警告のみ
+    warnSpanColorBinding(newYrtRoot); // 警告のみ
     gridColsRowsRequiredWarnMigrate(newYrtRoot); // 警告のみ
     rectangleBorderRadiusMultiWarnMigrate(newYrtRoot); // 警告のみ
     newYrtRoot = sizeCommaToSpaceMigrate(newYrtRoot);
