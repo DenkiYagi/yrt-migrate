@@ -1,3 +1,4 @@
+import { DOMParser } from "@xmldom/xmldom";
 import { getXPath } from "./utils.js";
 
 function isBinding(val) {
@@ -20,6 +21,10 @@ function checkSpan(node) {
     }
 }
 
-export function migrate(doc) {
-    checkSpan(doc.documentElement);
+export function migrate(yrtRoot) {
+    yrtRoot[2].l.forEach(layout => {
+        const xml = layout[1];
+        const doc = new DOMParser().parseFromString(xml, "text/xml");
+        checkSpan(doc.documentElement);
+    });
 }
