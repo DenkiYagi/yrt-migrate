@@ -14,52 +14,39 @@
  * limitations under the License.
  */
 import xpath from 'xpath';
-import { XMLSerializer } from '@xmldom/xmldom';
+import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
 import { yrtRootToPackage, packageToYrtRoot } from './yrt_format.js';
 
 /**
  * `<LayoutXml>` 要素を削除し、1XML1レイアウト化するマイグレーション
  * 
  * 処理内容:
- * 1. `<LayoutXml>` 直下の `<LinearLayout>` または `<StackLayout>` をそれぞれ分割し、
+ * - `<LayoutXml>` 直下の `<LinearLayout>` または `<StackLayout>` をそれぞれ分割し、
  *    YRT の `layouts` 配列に順序通り格納する
- * 2. スタイル用の XML がなければ YRT の `style` に格納する（`<Style>` 要素をルートとするXML）
  * 
  * 注意事項:
  * - YRT ファイルはファイル名やIDで管理せず、`layouts`配列の順序でレイアウトを管理する
  * 
- * @param {Document} doc XMLドキュメント
- * @param {Object} yrtData YRTファイルのデータ（YRTファイルの場合のみ）
- * @returns {Object|null} 変更されたYRTデータ、またはXMLファイルの場合はnull
+ * @param {Object} yrtRoot v1.0 形式のYRT構造。
+ *   ただし alpha.13 からpack構造だけを変換した直後のものであり、
+ *   レイアウト配列の中には、alpha.13 の `<LayoutXml>` 要素を使ったXMLが一つだけ存在する想定
+ * @returns {Object} 変更されたYRTデータ
  */
-export function migrate(doc, yrtData = null) {
+export function migrate(yrtRoot) {
+    const layouts = yrtRoot[2].l;
+    if (layouts.length !== 1) {
+        throw new Error([
+            "At this point prior to migration, YRT root must contain exactly one XML",
+            "since yrtRoot has just been converted from the old format with only the object structure changed.",
+        ].join(" "));
+    }
+    const [_, xml] = layouts[0];
+    const doc = new DOMParser().parseFromString(xml, "text/xml");
+
     const layoutXmlElements = xpath.select("//LayoutXml", doc);
-    
-    if (!layoutXmlElements || layoutXmlElements.length === 0) {
-        return yrtData;
-    }
 
-    // YRTファイルの場合のみ、複数レイアウト分割処理を実行
-    if (yrtData) {
-        return migrateYrtFile(doc, yrtData, layoutXmlElements);
-    } else {
-        // XMLファイルの場合は単純に LayoutXml 要素を削除
-        return migrateXmlFile(doc, layoutXmlElements);
-    }
-}
-
-/**
- * YRTファイルの場合の1XML1レイアウト化処理
- * @param {Document} doc 
- * @param {Object} yrtData 
- * @param {Node[]} layoutXmlElements 
- * @returns {Object}
- */
-function migrateYrtFile(doc, yrtRoot, layoutXmlElements) {
-    // YrtRoot -> YrtPackage へ変換
     const pkg = yrtRootToPackage(yrtRoot);
     const newLayouts = [];
-    let styleXml = null;
 
     layoutXmlElements.forEach(layoutXmlElement => {
         // LayoutXml直下の LinearLayout または StackLayout を取得
@@ -73,53 +60,13 @@ function migrateYrtFile(doc, yrtRoot, layoutXmlElements) {
             const layoutXml = serializer.serializeToString(newDoc);
             newLayouts.push({ name: null, xml: layoutXml });
         });
-
-        // Style要素があるかチェック
-        const styleElements = xpath.select("Style", layoutXmlElement);
-        if (styleElements.length > 0 && !styleXml) {
-            const newDoc = doc.implementation.createDocument(null, null, null);
-            const clonedStyle = styleElements[0].cloneNode(true);
-            newDoc.appendChild(clonedStyle);
-            const serializer = new XMLSerializer();
-            styleXml = serializer.serializeToString(newDoc);
-        }
     });
 
     // layouts配列を上書き
     if (newLayouts.length > 0) {
         pkg.layouts = newLayouts;
     }
-    // styleがあれば上書き
-    if (styleXml) {
-        pkg.style = styleXml;
-    }
 
     // YrtPackage -> YrtRoot へ戻して返す
     return packageToYrtRoot(pkg);
-}
-
-/**
- * XMLファイルの場合のLayoutXml削除処理
- * @param {Document} doc 
- * @param {Node[]} layoutXmlElements 
- * @returns {null}
- */
-function migrateXmlFile(doc, layoutXmlElements) {
-    // LayoutXml直下のレイアウト要素をすべて抽出し、各レイアウトごとに新しいXML文字列として返す
-    const results = [];
-    layoutXmlElements.forEach(layoutXmlElement => {
-        // LayoutXml直下の要素（Elementノードのみ）
-        const layoutChildren = [];
-        for (let node = layoutXmlElement.firstChild; node; node = node.nextSibling) {
-            if (node.nodeType === 1) layoutChildren.push(node);
-        }
-        if (layoutChildren.length === 0) return;
-        layoutChildren.forEach(child => {
-            const newDoc = doc.implementation.createDocument(null, null, null);
-            newDoc.appendChild(child.cloneNode(true));
-            const serializer = new XMLSerializer();
-            results.push(serializer.serializeToString(newDoc));
-        });
-    });
-    return results;
 }

@@ -17,12 +17,12 @@
  */
 
 import * as fs from "fs/promises";
-import * as multiple_xmls from "./multiple_xmls.mjs";
 import * as path from "path";
 import * as msgpack from "@msgpack/msgpack";
 import * as util from "util";
 import { yrtRootToPackage, packageToYrtRoot, isYrtRoot } from "./yrt_format.js";
 import { formatXml } from "./utils.js";
+import { migrate as layoutsToMultipleXmls } from "./multiple_xmls.mjs";
 import { migrate as removeContentElements } from "./remove_content_elements.mjs";
 import { migrate as styleElementMigrate } from "./style_element.mjs";
 import { migrate as foreachHiddenToLogicMigrate } from "./foreach_hidden_to_logic.mjs";
@@ -45,7 +45,7 @@ import { migrate as borderAdjacentLineWarning } from "./border_adjacent_line_war
 const DO_FORMAT_XML = true;
 
 function migrate(newYrtRoot) {
-    newYrtRoot = multiple_xmls.migrate(newYrtRoot);
+    newYrtRoot = layoutsToMultipleXmls(newYrtRoot);
     newYrtRoot = styleElementMigrate(newYrtRoot);
     newYrtRoot = removeContentElements(newYrtRoot);
     newYrtRoot = foreachHiddenToLogicMigrate(newYrtRoot);
