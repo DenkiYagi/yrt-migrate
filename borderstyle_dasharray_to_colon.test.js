@@ -52,4 +52,12 @@ describe("borderStyle属性 dasharray()→コロン区切り変換マイグレ�
         const doc = new DOMParser().parseFromString(layouts[0], "text/xml");
         expect(doc.documentElement.getAttribute("borderStyle")).toBe(" 1:2 ");
     });
+    it("dasharrayが大文字・小文字混在でも変換される", () => {
+        const xml = '<Rectangle borderStyle="DaShArRaY(7,8)" />';
+        const yrtRoot = toYrtRoot({ layouts: [xml] });
+        const migrated = migrate(yrtRoot);
+        const { layouts } = fromYrtRoot(migrated);
+        const doc = new DOMParser().parseFromString(layouts[0], "text/xml");
+        expect(doc.documentElement.getAttribute("borderStyle")).toBe("7:8");
+    });
 });

@@ -24,6 +24,14 @@ describe("<Grid> cols属性のauto/range廃止マイグレーション 警告出
         expect(spy.mock.calls.flat().join("\n")).toMatch(/cols.*auto/);
         spy.mockRestore();
     });
+    it("cols='AuTo'（大文字・小文字混在）で警告が出る", () => {
+        const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
+        const xml = `<Grid cols="AuTo"></Grid>`;
+        const yrtRoot = toYrtRoot({ layouts: [xml] });
+        migrate(yrtRoot);
+        expect(spy.mock.calls.flat().join("\n")).toMatch(/cols.*AuTo/);
+        spy.mockRestore();
+    });
 
     it("cols='10:20' で警告が出る", () => {
         const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
@@ -74,6 +82,14 @@ describe("<TableColumn> width属性のauto/range廃止マイグレーション �
         const yrtRoot = toYrtRoot({ layouts: [xml] });
         migrate(yrtRoot);
         expect(spy.mock.calls.flat().join("\n")).toMatch(/TableColumn.*width.*auto/);
+        spy.mockRestore();
+    });
+    it("width='AuTo'（大文字・小文字混在）で警告が出る", () => {
+        const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
+        const xml = `<TableColumn width="AuTo"></TableColumn>`;
+        const yrtRoot = toYrtRoot({ layouts: [xml] });
+        migrate(yrtRoot);
+        expect(spy.mock.calls.flat().join("\n")).toMatch(/width.*AuTo/);
         spy.mockRestore();
     });
 

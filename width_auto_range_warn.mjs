@@ -17,7 +17,7 @@ export function migrate(yrtRoot) {
         function checkGridCols(node) {
             if (node.nodeType === 1 && node.tagName === 'Grid' && node.hasAttribute('cols')) {
                 const val = node.getAttribute('cols')?.trim();
-                if (val === 'auto' || /^\d*:\d*$/.test(val)) {
+                if ((typeof val === 'string' && val.trim().toLowerCase() === 'auto') || /^\d*:\d*$/.test(val)) {
                     const xpath = getXPath(node);
                     warnings.push(`<Grid> の cols 属性に警告: cols=\"${val}\"（XPath: ${xpath}）`);
                 }
@@ -31,7 +31,7 @@ export function migrate(yrtRoot) {
         function checkTableColumnWidth(node) {
             if (node.nodeType === 1 && node.tagName === 'TableColumn' && node.hasAttribute('width')) {
                 const val = node.getAttribute('width')?.trim();
-                if (val === 'auto' || /^\d*:\d*$/.test(val)) {
+                if ((typeof val === 'string' && val.trim().toLowerCase() === 'auto') || /^\d*:\d*$/.test(val)) {
                     const xpath = getXPath(node);
                     warnings.push(`<TableColumn> の width 属性に警告: width=\"${val}\"（XPath: ${xpath}）`);
                 }
