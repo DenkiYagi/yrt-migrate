@@ -65,6 +65,9 @@ export function migrate(yrtRoot) {
     // layouts配列を上書き
     if (newLayouts.length > 0) {
         pkg.layouts = newLayouts;
+    } else {
+        // LayoutBody 必須化については後続ステップで対応
+        pkg.layouts = [{ name: null, xml: "<LinearLayout></LinearLayout>" }];
     }
 
     // YrtPackage -> YrtRoot へ戻して返す
