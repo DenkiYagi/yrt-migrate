@@ -42,6 +42,15 @@ describe("<Grid> cols属性のauto/range廃止マイグレーション 警告出
         spy.mockRestore();
     });
 
+    it("cols='3.5:4.5' で警告が出る", () => {
+        const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
+        const xml = `<Grid cols="3.5:4.5"></Grid>`;
+        const yrtRoot = toYrtRoot({ layouts: [xml] });
+        migrate(yrtRoot);
+        expect(spy.mock.calls.flat().join("\n")).toMatch(/cols.*3.5:4.5/);
+        spy.mockRestore();
+    });
+
     it("cols=':20', cols='10:' でも警告が出る", () => {
         const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
         const xml1 = `<Grid cols=":20"></Grid>`;
@@ -99,6 +108,14 @@ describe("<TableColumn> width属性のauto/range廃止マイグレーション �
         const yrtRoot = toYrtRoot({ layouts: [xml] });
         migrate(yrtRoot);
         expect(spy.mock.calls.flat().join("\n")).toMatch(/width.*5:10/);
+        spy.mockRestore();
+    });
+    it("width='5.5:10.5' で警告が出る", () => {
+        const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
+        const xml = `<TableColumn width="5.5:10.5"></TableColumn>`;
+        const yrtRoot = toYrtRoot({ layouts: [xml] });
+        migrate(yrtRoot);
+        expect(spy.mock.calls.flat().join("\n")).toMatch(/width.*5.5:10.5/);
         spy.mockRestore();
     });
 
