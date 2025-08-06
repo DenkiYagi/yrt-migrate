@@ -52,6 +52,12 @@ export function migrate(yrtRoot) {
                         const attr = styleElem.attributes[j];
                         cellRange.setAttribute(attr.name, attr.value);
                     }
+                    if (!cellRange.hasAttribute("col")) {
+                        cellRange.setAttribute("col", "all");
+                    }
+                    if (!cellRange.hasAttribute("row")) {
+                        cellRange.setAttribute("row", "all");
+                    }
                     styleTargetElem.appendChild(cellRange);
                     styleRoot.appendChild(styleTargetElem);
                     target.removeChild(styleElem);
