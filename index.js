@@ -41,6 +41,7 @@ import { migrate as sizeCommaToSpaceMigrate } from "./size_comma_to_space.mjs";
 import { migrate as borderstyleDasharrayToColonMigrate } from "./borderstyle_dasharray_to_colon.mjs";
 import { migrate as borderAdjacentLineWarning } from "./border_adjacent_line_warning.mjs";
 import { migrate as warnSpanColorBinding } from "./span_color_binding_warn.mjs";
+import { migrate as applySchema } from "./apply_schema.mjs";
 
 // dry-run時のXML整形出力を制御
 const DO_FORMAT_XML = true;
@@ -65,6 +66,9 @@ function migrate(newYrtRoot) {
     newYrtRoot = sizeCommaToSpaceMigrate(newYrtRoot);
     newYrtRoot = borderstyleDasharrayToColonMigrate(newYrtRoot);
     borderAdjacentLineWarning(newYrtRoot); // 警告のみ
+
+    // 最後にスキーマ指定用の属性追加
+    newYrtRoot = applySchema(newYrtRoot);
     return newYrtRoot;
 }
 
