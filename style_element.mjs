@@ -40,8 +40,8 @@ export function migrate(yrtRoot) {
         for (const { tag, styleTag } of STYLE_TARGETS) {
             const targets = Array.from(doc.getElementsByTagName(tag));
             for (const target of targets) {
-                const styleElem = target.getElementsByTagName(styleTag)[0];
-                if (styleElem) {
+                const styleElems = Array.from(target.getElementsByTagName(styleTag));
+                for (const styleElem of styleElems) {
                     const styleId = `styleelement-${styleIndex++}`;
                     target.setAttribute("style", styleId);
                     // Style XMLに追加

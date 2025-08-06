@@ -91,6 +91,34 @@ describe("style_element", () => {
         expect((styleXml.match(/<Style>/g) || []).length).toBe(1);
     });
 
+    it("同一親要素内に複数のXxxStyle要素が存在した場合に、すべてが正しく移行される", () => {
+        const inputXml = `<?xml version="1.0" encoding="UTF-8"?>
+<LayoutXml>
+  <Grid>
+    <GridStyle borderColor="red" col="1" row="1"/>
+    <GridStyle borderColor="blue" col="2" row="2"/>
+    <GridStyle borderColor="green" col="3" row="3"/>
+    <Text>test</Text>
+  </Grid>
+</LayoutXml>`;
+        const yrt = migrate(toYrtRoot({ layouts: [inputXml] }));
+        const { layouts, styleXml } = fromYrtRoot(yrt);
+
+        // レイアウトXMLから全てのGridStyleが削除されていることを確認
+        expect(layouts[0]).not.toContain("<GridStyle");
+
+        // Style XMLに3つのGrid要素が追加されていることを確認
+        expect((styleXml.match(/<Grid/g) || []).length).toBe(3);
+        expect(styleXml).toContain('<Grid key="styleelement-1"');
+        expect(styleXml).toContain('<Grid key="styleelement-2"');
+        expect(styleXml).toContain('<Grid key="styleelement-3"');
+
+        // 各CellRangeが正しく設定されていることを確認
+        expect(styleXml).toContain('<CellRange borderColor="red" col="1" row="1"');
+        expect(styleXml).toContain('<CellRange borderColor="blue" col="2" row="2"');
+        expect(styleXml).toContain('<CellRange borderColor="green" col="3" row="3"');
+    });
+
     describe("CellRange col/raw 必須化", () => {
         it("GridStyleにcol/row属性がない場合、CellRangeに col=\"all\" row=\"all\" が自動追加される", () => {
             const inputXml = `<?xml version="1.0" encoding="UTF-8"?>\n<LayoutXml>\n  <Grid>\n    <GridStyle borderColor=\"red\" foreach=\"item\"/>\n    <Text>test</Text>\n  </Grid>\n</LayoutXml>`;
