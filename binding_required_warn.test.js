@@ -45,4 +45,20 @@ describe("バインド変数必須化マイグレーション (bindingRequiredWa
         migrate(yrtRoot);
         expect(warnSpy).not.toHaveBeenCalled();
     });
+
+    it("items/breakCondition属性値に前後空白があっても正しく判定される", () => {
+        const xml = '<Table items="  ${foo}  " breakCondition="  true  " />';
+        const yrtRoot = toYrtRoot({ layouts: [xml] });
+        migrate(yrtRoot);
+        // itemsはバインド変数なので警告なし、breakConditionはリテラルなので警告
+        expect(warnSpy).toHaveBeenCalledTimes(1);
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("breakCondition属性はバインド変数で指定してください"));
+    });
+
+    it("items属性値が空白のみの場合は警告しない", () => {
+        const xml = '<Table items="   " />';
+        const yrtRoot = toYrtRoot({ layouts: [xml] });
+        migrate(yrtRoot);
+        expect(warnSpy).not.toHaveBeenCalled();
+    });
 });

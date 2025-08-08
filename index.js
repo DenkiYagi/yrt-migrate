@@ -17,12 +17,12 @@
  */
 
 import * as fs from "fs/promises";
-import * as multiple_xmls from "./multiple_xmls.mjs";
 import * as path from "path";
 import * as msgpack from "@msgpack/msgpack";
 import * as util from "util";
 import { yrtRootToPackage, packageToYrtRoot, isYrtRoot } from "./yrt_format.js";
 import { formatXml } from "./utils.js";
+import { migrate as layoutsToMultipleXmls } from "./multiple_xmls.mjs";
 import { migrate as removeContentElements } from "./remove_content_elements.mjs";
 import { migrate as styleElementMigrate } from "./style_element.mjs";
 import { migrate as foreachHiddenToLogicMigrate } from "./foreach_hidden_to_logic.mjs";
@@ -40,12 +40,14 @@ import { migrate as rectangleBorderRadiusMultiWarnMigrate } from "./rectangle_bo
 import { migrate as sizeCommaToSpaceMigrate } from "./size_comma_to_space.mjs";
 import { migrate as borderstyleDasharrayToColonMigrate } from "./borderstyle_dasharray_to_colon.mjs";
 import { migrate as borderAdjacentLineWarning } from "./border_adjacent_line_warning.mjs";
+import { migrate as warnSpanColorBinding } from "./span_color_binding_warn.mjs";
+import { migrate as applySchema } from "./apply_schema.mjs";
 
 // dry-run時のXML整形出力を制御
 const DO_FORMAT_XML = true;
 
 function migrate(newYrtRoot) {
-    newYrtRoot = multiple_xmls.migrate(newYrtRoot);
+    newYrtRoot = layoutsToMultipleXmls(newYrtRoot);
     newYrtRoot = styleElementMigrate(newYrtRoot);
     newYrtRoot = removeContentElements(newYrtRoot);
     newYrtRoot = foreachHiddenToLogicMigrate(newYrtRoot);
@@ -58,12 +60,15 @@ function migrate(newYrtRoot) {
     widthAutoRangeWarnMigrate(newYrtRoot); // 警告のみ
     newYrtRoot = colorNotationIllustratorMigrate(newYrtRoot);
     bindingRequiredWarnMigrate(newYrtRoot); // 警告のみ
-    spanColorBindingWarnMigrate(newYrtRoot); // 警告のみ
+    warnSpanColorBinding(newYrtRoot); // 警告のみ
     gridColsRowsRequiredWarnMigrate(newYrtRoot); // 警告のみ
     rectangleBorderRadiusMultiWarnMigrate(newYrtRoot); // 警告のみ
     newYrtRoot = sizeCommaToSpaceMigrate(newYrtRoot);
     newYrtRoot = borderstyleDasharrayToColonMigrate(newYrtRoot);
     borderAdjacentLineWarning(newYrtRoot); // 警告のみ
+
+    // 最後にスキーマ指定用の属性追加
+    newYrtRoot = applySchema(newYrtRoot);
     return newYrtRoot;
 }
 

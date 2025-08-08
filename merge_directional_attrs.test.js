@@ -15,6 +15,18 @@ describe('mergeDirectionalAttributes', () => {
         assert.equal(output, expected);
     });
 
+    it('margin の統合（値に前後空白あり）', () => {
+        const input = '<StackLayout marginTop=" 1 " marginRight=" 2 " marginBottom=" 3 " marginLeft=" 4 "/>';
+        const expected = '<StackLayout margin="1 2 3 4"/>';
+        const yrtRoot = toYrtRoot({ layouts: [input] });
+        const migrated = migrate(yrtRoot);
+        const { layouts } = fromYrtRoot(migrated);
+        const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
+        const output = new XMLSerializer().serializeToString(doc.documentElement);
+        assert.equal(output, expected);
+        // 他の属性については、同一ロジックであるため同種のテストは省略します。
+    });
+
     it('borderColor の統合', () => {
         const input = '<LinearLayout borderTopColor="#111" borderRightColor="#222" borderBottomColor="#333" borderLeftColor="#444"/>';
         const expected = '<LinearLayout borderColor="#111 #222 #333 #444"/>';
@@ -136,9 +148,9 @@ describe('mergeDirectionalAttributes', () => {
         assert.equal(output, expected);
     });
 
-    it('borderStyle の未指定部分はスキーマで許されている none で補完して4値で統合', () => {
-        const input = '<Grid borderTopStyle="solid" borderLeftStyle="dotted"/>';
-        const expected = '<Grid borderStyle="solid none none dotted"/>';
+    it('borderStyle の未指定部分はスキーマで許されている solid で補完して4値で統合', () => {
+        const input = '<Grid borderTopStyle="none" borderLeftStyle="dotted"/>';
+        const expected = '<Grid borderStyle="none solid solid dotted"/>';
         const yrtRoot = toYrtRoot({ layouts: [input] });
         const migrated = migrate(yrtRoot);
         const { layouts } = fromYrtRoot(migrated);
@@ -147,9 +159,9 @@ describe('mergeDirectionalAttributes', () => {
         assert.equal(output, expected);
     });
 
-    it('borderColor の未指定部分はスキーマで許されている transparent で補完して4値で統合', () => {
+    it('borderColor の未指定部分はスキーマで許されている black で補完して4値で統合', () => {
         const input = '<Grid borderTopColor="#111" borderLeftColor="#444"/>';
-        const expected = '<Grid borderColor="#111 transparent transparent #444"/>';
+        const expected = '<Grid borderColor="#111 black black #444"/>';
         const yrtRoot = toYrtRoot({ layouts: [input] });
         const migrated = migrate(yrtRoot);
         const { layouts } = fromYrtRoot(migrated);

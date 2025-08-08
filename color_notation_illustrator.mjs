@@ -5,10 +5,12 @@ const COLOR_ATTRS = [
     "borderColor",
     "outerBorderColor",
     "backgroundColor",
+    "headerBackgroundColor",
+    "footerBackgroundColor",
 ];
 
 function toK(val) {
-    const m = val.match(/^grayscale\((\d*\.?\d+)\)$/);
+    const m = val.match(/^grayscale\(\s*(\d*\.?\d+)\s*\)$/i);
     if (!m) return null;
     // 0.0→100, 1.0→0
     const v = Math.round((1 - parseFloat(m[1])) * 100);
@@ -16,7 +18,7 @@ function toK(val) {
 }
 
 function toRGB(val) {
-    const m = val.match(/^rgb\((\d*\.?\d+),(\d*\.?\d+),(\d*\.?\d+)\)$/);
+    const m = val.match(/^rgb\(\s*(\d*\.?\d+)\s*,\s*(\d*\.?\d+)\s*,\s*(\d*\.?\d+)\s*\)$/i);
     if (!m) return null;
     const r = Math.round(parseFloat(m[1]) * 100);
     const g = Math.round(parseFloat(m[2]) * 100);
@@ -25,7 +27,7 @@ function toRGB(val) {
 }
 
 function toCMYK(val) {
-    const m = val.match(/^cmyk\((\d*\.?\d+),(\d*\.?\d+),(\d*\.?\d+),(\d*\.?\d+)\)$/);
+    const m = val.match(/^cmyk\(\s*(\d*\.?\d+)\s*,\s*(\d*\.?\d+)\s*,\s*(\d*\.?\d+)\s*,\s*(\d*\.?\d+)\s*\)$/i);
     if (!m) return null;
     const c = Math.round(parseFloat(m[1]) * 100);
     const m_ = Math.round(parseFloat(m[2]) * 100);
@@ -38,7 +40,7 @@ function migrateNode(node) {
     if (node.nodeType !== 1) return;
     for (const attr of COLOR_ATTRS) {
         if (node.hasAttribute(attr)) {
-            const val = node.getAttribute(attr);
+            const val = node.getAttribute(attr).trim();
             let newVal = null;
             newVal = toK(val) || toRGB(val) || toCMYK(val);
             if (newVal) node.setAttribute(attr, newVal);

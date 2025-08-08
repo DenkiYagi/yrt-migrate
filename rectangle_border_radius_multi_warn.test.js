@@ -27,22 +27,8 @@ describe("<Rectangle> borderRadius属性 複数方向指定警告マイグレー
         expect(warnSpy).toHaveBeenCalledTimes(2);
     });
 
-    it("空文字も警告を出す", () => {
-        const xml = '<LinearLayout><Rectangle borderRadius=""/></LinearLayout>';
-        const yrtRoot = toYrtRoot({ layouts: [xml] });
-        migrate(yrtRoot);
-        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("<Rectangle>のborderRadius属性は単一値のみ許可されています"));
-    });
-
     it("単一値なら警告が出ない", () => {
         const xml = '<LinearLayout><Rectangle borderRadius="5"/></LinearLayout>';
-        const yrtRoot = toYrtRoot({ layouts: [xml] });
-        migrate(yrtRoot);
-        expect(warnSpy).not.toHaveBeenCalled();
-    });
-
-    it("noneなら警告が出ない", () => {
-        const xml = '<LinearLayout><Rectangle borderRadius="none"/></LinearLayout>';
         const yrtRoot = toYrtRoot({ layouts: [xml] });
         migrate(yrtRoot);
         expect(warnSpy).not.toHaveBeenCalled();

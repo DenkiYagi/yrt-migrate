@@ -13,40 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 import * as multiple_xmls from "./multiple_xmls.mjs";
+import { yrtRootToPackage } from "./yrt_format.js";
 
 describe("multiple_xmls", () => {
-    describe("XMLファイルの場合", () => {
-        it("LayoutXml要素を削除して子要素を親に移動する", () => {
-            const inputXml = `<?xml version="1.0" encoding="UTF-8"?>
-<LayoutXml>
-    <LinearLayout direction="vertical">
-        <LayoutBody>
-            <Text>Hello</Text>
-        </LayoutBody>
-    </LinearLayout>
-    <StackLayout>
-        <Text>World</Text>
-    </StackLayout>
-</LayoutXml>`;
-
-            const doc = new DOMParser().parseFromString(inputXml, "text/xml");
-            const result = multiple_xmls.migrate(doc);
-
-            expect(Array.isArray(result)).toBe(true);
-            expect(result.length).toBe(2);
-            expect(result[0]).toContain("<LinearLayout");
-            expect(result[0]).toContain("<LayoutBody>");
-            expect(result[0]).toContain("<Text>Hello</Text>");
-            expect(result[1]).toContain("<StackLayout");
-            expect(result[1]).toContain("<Text>World</Text>");
-        });
-    });
-
-    describe("YRTファイルの場合", () => {
-        it("複数のレイアウトを分割してlayouts配列に格納する", () => {
-            const inputXml = `<?xml version="1.0" encoding="UTF-8"?>
+    it("LayoutXml直下の複数レイアウトを分割してlayouts配列に格納する", () => {
+        const inputXml = `<?xml version="1.0" encoding="UTF-8"?>
 <LayoutXml>
     <LinearLayout direction="vertical">
         <Text>Layout 1</Text>
@@ -54,48 +26,53 @@ describe("multiple_xmls", () => {
     <StackLayout>
         <Text>Layout 2</Text>
     </StackLayout>
-    <Style>
-        <Grid key="grid1">
-            <CellRange borderColor="black"/>
-        </Grid>
-    </Style>
 </LayoutXml>`;
+        // YRTルート形式: ["YRT", 1, { l: [[null, xml]], s: null, a: null }]
+        const yrtRoot = [
+            "YRT",
+            1,
+            {
+                l: [[null, inputXml]],
+                s: null,
+                a: null,
+            },
+        ];
+        const result = multiple_xmls.migrate(yrtRoot);
+        const pkg = yrtRootToPackage(result);
+        expect(pkg.layouts.length).toBe(2);
 
-            const doc = new DOMParser().parseFromString(inputXml, "text/xml");
-            const yrtData = [
-                "YRT",
-                1,
-                {
-                    l: [],
-                    s: null,
-                    a: null,
-                },
-            ];
+        expect(pkg.layouts[0].xml.startsWith("<LinearLayout")).toBe(true);
+        expect(pkg.layouts[0].xml).toContain("Layout 1");
+        expect(pkg.layouts[0].xml).not.toContain("Layout 2");
+        expect(pkg.layouts[0].xml.endsWith("</LinearLayout>")).toBe(true);
 
-            const result = multiple_xmls.migrate(doc, yrtData);
+        expect(pkg.layouts[1].xml.startsWith("<StackLayout")).toBe(true);
+        expect(pkg.layouts[1].xml).toContain("Layout 2");
+        expect(pkg.layouts[1].xml).not.toContain("Layout 1");
+        expect(pkg.layouts[1].xml.endsWith("</StackLayout>")).toBe(true);
+    });
 
-            expect(Array.isArray(result)).toBe(true);
-            expect(result.length).toBeGreaterThanOrEqual(2);
-            const layouts = result[2].l;
-            expect(layouts[0][1]).toContain("<LinearLayout");
-            expect(layouts[0][1]).toContain("Layout 1");
-            expect(layouts[1][1]).toContain("<StackLayout");
-            expect(layouts[1][1]).toContain("Layout 2");
-            expect(result[2].s).toContain("<Style");
-        });
-
-        it("LayoutXml要素がない場合は元のデータをそのまま返す", () => {
-            const inputXml = `<?xml version="1.0" encoding="UTF-8"?>
-<LinearLayout>
-    <Text>Test</Text>
-</LinearLayout>`;
-
-            const doc = new DOMParser().parseFromString(inputXml, "text/xml");
-            const yrtData = [inputXml];
-
-            const result = multiple_xmls.migrate(doc, yrtData);
-
-            expect(result).toEqual(yrtData);
-        });
+    it("LinearLayout | StackLayout が見つからない場合、空の LinearLayout を追加する", () => {
+        const inputXml = `<?xml version="1.0" encoding="UTF-8"?>
+<LayoutXml>
+    <Text>Some other content</Text>
+    <Button>Not a layout element</Button>
+</LayoutXml>`;
+        // YRTルート形式: ["YRT", 1, { l: [[null, xml]], s: null, a: null }]
+        const yrtRoot = [
+            "YRT",
+            1,
+            {
+                l: [[null, inputXml]],
+                s: null,
+                a: null,
+            },
+        ];
+        const result = multiple_xmls.migrate(yrtRoot);
+        const pkg = yrtRootToPackage(result);
+        
+        expect(pkg.layouts.length).toBe(1);
+        expect(pkg.layouts[0].xml).toBe("<LinearLayout></LinearLayout>");
+        expect(pkg.layouts[0].name).toBe(null);
     });
 });

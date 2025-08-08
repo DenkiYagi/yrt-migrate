@@ -28,7 +28,7 @@ function convertDasharray(doc) {
         const el = elements[i];
         const val = el.getAttribute && el.getAttribute("borderStyle");
         if (typeof val === "string") {
-            const m = val.match(/^dasharray\((.*)\)$/);
+            const m = val.match(/^\s*dasharray\((.*)\)\s*$/i);
             if (m) {
                 // dasharray(...) の中身を安全に抽出
                 const inner = m[1];

@@ -32,6 +32,20 @@ describe("<Grid> cols, rows属性省略不可警告マイグレーション", ()
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("<Grid>のcols, rows属性は省略できません"));
     });
 
+    it("cols, rows属性値に前後空白があっても正しく判定される", () => {
+        const xml = '<LinearLayout><Grid cols="   1 1 1   " rows="   1 1 1   "></Grid></LinearLayout>';
+        const yrtRoot = toYrtRoot({ layouts: [xml] });
+        migrate(yrtRoot);
+        expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    it("cols, rows属性値が空白のみの場合は警告が出る", () => {
+        const xml = '<LinearLayout><Grid cols="   " rows="   "></Grid></LinearLayout>';
+        const yrtRoot = toYrtRoot({ layouts: [xml] });
+        migrate(yrtRoot);
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("<Grid>のcols, rows属性は省略できません"));
+    });
+
     it("cols, rows両方指定されていれば警告が出ない", () => {
         const xml = '<LinearLayout><Grid cols="1 1 1" rows="1 1 1"></Grid></LinearLayout>';
         const yrtRoot = toYrtRoot({ layouts: [xml] });

@@ -16,10 +16,12 @@ export function migrate(yrtRoot) {
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         function checkGridCols(node) {
             if (node.nodeType === 1 && node.tagName === 'Grid' && node.hasAttribute('cols')) {
-                const val = node.getAttribute('cols');
-                if (val === 'auto' || /^\d*:\d*$/.test(val)) {
-                    const xpath = getXPath(node);
-                    warnings.push(`<Grid> の cols 属性に警告: cols=\"${val}\"（XPath: ${xpath}）`);
+                const val = node.getAttribute('cols')?.trim();
+                if (typeof val === 'string') {
+                    if ((val.trim().toLowerCase() === 'auto') || val.includes(":")) {
+                        const xpath = getXPath(node);
+                        warnings.push(`<Grid> の cols 属性に警告: cols=\"${val}\"（XPath: ${xpath}）`);
+                    }
                 }
             }
             if (node.childNodes) {
@@ -30,10 +32,12 @@ export function migrate(yrtRoot) {
         }
         function checkTableColumnWidth(node) {
             if (node.nodeType === 1 && node.tagName === 'TableColumn' && node.hasAttribute('width')) {
-                const val = node.getAttribute('width');
-                if (val === 'auto' || /^\d*:\d*$/.test(val)) {
-                    const xpath = getXPath(node);
-                    warnings.push(`<TableColumn> の width 属性に警告: width=\"${val}\"（XPath: ${xpath}）`);
+                const val = node.getAttribute('width')?.trim();
+                if (typeof val === 'string') {
+                    if (val.trim().toLowerCase() === 'auto' || val.includes(":")) {
+                        const xpath = getXPath(node);
+                        warnings.push(`<TableColumn> の width 属性に警告: width=\"${val}\"（XPath: ${xpath}）`);
+                    }
                 }
             }
             if (node.childNodes) {

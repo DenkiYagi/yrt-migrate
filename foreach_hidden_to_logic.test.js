@@ -29,6 +29,33 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
         spy.mockRestore();
     });
 
+    it("foreach/hidden属性値に前後空白があっても正しく判定される", () => {
+        const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
+        const inputXml = '<Grid foreach="  ${items}  " hidden="  ${isHidden}  "/>';
+        const yrtRoot = toYrtRoot({ layouts: [inputXml] });
+        const migrated = migrate(yrtRoot);
+        const { layouts } = fromYrtRoot(migrated);
+        const xml = layouts[0];
+        expect(xml).toContain('logic="foreach:${items}"');
+        expect(xml).not.toContain("foreach=");
+        expect(xml).toContain('hidden="  ${isHidden}  "'); // hiddenはlogic化されない
+        spy.mockRestore();
+    });
+
+    it("foreach/hidden属性値が空白のみの場合は変換・警告しない", () => {
+        const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
+        const inputXml = '<Grid foreach="   " hidden="   "/>';
+        const yrtRoot = toYrtRoot({ layouts: [inputXml] });
+        const migrated = migrate(yrtRoot);
+        const { layouts } = fromYrtRoot(migrated);
+        const xml = layouts[0];
+        expect(xml).not.toContain("logic=");
+        expect(xml).not.toContain("foreach=");
+        expect(xml).not.toContain("hidden=");
+        expect(spy).not.toHaveBeenCalled();
+        spy.mockRestore();
+    });
+
     it("foreach属性とhidden属性が両方ある場合はforeachのみlogic化し、hiddenは警告のみで変換しない", () => {
         const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
         const inputXml = '<?xml version="1.0" encoding="UTF-8"?>\n<Grid foreach="${items}" hidden="isHidden"/>';

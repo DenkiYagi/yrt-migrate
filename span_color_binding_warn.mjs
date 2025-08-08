@@ -1,3 +1,4 @@
+import { DOMParser } from "@xmldom/xmldom";
 import { getXPath } from "./utils.js";
 
 function isBinding(val) {
@@ -6,7 +7,7 @@ function isBinding(val) {
 
 function checkSpan(node) {
     if (node.nodeType === 1 && node.nodeName === "Span") {
-        const color = node.getAttribute("color");
+        const color = node.getAttribute("color")?.trim();
         if (isBinding(color)) {
             const xpath = getXPath(node);
             console.warn(`<Span>のcolor属性にバインド変数は指定できません (値: ${color}) @ ${xpath}`);
@@ -20,6 +21,10 @@ function checkSpan(node) {
     }
 }
 
-export function migrate(doc) {
-    checkSpan(doc.documentElement);
+export function migrate(yrtRoot) {
+    yrtRoot[2].l.forEach(layout => {
+        const xml = layout[1];
+        const doc = new DOMParser().parseFromString(xml, "text/xml");
+        checkSpan(doc.documentElement);
+    });
 }

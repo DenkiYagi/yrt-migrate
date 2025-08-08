@@ -41,6 +41,25 @@ describe("カラー記法のIllustrator寄り変換マイグレーション", ()
             const out = new XMLSerializer().serializeToString(doc.documentElement);
             expect(out).toContain('color="K88"');
         });
+
+        it("color='grayscale( 0.5 )'（空白あり）→ color='K50'", () => {
+            const xml = `<Text color="grayscale(  0.5  )"/>`;
+            const yrtRoot = toYrtRoot({ layouts: [xml] });
+            const migrated = migrate(yrtRoot);
+            const { layouts } = fromYrtRoot(migrated);
+            const doc = new DOMParser().parseFromString(layouts[0], "text/xml");
+            const out = new XMLSerializer().serializeToString(doc.documentElement);
+            expect(out).toContain('color="K50"');
+        });
+        it("color='GrAyScAlE(0.5)'（大文字・小文字混在）→ color='K50'", () => {
+            const xml = `<Text color="GrAyScAlE(0.5)"/>`;
+            const yrtRoot = toYrtRoot({ layouts: [xml] });
+            const migrated = migrate(yrtRoot);
+            const { layouts } = fromYrtRoot(migrated);
+            const doc = new DOMParser().parseFromString(layouts[0], "text/xml");
+            const out = new XMLSerializer().serializeToString(doc.documentElement);
+            expect(out).toContain('color="K50"');
+        });
     });
     describe("rgb → RxGxBx記法", () => {
         it("color='rgb(0.0,0.5,1.0)' → color='R0G50B100'", () => {
@@ -52,10 +71,48 @@ describe("カラー記法のIllustrator寄り変換マイグレーション", ()
             const out = new XMLSerializer().serializeToString(doc.documentElement);
             expect(out).toContain('color="R0G50B100"');
         });
+
+        it("color='rgb( 0.0 , 0.5 , 1.0 )'（空白あり）→ color='R0G50B100'", () => {
+            const xml = `<Text color="rgb( 0.0 , 0.5 , 1.0 )"/>`;
+            const yrtRoot = toYrtRoot({ layouts: [xml] });
+            const migrated = migrate(yrtRoot);
+            const { layouts } = fromYrtRoot(migrated);
+            const doc = new DOMParser().parseFromString(layouts[0], "text/xml");
+            const out = new XMLSerializer().serializeToString(doc.documentElement);
+            expect(out).toContain('color="R0G50B100"');
+        });
+        it("color='RgB(0.0,0.5,1.0)'（大文字・小文字混在）→ color='R0G50B100'", () => {
+            const xml = `<Text color="RgB(0.0,0.5,1.0)"/>`;
+            const yrtRoot = toYrtRoot({ layouts: [xml] });
+            const migrated = migrate(yrtRoot);
+            const { layouts } = fromYrtRoot(migrated);
+            const doc = new DOMParser().parseFromString(layouts[0], "text/xml");
+            const out = new XMLSerializer().serializeToString(doc.documentElement);
+            expect(out).toContain('color="R0G50B100"');
+        });
     });
     describe("cmyk → CxMxYxKx記法", () => {
         it("color='cmyk(0.0,0.5,1.0,0.25)' → color='C0M50Y100K25'", () => {
             const xml = `<Text color="cmyk(0.0,0.5,1.0,0.25)"/>`;
+            const yrtRoot = toYrtRoot({ layouts: [xml] });
+            const migrated = migrate(yrtRoot);
+            const { layouts } = fromYrtRoot(migrated);
+            const doc = new DOMParser().parseFromString(layouts[0], "text/xml");
+            const out = new XMLSerializer().serializeToString(doc.documentElement);
+            expect(out).toContain('color="C0M50Y100K25"');
+        });
+
+        it("color='cmyk( 0.0 , 0.5 , 1.0 , 0.25 )'（空白あり）→ color='C0M50Y100K25'", () => {
+            const xml = `<Text color="cmyk( 0.0 , 0.5 , 1.0 , 0.25 )"/>`;
+            const yrtRoot = toYrtRoot({ layouts: [xml] });
+            const migrated = migrate(yrtRoot);
+            const { layouts } = fromYrtRoot(migrated);
+            const doc = new DOMParser().parseFromString(layouts[0], "text/xml");
+            const out = new XMLSerializer().serializeToString(doc.documentElement);
+            expect(out).toContain('color="C0M50Y100K25"');
+        });
+        it("color='CmYk(0.0,0.5,1.0,0.25)'（大文字・小文字混在）→ color='C0M50Y100K25'", () => {
+            const xml = `<Text color="CmYk(0.0,0.5,1.0,0.25)"/>`;
             const yrtRoot = toYrtRoot({ layouts: [xml] });
             const migrated = migrate(yrtRoot);
             const { layouts } = fromYrtRoot(migrated);
@@ -75,7 +132,7 @@ describe("カラー記法のIllustrator寄り変換マイグレーション", ()
             expect(out).toContain('color="K80"');
         });
     });
-    describe("全属性網羅", () => {
+    describe("全属性網羅（一般）", () => {
         it("borderColor, outerBorderColor, backgroundColorも変換", () => {
             const xml = `<Rectangle borderColor="grayscale(0.5)" outerBorderColor="rgb(1.0,0,0)" backgroundColor="cmyk(0,0,0,1.0)"/>`;
             const yrtRoot = toYrtRoot({ layouts: [xml] });
@@ -86,6 +143,19 @@ describe("カラー記法のIllustrator寄り変換マイグレーション", ()
             expect(out).toContain('borderColor="K50"');
             expect(out).toContain('outerBorderColor="R100G0B0"');
             expect(out).toContain('backgroundColor="C0M0Y0K100"');
+        });
+    });
+
+    describe("全属性網羅（Table系特殊）", () => {
+        it("headerBackgroundColor, footerBackgroundColorも変換", () => {
+            const xml = `<Table headerBackgroundColor="grayscale(0.2)" footerBackgroundColor="rgb(0.1,0.2,0.3)"/>`;
+            const yrtRoot = toYrtRoot({ layouts: [xml] });
+            const migrated = migrate(yrtRoot);
+            const { layouts } = fromYrtRoot(migrated);
+            const doc = new DOMParser().parseFromString(layouts[0], "text/xml");
+            const out = new XMLSerializer().serializeToString(doc.documentElement);
+            expect(out).toContain('headerBackgroundColor="K80"');
+            expect(out).toContain('footerBackgroundColor="R10G20B30"');
         });
     });
 });
