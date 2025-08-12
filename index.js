@@ -21,7 +21,7 @@ import * as path from "path";
 import * as msgpack from "@msgpack/msgpack";
 import * as util from "util";
 import { yrtRootToPackage, packageToYrtRoot, isYrtRoot } from "./yrt_format.js";
-import { formatXml } from "./utils.js";
+import { formatXml, isAlreadyMigrated } from "./utils.js";
 import { migrate as layoutsToMultipleXmls } from "./multiple_xmls.mjs";
 import { migrate as removeContentElements } from "./remove_content_elements.mjs";
 import { migrate as styleElementMigrate } from "./style_element.mjs";
@@ -165,6 +165,10 @@ async function main() {
             if (!isYrtRoot(decoded)) {
                 console.error("YRTファイル形式が不正です");
                 process.exit(1);
+            }
+            if (isAlreadyMigrated(decoded)) {
+                console.warn("このYRTファイルはすでにマイグレーション済みです。処理をスキップします。");
+                process.exit(0);
             }
             inputYrtRoot = decoded;
         } else {
