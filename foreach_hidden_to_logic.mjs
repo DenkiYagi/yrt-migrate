@@ -77,7 +77,7 @@ function migrateElement(el, warnings) {
  * @returns {any} 新しいYRT構造
  */
 export function migrate(yrtRoot) {
-    const newRoot = JSON.parse(JSON.stringify(yrtRoot));
+    const newRoot = structuredClone(yrtRoot);
     const layouts = newRoot[2].l;
     let allWarnings = [];
     for (let i = 0; i < layouts.length; i++) {

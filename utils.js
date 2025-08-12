@@ -1,6 +1,59 @@
 import xmlFormat from "xml-formatter";
 
 /**
+ * 任意の値をUint8Arrayに変換する
+ * @param {any} val
+ * @returns {Uint8Array}
+ */
+export function toUint8Array(val) {
+    // Buffer型はUint8Arrayのサブクラスなので先に判定
+    if (typeof Buffer !== 'undefined' && Buffer.isBuffer && Buffer.isBuffer(val)) {
+        return new Uint8Array(val.buffer, val.byteOffset, val.byteLength);
+    }
+    if (val instanceof Uint8Array) return val;
+    if (val instanceof ArrayBuffer) return new Uint8Array(val);
+    if (Array.isArray(val)) return new Uint8Array(val);
+    if (val && typeof val === 'object' && val.type === 'Buffer' && Array.isArray(val.data)) {
+        return new Uint8Array(val.data);
+    }
+    if (typeof val === 'string') {
+        // 簡易的なBase64判定: 4の倍数長・A-Za-z0-9+/=のみ
+        if (val.length % 4 === 0 && /^[A-Za-z0-9+/=]+$/.test(val)) {
+            try {
+                return new Uint8Array(Buffer.from(val, 'base64'));
+            } catch {
+                return null;
+            }
+        }
+        return null;
+    }
+    // 不明な型はnull返却
+    return null;
+}
+
+/**
+ * Mapまたはオブジェクトを{[id]: Uint8Array}のプレーンなオブジェクトに変換
+ * @param {object|Map} assets
+ * @returns {Object.<string, Uint8Array>}
+ */
+export function normalizeAssets(assets) {
+    if (!assets) return null;
+    if (typeof assets.entries === 'function') {
+        // Map型
+        return Object.fromEntries(Array.from(assets, ([k, v]) => [k, toUint8Array(v)]));
+    } else {
+        // プレーンオブジェクト
+        const obj = {};
+        for (const k in assets) {
+            if (Object.prototype.hasOwnProperty.call(assets, k)) {
+                obj[k] = toUint8Array(assets[k]);
+            }
+        }
+        return obj;
+    }
+}
+
+/**
  * YRTが新フォーマット（マイグレーション済み）かどうか判定
  * - ['YRT', 1, { l: [...], ... }] 形式であること
  * - l配列が1つ以上存在すること

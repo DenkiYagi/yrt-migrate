@@ -20,8 +20,8 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import * as msgpack from "@msgpack/msgpack";
 import * as util from "util";
-import { yrtRootToPackage, packageToYrtRoot, isYrtRoot } from "./yrt_format.js";
-import { formatXml, isAlreadyMigrated } from "./utils.js";
+import { yrtRootToPackage, packageToYrtRoot } from "./yrt_format.js";
+import { formatXml, isAlreadyMigrated, normalizeAssets } from "./utils.js";
 import { migrate as layoutsToMultipleXmls } from "./multiple_xmls.mjs";
 import { migrate as removeContentElements } from "./remove_content_elements.mjs";
 import { migrate as styleElementMigrate } from "./style_element.mjs";
@@ -162,15 +162,21 @@ async function main() {
         } else if (ext === ".yrt") {
             const inputFile = await fs.readFile(inputFileName);
             const decoded = msgpack.decode(inputFile);
-            if (!isYrtRoot(decoded)) {
-                console.error("YRTファイル形式が不正です");
-                process.exit(1);
-            }
             if (isAlreadyMigrated(decoded)) {
                 console.warn("このYRTファイルはすでにマイグレーション済みです。処理をスキップします。");
                 process.exit(0);
             }
-            inputYrtRoot = decoded;
+            // 旧YRT(alpha)形式: [xml, assets?]
+            if (!Array.isArray(decoded) || typeof decoded[0] !== 'string' || !decoded[0]) {
+                throw new Error("YRTファイル形式が不正です: alpha系旧YRT形式ではありません");
+            }
+            const assetsObj = normalizeAssets(decoded[1]);
+            const yrtPackage = {
+                layouts: [{ name: null, xml: decoded[0] }],
+                style: null,
+                assets: assetsObj,
+            };
+            inputYrtRoot = packageToYrtRoot(yrtPackage);
         } else {
             console.error("非対応のファイル形式です");
             process.exit(1);

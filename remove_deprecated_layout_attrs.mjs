@@ -7,7 +7,7 @@ import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
  * @returns {any} 新しいYRT構造
  */
 export function migrate(yrtRoot) {
-    const newRoot = JSON.parse(JSON.stringify(yrtRoot));
+    const newRoot = structuredClone(yrtRoot);
     const layouts = newRoot[2].l;
     for (let i = 0; i < layouts.length; i++) {
         const [name, xml] = layouts[i];

@@ -31,22 +31,6 @@
  */
 
 /**
- * YRTデータがYrtRoot形式か判定
- * @param {any} data
- * @returns {boolean}
- */
-export function isYrtRoot(data) {
-    return (
-        Array.isArray(data) &&
-        data.length === 3 &&
-        data[0] === "YRT" &&
-        typeof data[1] === "number" &&
-        typeof data[2] === "object" &&
-        data[2] !== null
-    );
-}
-
-/**
  * YrtRootからYrtPackageへ変換
  * @param {YrtRoot} yrtRoot
  * @returns {YrtPackage}
