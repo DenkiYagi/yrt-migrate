@@ -173,21 +173,22 @@ async function main() {
         }
 
         const migratedYrtRoot = migrate(inputYrtRoot);
+        // レイアウトXMLとStyle XMLを整形
+        migratedYrtRoot[2].l = migratedYrtRoot[2].l.map(([name, xml]) => [name, DO_FORMAT_XML ? formatXml(xml) : xml]);
+        if (migratedYrtRoot[2].s) {
+            migratedYrtRoot[2].s = DO_FORMAT_XML ? formatXml(migratedYrtRoot[2].s) : migratedYrtRoot[2].s;
+        }
         const migratedPkg = yrtRootToPackage(migratedYrtRoot);
         const outputFile = msgpack.encode(migratedYrtRoot);
 
         if (args.values["dry-run"]) {
             migratedPkg.layouts.forEach((layout, idx) => {
                 console.log(`=== Layout ${idx} ===`);
-                console.log(DO_FORMAT_XML ? formatXml(layout.xml) : layout.xml);
+                console.log(layout.xml);
             });
             if (migratedPkg.style) {
                 console.log("=== Style ===");
-                console.log(
-                    DO_FORMAT_XML
-                        ? formatXml(migratedPkg.style)
-                        : migratedPkg.style
-                );
+                console.log(migratedPkg.style);
             }
         } else {
             // 入力が .yrt で出力ファイル名が同じ場合のみバックアップを作成
