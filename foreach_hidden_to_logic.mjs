@@ -27,7 +27,7 @@ function migrateElement(el, warnings) {
         const logicVal = `foreach:${foreach}`;
         if (!isBindingVariable(foreach)) {
             const xpath = getXPath(el);
-            warnings.push(`[WARNING] foreach属性の値「${foreach}」はバインド変数ではありません。バインド変数しか指定できないので修正してください。（XPath: ${xpath}）`);
+            warnings.push(`[WARNING] foreach属性の値 "${foreach}" はバインド変数ではありません。バインド変数しか指定できないので修正してください。（XPath: ${xpath}）`);
         }
         el.setAttribute('logic', logicVal);
         el.removeAttribute('foreach');
@@ -41,7 +41,7 @@ function migrateElement(el, warnings) {
             const logicVal = `foreach:${foreach}`;
             if (!isBindingVariable(foreach)) {
                 const xpath = getXPath(el);
-                warnings.push(`[WARNING] foreach属性の値「${foreach}」はバインド変数ではありません。バインド変数しか指定できないので修正してください。（XPath: ${xpath}）`);
+                warnings.push(`[WARNING] foreach属性の値 "${foreach}" はバインド変数ではありません。バインド変数しか指定できないので修正してください。（XPath: ${xpath}）`);
             }
             el.setAttribute('logic', logicVal);
             el.removeAttribute('foreach');
@@ -54,7 +54,7 @@ function migrateElement(el, warnings) {
             const logicVal = `if:${hidden}`;
             if (!isBindingVariable(hidden)) {
                 const xpath = getXPath(el);
-                warnings.push(`[WARNING] hidden属性の値「${hidden}」はバインド変数ではありません。バインド変数しか指定できないので修正してください。（XPath: ${xpath}）`);
+                warnings.push(`[WARNING] hidden属性の値 "${hidden}" はバインド変数ではありません。バインド変数しか指定できないので修正してください。（XPath: ${xpath}）`);
             }
             el.setAttribute('logic', logicVal);
             el.removeAttribute('hidden');
