@@ -20,7 +20,7 @@ export function migrate(yrtRoot) {
                 if (typeof val === 'string') {
                     if ((val.trim().toLowerCase() === 'auto') || val.includes(":")) {
                         const xpath = getXPath(node);
-                        warnings.push(`<Grid> の cols 属性に警告: cols=\"${val}\"（XPath: ${xpath}）`);
+                        warnings.push(`[WARNING] <Grid> の cols 属性で auto/range 指定はサポートされなくなりました（XPath: ${xpath}）`);
                     }
                 }
             }
@@ -36,7 +36,7 @@ export function migrate(yrtRoot) {
                 if (typeof val === 'string') {
                     if (val.trim().toLowerCase() === 'auto' || val.includes(":")) {
                         const xpath = getXPath(node);
-                        warnings.push(`<TableColumn> の width 属性に警告: width=\"${val}\"（XPath: ${xpath}）`);
+                        warnings.push(`[WARNING] <TableColumn> の width 属性で auto/range 指定はサポートされなくなりました（XPath: ${xpath}）`);
                     }
                 }
             }
@@ -51,8 +51,8 @@ export function migrate(yrtRoot) {
             checkTableColumnWidth(doc.documentElement);
         }
     });
-    if (warnings.length > 0) {
-        console.warn('[width_auto_range_warn] 警告:', warnings.join('\n'));
+    for (const warning of warnings) {
+        console.warn(warning);
     }
     return yrtRoot;
 }

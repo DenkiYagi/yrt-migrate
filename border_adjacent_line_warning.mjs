@@ -31,7 +31,7 @@ export function migrate(yrtRoot) {
                     if (node.hasAttribute(attr)) {
                         const xpath = getXPath(node);
                         console.warn(
-                            `警告: ${tag} 要素(${xpath})に${attr}属性が含まれています。罫線のレイアウトが変わる可能性があります。`
+                            `[WARNING] ${tag} 要素(${xpath})に${attr}属性が含まれています。罫線のレイアウトが変わる可能性があります。`
                         );
                     }
                 }

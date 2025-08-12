@@ -23,7 +23,7 @@ export function migrate(yrtRoot) {
             const rows = grid.getAttribute("rows")?.trim();
             if (!cols || !rows) {
                 const xpath = getXPath(grid);
-                console.warn(`<Grid>のcols, rows属性は省略できません (両方必須): ${xpath}`);
+                console.warn(`[WARNING] <Grid>のcols, rows属性は省略できません (両方必須): ${xpath}`);
             }
         }
     });

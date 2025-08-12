@@ -25,7 +25,7 @@ export function migrate(yrtRoot) {
             // スペース区切りで複数値の場合は警告
             if (trimmed.split(/\s+/).length > 1) {
                 const xpath = getXPath(rect);
-                console.warn(`<Rectangle>のborderRadius属性は単一値のみ許可されています（複数値は不正）: ${xpath}`);
+                console.warn(`[WARNING] <Rectangle>のborderRadius属性は単一値のみ許可されています（複数値は不正）: ${xpath}`);
             }
         }
     });

@@ -27,21 +27,21 @@ function migrateElement(el, warnings) {
         const logicVal = `foreach:${foreach}`;
         if (!isBindingVariable(foreach)) {
             const xpath = getXPath(el);
-            warnings.push(`foreach属性の値「${foreach}」はバインド変数ではありません。バインド変数しか指定できないので修正してください。（XPath: ${xpath}）`);
+            warnings.push(`[WARNING] foreach属性の値「${foreach}」はバインド変数ではありません。バインド変数しか指定できないので修正してください。（XPath: ${xpath}）`);
         }
         el.setAttribute('logic', logicVal);
         el.removeAttribute('foreach');
         const xpath = getXPath(el);
-        warnings.push(`logic属性が既に存在するためhidden属性は変換しませんでした（XPath: ${xpath}）`);
+        warnings.push(`[WARNING] logic属性が既に存在するためhidden属性は変換しませんでした（XPath: ${xpath}）`);
     } else if (foreach) {
         if (logic) {
             const xpath = getXPath(el);
-            warnings.push(`logic属性が既に存在するためforeach属性は変換しませんでした（XPath: ${xpath}）`);
+            warnings.push(`[WARNING] logic属性が既に存在するためforeach属性は変換しませんでした（XPath: ${xpath}）`);
         } else {
             const logicVal = `foreach:${foreach}`;
             if (!isBindingVariable(foreach)) {
                 const xpath = getXPath(el);
-                warnings.push(`foreach属性の値「${foreach}」はバインド変数ではありません。バインド変数しか指定できないので修正してください。（XPath: ${xpath}）`);
+                warnings.push(`[WARNING] foreach属性の値「${foreach}」はバインド変数ではありません。バインド変数しか指定できないので修正してください。（XPath: ${xpath}）`);
             }
             el.setAttribute('logic', logicVal);
             el.removeAttribute('foreach');
@@ -49,12 +49,12 @@ function migrateElement(el, warnings) {
     } else if (hidden) {
         if (logic) {
             const xpath = getXPath(el);
-            warnings.push(`logic属性が既に存在するためhidden属性は変換しませんでした（XPath: ${xpath}）`);
+            warnings.push(`[WARNING] logic属性が既に存在するためhidden属性は変換しませんでした（XPath: ${xpath}）`);
         } else {
             const logicVal = `if:${hidden}`;
             if (!isBindingVariable(hidden)) {
                 const xpath = getXPath(el);
-                warnings.push(`hidden属性の値「${hidden}」はバインド変数ではありません。バインド変数しか指定できないので修正してください。（XPath: ${xpath}）`);
+                warnings.push(`[WARNING] hidden属性の値「${hidden}」はバインド変数ではありません。バインド変数しか指定できないので修正してください。（XPath: ${xpath}）`);
             }
             el.setAttribute('logic', logicVal);
             el.removeAttribute('hidden');
@@ -93,8 +93,8 @@ export function migrate(yrtRoot) {
         const newXml = new XMLSerializer().serializeToString(doc.documentElement);
         layouts[i][1] = newXml;
     }
-    if (allWarnings.length > 0) {
-        console.warn('[foreach_hidden_to_logic] 警告:', allWarnings.join('\n'));
+    for (const warning of allWarnings) {
+        console.warn(warning);
     }
     return newRoot;
 }

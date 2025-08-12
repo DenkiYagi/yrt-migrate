@@ -12,7 +12,7 @@ export function migrate(yrtRoot) {
             const image = images[i];
             if (!image.hasAttribute("width")) {
                 const xpath = getXPath(image);
-                console.warn(`Image要素にwidth属性がありません（XPath: ${xpath}）`);
+                console.warn(`[WARNING] Image要素にwidth属性がありません（XPath: ${xpath}）`);
             }
         }
     });

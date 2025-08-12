@@ -22,12 +22,12 @@ export function migrate(yrtRoot) {
             // items属性
             const items = table.getAttribute("items")?.trim();
             if (items && !/^\$\{[^}]+\}$/.test(items)) {
-                console.warn(`items属性はバインド変数で指定してください: ${items} (${xpath})`);
+                console.warn(`[WARNING] items属性はバインド変数で指定してください: ${items} (${xpath})`);
             }
             // breakCondition属性
             const breakCond = table.getAttribute("breakCondition")?.trim();
             if (breakCond && !/^\$\{[^}]+\}$/.test(breakCond)) {
-                console.warn(`breakCondition属性はバインド変数で指定してください: ${breakCond} (${xpath})`);
+                console.warn(`[WARNING] breakCondition属性はバインド変数で指定してください: ${breakCond} (${xpath})`);
             }
         }
     });

@@ -10,7 +10,7 @@ function checkSpan(node) {
         const color = node.getAttribute("color")?.trim();
         if (isBinding(color)) {
             const xpath = getXPath(node);
-            console.warn(`<Span>のcolor属性にバインド変数は指定できません (値: ${color}) @ ${xpath}`);
+            console.warn(`[WARNING] <Span>のcolor属性にバインド変数は指定できません (値: ${color}) @ ${xpath}`);
         }
     }
     // 子要素も再帰的にチェック

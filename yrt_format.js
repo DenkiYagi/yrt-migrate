@@ -54,8 +54,7 @@ export function isYrtRoot(data) {
 export function yrtRootToPackage(yrtRoot) {
     const body = yrtRoot[2];
     if (!body || typeof body !== "object") {
-        console.warn("YRTデータのbodyが不正です");
-        return { layouts: [], style: null, assets: null };
+        throw new Error("YRTデータのbodyが不正です");
     }
     return {
         layouts: (body.l || []).map((entry) => ({

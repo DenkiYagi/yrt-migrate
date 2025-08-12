@@ -29,7 +29,7 @@ function removeAttrsAndWarn(node) {
             found.forEach((attr) => node.removeAttribute(attr));
             const xpath = getXPath(node);
             console.warn(
-                `LinearLayoutのborder系属性（borderThickness, borderColor, borderStyle）は廃止されました。レイアウトが変わる可能性があるため手直ししてください。（XPath: ${xpath}）`
+                `[WARNING] LinearLayoutのborder系属性（borderThickness, borderColor, borderStyle）は廃止されました。レイアウトが変わる可能性があるため手直ししてください。（XPath: ${xpath}）`
             );
         }
     } else if (tag === "StackLayout") {
@@ -44,7 +44,7 @@ function removeAttrsAndWarn(node) {
             found.forEach((attr) => node.removeAttribute(attr));
             const xpath = getXPath(node);
             console.warn(
-                `StackLayoutのborder系属性・padding属性（borderThickness, borderColor, borderStyle, padding）は廃止されました。レイアウトが変わる可能性があるため手直ししてください。（XPath: ${xpath}）`
+                `[WARNING] <StackLayout>のborder系属性・padding属性（borderThickness, borderColor, borderStyle, padding）は廃止されました。レイアウトが変わる可能性があるため手直ししてください。（XPath: ${xpath}）`
             );
         }
     } else if (tag === "StackBlock") {
@@ -52,7 +52,7 @@ function removeAttrsAndWarn(node) {
             node.removeAttribute("padding");
             const xpath = getXPath(node);
             console.warn(
-                `StackBlockのpadding属性は廃止されました。レイアウトが変わる可能性があるため手直ししてください。（XPath: ${xpath}）`
+                `[WARNING] <StackBlock>のpadding属性は廃止されました。レイアウトが変わる可能性があるため手直ししてください。（XPath: ${xpath}）`
             );
         }
     }
