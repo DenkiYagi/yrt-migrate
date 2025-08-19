@@ -1,3 +1,8 @@
+# Testing Output
+/test-out/
+
+# --------------------------------
+
 # Logs
 logs
 *.log
