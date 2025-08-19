@@ -27,6 +27,7 @@ export function migrate(yrtRoot) {
         { tag: "ColumnText", styleTag: "ColumnTextStyle" },
     ];
     let styleIndex = 1;
+    let styleAdded = false;
     const styleDoc = new DOMParser().parseFromString(
         '<?xml version="1.0" encoding="UTF-8"?><Style></Style>',
         "text/xml"
@@ -42,6 +43,7 @@ export function migrate(yrtRoot) {
             for (const target of targets) {
                 const styleElems = Array.from(target.getElementsByTagName(styleTag));
                 for (const styleElem of styleElems) {
+                    styleAdded = true;
                     const styleId = `styleelement-${styleIndex++}`;
                     target.setAttribute("style", styleId);
                     // Style XMLに追加
@@ -69,6 +71,6 @@ export function migrate(yrtRoot) {
     }
     // YRT構造に反映
     yrtRoot[2].l = layouts;
-    yrtRoot[2].s = new XMLSerializer().serializeToString(styleRoot);
+    yrtRoot[2].s = styleAdded ? new XMLSerializer().serializeToString(styleRoot) : null;
     return yrtRoot;
 }

@@ -150,4 +150,11 @@ describe("style_element", () => {
             expect(styleXml).not.toContain('row="all"');
         });
     });
+
+    it('XxxStyle要素が存在しない場合はスタイル情報を生成しない', () => {
+        const inputXml = `<?xml version="1.0" encoding="UTF-8"?>\n<LayoutXml>\n  <LinearLayout>\n    <Text>test</Text>\n  </LinearLayout>\n</LayoutXml>`;
+        const yrt = migrate(toYrtRoot({ layouts: [inputXml] }));
+        const { styleXml } = fromYrtRoot(yrt);
+        expect(!styleXml || styleXml.trim() === '').toBe(true);
+    });
 });
