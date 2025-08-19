@@ -8,8 +8,8 @@ import {
     readAndValidateNewFormatYrtFile,
     prepareInputFile
 } from "./test-utils.mjs";
-import { readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { readdir, readFile, writeFile } from "node:fs/promises";
+import { basename, join } from "node:path";
 
 describe("yrt-migrate CLIテスト", () => {
     const testOutDir = "test-out/cli";
@@ -109,7 +109,9 @@ describe("yrt-migrate CLIテスト", () => {
         });
 
         test("--dry-runオプションでXMLファイルを指定すると、ファイル出力せずに標準出力に変換結果が表示される", async () => {
-            const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testOutDir);
+            const testCaseDir = await createTestCaseDir(testOutDir, "xml-dry-run");
+            const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir);
+            const inputDataBeforeRun = await readFile(inputFile);
             const result = await runYrtMigrate([
                 "--dry-run",
                 inputFile
@@ -121,6 +123,14 @@ describe("yrt-migrate CLIテスト", () => {
             assert(result.stdout.includes("=== Layout 0 ==="), "Layout情報がヘッダーと共に出力されること");
             assert(result.stdout.includes("<StackLayout"), "変換後のLayoutXMLが出力されること");
             assert(!result.stdout.includes("<LayoutXml>"), "<LayoutXml>要素は出力されないこと");
+
+            // 入力ファイルが変更されていないことを確認
+            const inputDataAfterRun = await readFile(inputFile);
+            assert.deepStrictEqual(inputDataAfterRun, inputDataBeforeRun, "--dry-runでは入力ファイルが変更されないこと");
+
+            // ディレクトリに入力ファイルのみが存在することを確認
+            const files = await readdir(testCaseDir);
+            assert.deepStrictEqual(files, [basename(inputFile)], "--dry-runでは新たなファイルが出力されないこと");
         });
     });
 
@@ -247,7 +257,9 @@ describe("yrt-migrate CLIテスト", () => {
         });
 
         test("--dry-runオプションでYRTファイルを指定すると、ファイル出力せずに標準出力に変換結果が表示される", async () => {
-            const inputFile = await prepareInputFile("test/fixtures/legacy_complex.yrt", testOutDir);
+            const testCaseDir = await createTestCaseDir(testOutDir, "yrt-dry-run");
+            const inputFile = await prepareInputFile("test/fixtures/legacy_complex.yrt", testCaseDir);
+            const inputDataBeforeRun = await readFile(inputFile);
             const result = await runYrtMigrate([
                 "--input", inputFile,
                 "--dry-run"
@@ -260,6 +272,14 @@ describe("yrt-migrate CLIテスト", () => {
             assert(result.stdout.includes("=== Layout 0 ==="), "Layout情報がヘッダーと共に出力されること");
             assert(result.stdout.includes("<LinearLayout"), "変換後のLayoutXMLが出力されること");
             assert(!result.stdout.includes("<LayoutXml>"), "<LayoutXml>要素は出力されないこと");
+
+            // 入力ファイルが変更されていないことを確認
+            const inputDataAfterRun = await readFile(inputFile);
+            assert.deepStrictEqual(inputDataAfterRun, inputDataBeforeRun, "--dry-runでは入力ファイルが変更されないこと");
+
+            // ディレクトリに入力ファイルのみが存在することを確認
+            const files = await readdir(testCaseDir);
+            assert.deepStrictEqual(files, [basename(inputFile)], "--dry-runでは新たなファイルが出力されないこと");
         });
     });
 
