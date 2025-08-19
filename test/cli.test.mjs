@@ -280,5 +280,20 @@ describe("yrt-migrate CLIテスト", () => {
             assert.strictEqual(result.exitCode, 1);
             assert(result.stderr.includes("非対応のファイル形式です"));
         });
+
+        test("既にマイグレーション済みのYRTファイルを指定した場合、警告を出して正常終了する", async () => {
+            // 既にマイグレーション済みのYRTファイルを用意
+            const testCaseDir = await createTestCaseDir(testOutDir, "already-migrated");
+            // test/fixtures/legacy_minimal.xml → 変換 → .yrt → もう一度変換
+            const inputXml = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir, "input.xml");
+            // 1回目: XML→YRT
+            const firstResult = await runYrtMigrate([inputXml]);
+            assert.strictEqual(firstResult.exitCode, 0);
+            const migratedYrt = join(testCaseDir, "input.yrt");
+            // 2回目: 既にマイグレーション済みのYRTを再度変換
+            const secondResult = await runYrtMigrate([migratedYrt]);
+            assert.strictEqual(secondResult.exitCode, 0);
+            assert(secondResult.stderr.includes("このYRTファイルはすでにマイグレーション済みです。処理をスキップします。"), "警告メッセージが出力されること");
+        });
     });
 });

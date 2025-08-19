@@ -2,13 +2,12 @@ import { test, describe, before } from "node:test";
 import assert from "node:assert";
 import {
     runYrtMigrate,
-    fileExists,
     createTestCaseDir,
     setupTestOutputDir,
     readAndValidateNewFormatYrtFile,
     prepareInputFile
 } from "./test-utils.mjs";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 describe("yrt-migrate 統合テスト", () => {
@@ -47,6 +46,17 @@ describe("yrt-migrate 統合テスト", () => {
                 assert(!layoutXml.includes("<LayoutXml>"), "<LayoutXml>要素を含まないこと");
                 assert(layoutXml.includes("<StackLayout"), "ルート要素は<StackLayout>であること");
                 assert(layoutXml.includes("Minimal Layout"), "入力されたテキスト内容を含むこと");
+            });
+        });
+
+        describe("警告の検証", () => {
+            test("入力を反映して、警告は何も出力されない", async () => {
+                const testCaseDir = await createTestCaseDir(testOutDir, "content-minimal-xml-warning");
+                const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir);
+                const result = await runYrtMigrate([inputFile]);
+
+                assert.strictEqual(result.exitCode, 0);
+                assert.strictEqual(result.stderr, "", "警告は何も出力されないこと");
             });
         });
 
@@ -209,6 +219,17 @@ describe("yrt-migrate 統合テスト", () => {
                 assert(typeof body.s === "string", "StyleXMLは文字列であること");
                 assert(body.s.includes("<Style"), "StyleXMLのルート要素は<Style>であること");
                 assert(body.s.includes("styleelement-1"), "StyleXMLはstyleelement-1 (連番key名) を含むこと");
+            });
+        });
+
+        describe("警告の検証", () => {
+            test("入力を反映して、警告が出力される", async () => {
+                const testCaseDir = await createTestCaseDir(testOutDir, "content-complex-xml-warning");
+                const inputFile = await prepareInputFile("test/fixtures/legacy_complex.xml", testCaseDir);
+                const result = await runYrtMigrate([inputFile]);
+
+                assert.strictEqual(result.exitCode, 0);
+                assert(result.stderr.includes("Image要素にwidth属性がありません"), "警告が出力されること");
             });
         });
 
