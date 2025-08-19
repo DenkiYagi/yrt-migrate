@@ -1,17 +1,18 @@
 import { test, describe, before } from "node:test";
 import assert from "node:assert";
-import * as fs from "fs/promises";
-import * as path from "path";
 import {
     runYrtMigrate,
     fileExists,
     createTestCaseDir,
     setupTestOutputDir,
-    readAndValidateNewFormatYrtFile
+    readAndValidateNewFormatYrtFile,
+    prepareInputFile
 } from "./test-utils.mjs";
+import { readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 
 describe("yrt-migrate CLI統合テスト", () => {
-    const testOutDir = path.resolve("test-out");
+    const testOutDir = "test-out";
 
     before(async () => {
         await setupTestOutputDir(testOutDir);
@@ -45,18 +46,13 @@ describe("yrt-migrate CLI統合テスト", () => {
 
     describe("XMLファイル入力のテスト", () => {
         test("位置引数でXMLファイルを指定すると、同じディレクトリに同名の.yrtファイルが作成される", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "01-xml-positional-only");
-
-            // 入力ファイルをテスト用ディレクトリにコピー
-            const originalFile = path.resolve("test/fixtures/legacy_minimal.xml");
-            const inputFile = path.join(testCaseDir, "input.xml");
-            await fs.copyFile(originalFile, inputFile);
-
+            const testCaseDir = await createTestCaseDir(testOutDir, "xml-positional-only");
+            const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir, "input.xml");
             const result = await runYrtMigrate([inputFile]);
 
             assert.strictEqual(result.exitCode, 0);
 
-            const expectedOutputFile = path.join(testCaseDir, "input.yrt");
+            const expectedOutputFile = join(testCaseDir, "input.yrt");
             assert.strictEqual(await fileExists(expectedOutputFile), true, "同名の.yrtファイルが作成されること");
 
             // 出力結果の形式検証
@@ -64,10 +60,9 @@ describe("yrt-migrate CLI統合テスト", () => {
         });
 
         test("位置引数でXMLファイルを指定し、-oで出力先を指定すると指定したパスに変換結果が作成される", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "02-xml-positional-with-output");
-
-            const inputFile = path.resolve("test/fixtures/legacy_minimal.xml");
-            const outputFile = path.join(testCaseDir, "custom_output.yrt");
+            const testCaseDir = await createTestCaseDir(testOutDir, "xml-positional-with-output");
+            const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir);
+            const outputFile = join(testCaseDir, "custom_output.yrt");
 
             const result = await runYrtMigrate([
                 inputFile,
@@ -83,20 +78,13 @@ describe("yrt-migrate CLI統合テスト", () => {
         });
 
         test("-iでXMLファイルを指定し、出力先を省略すると入力ファイルと同じディレクトリに同名の.yrtファイルが作成される", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "04-xml-input-only");
-
-            // 入力ファイルをテスト用ディレクトリにコピーして、そこで変換テストを行う
-            const originalFile = path.resolve("test/fixtures/legacy_complex.xml");
-            const inputFile = path.join(testCaseDir, "legacy_complex.xml");
-            await fs.copyFile(originalFile, inputFile);
-
-            const result = await runYrtMigrate([
-                "--input", inputFile
-            ]);
+            const testCaseDir = await createTestCaseDir(testOutDir, "xml-input-only");
+            const inputFile = await prepareInputFile("test/fixtures/legacy_complex.xml", testCaseDir);
+            const result = await runYrtMigrate(["--input", inputFile]);
 
             assert.strictEqual(result.exitCode, 0);
 
-            const expectedOutputFile = path.join(testCaseDir, "legacy_complex.yrt");
+            const expectedOutputFile = join(testCaseDir, "legacy_complex.yrt");
             assert.strictEqual(await fileExists(expectedOutputFile), true, "同名の.yrtファイルが作成されること");
 
             // 出力結果の形式検証
@@ -104,11 +92,9 @@ describe("yrt-migrate CLI統合テスト", () => {
         });
 
         test("-iでXMLファイルを指定し、-oで出力先を指定すると指定したパスに変換結果が作成される", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "03-xml-input-output-options");
-
-            const inputFile = path.resolve("test/fixtures/legacy_complex.xml");
-            const outputFile = path.join(testCaseDir, "converted.yrt");
-
+            const testCaseDir = await createTestCaseDir(testOutDir, "xml-input-output-options");
+            const inputFile = await prepareInputFile("test/fixtures/legacy_complex.xml", testCaseDir);
+            const outputFile = join(testCaseDir, "converted.yrt");
             const result = await runYrtMigrate([
                 "--input", inputFile,
                 "--output", outputFile
@@ -123,8 +109,7 @@ describe("yrt-migrate CLI統合テスト", () => {
         });
 
         test("--dry-runオプションでXMLファイルを指定すると、ファイル出力せずに標準出力に変換結果が表示される", async () => {
-            const inputFile = path.resolve("test/fixtures/legacy_minimal.xml");
-
+            const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testOutDir);
             const result = await runYrtMigrate([
                 "--dry-run",
                 inputFile
@@ -141,15 +126,11 @@ describe("yrt-migrate CLI統合テスト", () => {
 
     describe("YRTファイル入力のテスト", () => {
         test("位置引数でYRTファイルを指定すると、元ファイルが上書きされ自動バックアップが作成される", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "05-yrt-positional-only");
-
-            // 入力ファイルをテスト用ディレクトリにコピー
-            const originalFile = path.resolve("test/fixtures/legacy_complex.yrt");
-            const inputFile = path.join(testCaseDir, "data.yrt");
-            await fs.copyFile(originalFile, inputFile);
+            const testCaseDir = await createTestCaseDir(testOutDir, "yrt-positional-only");
+            const inputFile = await prepareInputFile("test/fixtures/legacy_complex.yrt", testCaseDir, "data.yrt");
 
             // 元のファイル内容を記録
-            const originalData = await fs.readFile(inputFile);
+            const originalData = await readFile(inputFile);
 
             const result = await runYrtMigrate([inputFile]);
 
@@ -159,23 +140,18 @@ describe("yrt-migrate CLI統合テスト", () => {
             await readAndValidateNewFormatYrtFile(inputFile);
 
             // 自動バックアップファイルの存在確認
-            const backupFile = path.join(testCaseDir, "data.yrt.old");
+            const backupFile = join(testCaseDir, "data.yrt.old");
             assert.strictEqual(await fileExists(backupFile), true, "自動バックアップファイルが作成されること");
 
             // バックアップファイルが元のデータを保持していることを確認
-            const backupData = await fs.readFile(backupFile);
+            const backupData = await readFile(backupFile);
             assert.deepStrictEqual(backupData, originalData, "バックアップファイルが元のデータを保持していること");
         });
 
         test("位置引数でYRTファイルを指定し、-oで出力先を指定すると指定したパスに変換結果が作成される", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "06-yrt-positional-with-output");
-
-            // 入力ファイルをテスト用ディレクトリにコピー
-            const originalFile = path.resolve("test/fixtures/legacy_complex.yrt");
-            const inputFile = path.join(testCaseDir, "input.yrt");
-            await fs.copyFile(originalFile, inputFile);
-
-            const outputFile = path.join(testCaseDir, "converted.yrt");
+            const testCaseDir = await createTestCaseDir(testOutDir, "yrt-positional-with-output");
+            const inputFile = await prepareInputFile("test/fixtures/legacy_complex.yrt", testCaseDir, "input.yrt");
+            const outputFile = join(testCaseDir, "converted.yrt");
 
             const result = await runYrtMigrate([
                 inputFile,
@@ -190,21 +166,17 @@ describe("yrt-migrate CLI統合テスト", () => {
             await readAndValidateNewFormatYrtFile(outputFile);
 
             // 元の入力ファイルは変更されていないことを確認
-            const originalData = await fs.readFile(path.resolve("test/fixtures/legacy_complex.yrt"));
-            const inputData = await fs.readFile(inputFile);
+            const originalData = await readFile("test/fixtures/legacy_complex.yrt");
+            const inputData = await readFile(inputFile);
             assert.deepStrictEqual(originalData, inputData, "元の入力ファイルは変更されないこと");
         });
 
         test("-iでYRTファイルを指定し、出力先を省略すると元ファイルが上書きされ自動バックアップが作成される", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "08-yrt-input-only");
-
-            // 入力ファイルをテスト用ディレクトリにコピー
-            const originalFile = path.resolve("test/fixtures/legacy_complex.yrt");
-            const inputFile = path.join(testCaseDir, "data.yrt");
-            await fs.copyFile(originalFile, inputFile);
+            const testCaseDir = await createTestCaseDir(testOutDir, "yrt-input-only");
+            const inputFile = await prepareInputFile("test/fixtures/legacy_complex.yrt", testCaseDir, "data.yrt");
 
             // 元のファイル内容を記録
-            const originalData = await fs.readFile(inputFile);
+            const originalData = await readFile(inputFile);
 
             const result = await runYrtMigrate([
                 "--input", inputFile
@@ -216,23 +188,18 @@ describe("yrt-migrate CLI統合テスト", () => {
             await readAndValidateNewFormatYrtFile(inputFile);
 
             // 自動バックアップファイルの存在確認
-            const backupFile = path.join(testCaseDir, "data.yrt.old");
+            const backupFile = join(testCaseDir, "data.yrt.old");
             assert.strictEqual(await fileExists(backupFile), true, "自動バックアップファイルが作成されること");
 
             // バックアップファイルが元のデータを保持していることを確認
-            const backupData = await fs.readFile(backupFile);
+            const backupData = await readFile(backupFile);
             assert.deepStrictEqual(backupData, originalData, "バックアップファイルが元のデータを保持していること");
         });
 
         test("-iでYRTファイルを指定し、-oで出力先を指定すると指定したパスに変換結果が作成される", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "07-yrt-input-output-options");
-
-            // 入力ファイルをテスト用ディレクトリにコピー
-            const originalFile = path.resolve("test/fixtures/legacy_complex.yrt");
-            const inputFile = path.join(testCaseDir, "input.yrt");
-            await fs.copyFile(originalFile, inputFile);
-
-            const outputFile = path.join(testCaseDir, "converted.yrt");
+            const testCaseDir = await createTestCaseDir(testOutDir, "yrt-input-output-options");
+            const inputFile = await prepareInputFile("test/fixtures/legacy_complex.yrt", testCaseDir, "input.yrt");
+            const outputFile = join(testCaseDir, "converted.yrt");
 
             const result = await runYrtMigrate([
                 "--input", inputFile,
@@ -247,23 +214,19 @@ describe("yrt-migrate CLI統合テスト", () => {
             await readAndValidateNewFormatYrtFile(outputFile);
 
             // 元の入力ファイルは変更されていないことを確認
-            const originalData = await fs.readFile(originalFile);
-            const inputData = await fs.readFile(inputFile);
+            const originalData = await readFile("test/fixtures/legacy_complex.yrt");
+            const inputData = await readFile(inputFile);
             assert.deepStrictEqual(originalData, inputData, "元の入力ファイルは変更されないこと");
         });
 
         test("-iでYRTファイルを指定し、-bで明示的にバックアップ先を指定すると元ファイルが上書きされ指定したバックアップが作成される", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "09-yrt-input-with-backup");
-
-            // 入力ファイルをテスト用ディレクトリにコピー
-            const originalFile = path.resolve("test/fixtures/legacy_complex.yrt");
-            const inputFile = path.join(testCaseDir, "input.yrt");
-            await fs.copyFile(originalFile, inputFile);
+            const testCaseDir = await createTestCaseDir(testOutDir, "yrt-input-with-backup");
+            const inputFile = await prepareInputFile("test/fixtures/legacy_complex.yrt", testCaseDir, "input.yrt");
 
             // 元のファイル内容を記録
-            const originalData = await fs.readFile(inputFile);
+            const originalData = await readFile(inputFile);
 
-            const backupFile = path.join(testCaseDir, "custom_backup.yrt");
+            const backupFile = join(testCaseDir, "custom_backup.yrt");
 
             const result = await runYrtMigrate([
                 "--input", inputFile,
@@ -279,13 +242,12 @@ describe("yrt-migrate CLI統合テスト", () => {
             assert.strictEqual(await fileExists(backupFile), true, "指定したバックアップファイルが作成されること");
 
             // バックアップファイルが元のデータを保持していることを確認
-            const backupData = await fs.readFile(backupFile);
+            const backupData = await readFile(backupFile);
             assert.deepStrictEqual(backupData, originalData, "バックアップファイルが元のデータを保持していること");
         });
 
         test("--dry-runオプションでYRTファイルを指定すると、ファイル出力せずに標準出力に変換結果が表示される", async () => {
-            const inputFile = path.resolve("test/fixtures/legacy_complex.yrt");
-
+            const inputFile = await prepareInputFile("test/fixtures/legacy_complex.yrt", testOutDir);
             const result = await runYrtMigrate([
                 "--input", inputFile,
                 "--dry-run"
@@ -309,10 +271,10 @@ describe("yrt-migrate CLI統合テスト", () => {
         });
 
         test("非対応のファイル形式を指定した場合", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "07-invalid-file");
+            const testCaseDir = await createTestCaseDir(testOutDir, "invalid-file");
 
-            const invalidFile = path.join(testCaseDir, "invalid.txt");
-            await fs.writeFile(invalidFile, "This is not a valid file");
+            const invalidFile = join(testCaseDir, "invalid.txt");
+            await writeFile(invalidFile, "This is not a valid file");
 
             const result = await runYrtMigrate([invalidFile]);
             assert.strictEqual(result.exitCode, 1);
@@ -324,10 +286,9 @@ describe("yrt-migrate CLI統合テスト", () => {
         describe("例: 最小構成のXML", () => {
             describe("マイグレート後のLayoutXMLの検証", () => {
                 test("入力を反映して、StackLayoutが1つだけ生成される", async () => {
-                    const testCaseDir = await createTestCaseDir(testOutDir, "content-01-minimal-xml");
-
-                    const inputFile = path.resolve("test/fixtures/legacy_minimal.xml");
-                    const outputFile = path.join(testCaseDir, "output.yrt");
+                    const testCaseDir = await createTestCaseDir(testOutDir, "content-minimal-xml");
+                    const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir);
+                    const outputFile = join(testCaseDir, "output.yrt");
 
                     const result = await runYrtMigrate([
                         "--input", inputFile,
@@ -356,10 +317,9 @@ describe("yrt-migrate CLI統合テスト", () => {
                 // TODO: 現在のバグ - 最小XMLでもStyleXMLが生成されてしまう（後で修正予定）
                 // 修正後にskipを削除して以下のテストを有効化する
                 test("入力を反映して、StyleXMLは生成されない", async () => {
-                    const testCaseDir = await createTestCaseDir(testOutDir, "content-01-minimal-xml-style");
-
-                    const inputFile = path.resolve("test/fixtures/legacy_minimal.xml");
-                    const outputFile = path.join(testCaseDir, "output.yrt");
+                    const testCaseDir = await createTestCaseDir(testOutDir, "content-minimal-xml-style");
+                    const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir);
+                    const outputFile = join(testCaseDir, "output.yrt");
 
                     const result = await runYrtMigrate([
                         "--input", inputFile,
@@ -377,14 +337,9 @@ describe("yrt-migrate CLI統合テスト", () => {
 
             describe("マイグレート後のアセットの検証", () => {
                 test("YRT入力の場合、アセットが正しく保持される", async () => {
-                    const testCaseDir = await createTestCaseDir(testOutDir, "content-01-minimal-yrt-assets");
-
-                    // 入力ファイルをテスト用ディレクトリにコピー
-                    const originalFile = path.resolve("test/fixtures/legacy_minimal.yrt");
-                    const inputFile = path.join(testCaseDir, "input.yrt");
-                    await fs.copyFile(originalFile, inputFile);
-
-                    const outputFile = path.join(testCaseDir, "output.yrt");
+                    const testCaseDir = await createTestCaseDir(testOutDir, "content-minimal-yrt-assets");
+                    const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.yrt", testCaseDir, "input.yrt");
+                    const outputFile = join(testCaseDir, "output.yrt");
 
                     const result = await runYrtMigrate([
                         "--input", inputFile,
@@ -399,10 +354,9 @@ describe("yrt-migrate CLI統合テスト", () => {
                 });
 
                 test("XML入力の場合、アセットは含まれない", async () => {
-                    const testCaseDir = await createTestCaseDir(testOutDir, "content-01-minimal-xml-assets");
-
-                    const inputFile = path.resolve("test/fixtures/legacy_minimal.xml");
-                    const outputFile = path.join(testCaseDir, "output.yrt");
+                    const testCaseDir = await createTestCaseDir(testOutDir, "content-minimal-xml-assets");
+                    const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir);
+                    const outputFile = join(testCaseDir, "output.yrt");
 
                     const result = await runYrtMigrate([
                         "--input", inputFile,
@@ -420,11 +374,11 @@ describe("yrt-migrate CLI統合テスト", () => {
 
             describe("異なる入力形式に対するXML生成の一貫性の検証", () => {
                 test("入力がYRT形式の場合も、入力がXML形式の場合と完全に同じXMLを生成する", async () => {
-                    const testCaseDir = await createTestCaseDir(testOutDir, "content-01-minimal-xml-yrt-compare");
+                    const testCaseDir = await createTestCaseDir(testOutDir, "content-minimal-xml-yrt-compare");
 
                     // XML入力からの変換
-                    const inputFileLegacyXml = path.resolve("test/fixtures/legacy_minimal.xml");
-                    const outputFileFromLegacyXml = path.join(testCaseDir, "from-xml.yrt");
+                    const inputFileLegacyXml = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir, "input.xml");
+                    const outputFileFromLegacyXml = join(testCaseDir, "from-xml.yrt");
 
                     const resultFromLegacyXml = await runYrtMigrate([
                         "--input", inputFileLegacyXml,
@@ -433,10 +387,8 @@ describe("yrt-migrate CLI統合テスト", () => {
                     assert.strictEqual(resultFromLegacyXml.exitCode, 0);
 
                     // YRT入力からの変換
-                    const originalYrtFile = path.resolve("test/fixtures/legacy_minimal.yrt");
-                    const inputFileLegacyYrt = path.join(testCaseDir, "input.yrt");
-                    await fs.copyFile(originalYrtFile, inputFileLegacyYrt);
-                    const outputFileFromLegacyYrt = path.join(testCaseDir, "from-yrt.yrt");
+                    const inputFileLegacyYrt = await prepareInputFile("test/fixtures/legacy_minimal.yrt", testCaseDir, "input.yrt");
+                    const outputFileFromLegacyYrt = join(testCaseDir, "from-yrt.yrt");
 
                     const resultFromLegacyYrt = await runYrtMigrate([
                         "--input", inputFileLegacyYrt,
@@ -461,10 +413,9 @@ describe("yrt-migrate CLI統合テスト", () => {
         describe("例: 複雑な構成のYRT", () => {
             describe("マイグレート後のLayoutXMLの検証", () => {
                 test("入力を反映して、2つのLayoutが生成され、属性値の変換も行われる", async () => {
-                    const testCaseDir = await createTestCaseDir(testOutDir, "content-03-complex-xml");
-
-                    const inputFile = path.resolve("test/fixtures/legacy_complex.xml");
-                    const outputFile = path.join(testCaseDir, "output.yrt");
+                    const testCaseDir = await createTestCaseDir(testOutDir, "content-complex-xml");
+                    const inputFile = await prepareInputFile("test/fixtures/legacy_complex.xml", testCaseDir);
+                    const outputFile = join(testCaseDir, "output.yrt");
 
                     const result = await runYrtMigrate([
                         "--input", inputFile,
@@ -502,10 +453,9 @@ describe("yrt-migrate CLI統合テスト", () => {
 
             describe("マイグレート後のStyleXMLの検証", () => {
                 test("入力を反映して、StyleXMLが生成される", async () => {
-                    const testCaseDir = await createTestCaseDir(testOutDir, "content-03-complex-xml-style");
-
-                    const inputFile = path.resolve("test/fixtures/legacy_complex.xml");
-                    const outputFile = path.join(testCaseDir, "output.yrt");
+                    const testCaseDir = await createTestCaseDir(testOutDir, "content-complex-xml-style");
+                    const inputFile = await prepareInputFile("test/fixtures/legacy_complex.xml", testCaseDir);
+                    const outputFile = join(testCaseDir, "output.yrt");
 
                     const result = await runYrtMigrate([
                         "--input", inputFile,
@@ -527,14 +477,9 @@ describe("yrt-migrate CLI統合テスト", () => {
 
             describe("マイグレート後のアセットの検証", () => {
                 test("YRT入力の場合、アセットが正しく保持される", async () => {
-                    const testCaseDir = await createTestCaseDir(testOutDir, "content-03-complex-yrt-assets");
-
-                    // 入力ファイルをテスト用ディレクトリにコピー
-                    const originalFile = path.resolve("test/fixtures/legacy_complex.yrt");
-                    const inputFile = path.join(testCaseDir, "input.yrt");
-                    await fs.copyFile(originalFile, inputFile);
-
-                    const outputFile = path.join(testCaseDir, "output.yrt");
+                    const testCaseDir = await createTestCaseDir(testOutDir, "content-complex-yrt-assets");
+                    const inputFile = await prepareInputFile("test/fixtures/legacy_complex.yrt", testCaseDir, "input.yrt");
+                    const outputFile = join(testCaseDir, "output.yrt");
 
                     const result = await runYrtMigrate([
                         "--input", inputFile,
@@ -550,17 +495,16 @@ describe("yrt-migrate CLI統合テスト", () => {
                     assert.deepStrictEqual(
                         body.a,
                         {
-                            image: await fs.readFile("test/fixtures/image.png")
+                            image: await readFile("test/fixtures/image.png")
                         },
                         "入力されたYRTファイルのアセットが保持されること"
                     );
                 });
 
                 test("XML入力の場合、アセットは含まれない", async () => {
-                    const testCaseDir = await createTestCaseDir(testOutDir, "content-03-complex-xml-no-assets");
-
-                    const inputFile = path.resolve("test/fixtures/legacy_complex.xml");
-                    const outputFile = path.join(testCaseDir, "output.yrt");
+                    const testCaseDir = await createTestCaseDir(testOutDir, "content-complex-xml-no-assets");
+                    const inputFile = await prepareInputFile("test/fixtures/legacy_complex.xml", testCaseDir);
+                    const outputFile = join(testCaseDir, "output.yrt");
 
                     const result = await runYrtMigrate([
                         "--input", inputFile,
@@ -578,11 +522,11 @@ describe("yrt-migrate CLI統合テスト", () => {
 
             describe("異なる入力形式に対するXML生成の一貫性の検証", () => {
                 test("入力がYRT形式の場合も、入力がXML形式の場合と完全に同じXMLを生成する", async () => {
-                    const testCaseDir = await createTestCaseDir(testOutDir, "content-03-complex-xml-yrt-compare");
+                    const testCaseDir = await createTestCaseDir(testOutDir, "content-complex-xml-yrt-compare");
 
                     // XML入力からの変換
-                    const inputFileLegacyXml = path.resolve("test/fixtures/legacy_complex.xml");
-                    const outputFileFromLegacyXml = path.join(testCaseDir, "from-xml.yrt");
+                    const inputFileLegacyXml = await prepareInputFile("test/fixtures/legacy_complex.xml", testCaseDir, "input.xml");
+                    const outputFileFromLegacyXml = join(testCaseDir, "from-xml.yrt");
 
                     const xmlResult = await runYrtMigrate([
                         "--input", inputFileLegacyXml,
@@ -591,10 +535,8 @@ describe("yrt-migrate CLI統合テスト", () => {
                     assert.strictEqual(xmlResult.exitCode, 0);
 
                     // YRT入力からの変換
-                    const originalYrtFile = path.resolve("test/fixtures/legacy_complex.yrt");
-                    const yrtInputFile = path.join(testCaseDir, "input.yrt");
-                    await fs.copyFile(originalYrtFile, yrtInputFile);
-                    const yrtOutputFile = path.join(testCaseDir, "from-yrt.yrt");
+                    const yrtInputFile = await prepareInputFile("test/fixtures/legacy_complex.yrt", testCaseDir, "input.yrt");
+                    const yrtOutputFile = join(testCaseDir, "from-yrt.yrt");
 
                     const yrtResult = await runYrtMigrate([
                         "--input", yrtInputFile,

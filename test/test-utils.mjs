@@ -5,7 +5,11 @@ import * as path from "path";
 import * as msgpack from "@msgpack/msgpack";
 import assert from "node:assert";
 
+
 const execFileAsync = promisify(execFile);
+
+// テストケースごとに自動インクリメントするためのカウンタを保持
+const testCaseDirCounters = new Map();
 
 /**
  * CLI commandを実行するヘルパー関数
@@ -74,15 +78,34 @@ export async function fileExists(filePath) {
 }
 
 /**
- * テストケース用のディレクトリを作成するヘルパー関数
+ * テストケース用のディレクトリを作成するヘルパー関数（自動インクリメントprefix付き）
  * @param {string} testOutDir - 基本となるtest-outディレクトリパス
- * @param {string} testCaseName - テストケース名
+ * @param {string} testCaseName - テストケース名（prefix不要、関数が自動付与）
  * @returns {Promise<string>} - 作成されたディレクトリのパス
  */
 export async function createTestCaseDir(testOutDir, testCaseName) {
-    const testCaseDir = path.join(testOutDir, testCaseName);
+    // カウンタ取得・更新
+    let counter = testCaseDirCounters.get(testOutDir) || 1;
+    const prefix = String(counter).padStart(2, "0");
+    testCaseDirCounters.set(testOutDir, counter + 1);
+    const dirName = `${prefix}-${testCaseName}`;
+    const testCaseDir = path.join(testOutDir, dirName);
     await fs.mkdir(testCaseDir, { recursive: true });
     return testCaseDir;
+}
+
+/**
+ * 入力ファイルをテスト用ディレクトリにコピーして新しいパスを返すヘルパー関数
+ * @param {string} originalPath - 元ファイルのパス
+ * @param {string} testCaseDir - テストケース用ディレクトリのパス
+ * @param {string} [fileName] - 新しいファイル名（省略時は元ファイル名を使用）
+ * @returns {Promise<string>} - コピー後のファイルパス
+ */
+export async function prepareInputFile(originalPath, testCaseDir, fileName = null) {
+    const newFileName = fileName || path.basename(originalPath);
+    const newFilePath = path.join(testCaseDir, newFileName);
+    await fs.copyFile(originalPath, newFilePath);
+    return newFilePath;
 }
 
 /**
