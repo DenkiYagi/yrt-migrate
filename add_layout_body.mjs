@@ -1,4 +1,5 @@
-import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
+import { DOMParser } from "@xmldom/xmldom";
+import { getXPath } from "./utils.js";
 
 /**
  * <LinearLayout> 直下に <LayoutBody> がない場合、
@@ -19,40 +20,35 @@ export function migrate(yrtRoot) {
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         const linearLayouts = Array.from(doc.getElementsByTagName("LinearLayout"));
         for (const layout of linearLayouts) {
-            // 直下に <LayoutBody> があれば何もしない
-            const hasBody = Array.from(layout.childNodes).some(
-                (n) => n.nodeType === 1 && n.nodeName === "LayoutBody"
-            );
-            if (hasBody) continue;
-            // 直下の要素を分類
-            const headerNodes = [];
-            const footerNodes = [];
-            const bodyNodes = [];
+            let header = null;
+            let body = null;
+            let footer = null;
+            const others = [];
             for (let j = 0; j < layout.childNodes.length; j++) {
                 const node = layout.childNodes[j];
                 if (node.nodeType !== 1) continue;
                 if (node.nodeName === "LayoutHeader") {
-                    headerNodes.push(node);
+                    header = node;
+                } else if (node.nodeName === "LayoutBody") {
+                    body = node;
                 } else if (node.nodeName === "LayoutFooter") {
-                    footerNodes.push(node);
+                    footer = node;
                 } else {
-                    bodyNodes.push(node);
+                    others.push(node);
+                    console.warn(`[WARNING] LinearLayout直下にLayoutHeader, LayoutBody, LayoutFooter以外の要素: <${node.nodeName}> が存在します。XPath: ${getXPath(node)}`);
                 }
             }
-            if (bodyNodes.length === 0) continue;
-            // bodyNodes を <LayoutBody> で包む
-            const layoutBody = doc.createElement("LayoutBody");
-            for (const node of bodyNodes) {
-                layoutBody.appendChild(node);
+            if (!body) {
+                body = doc.createElement("LayoutBody");
             }
-            // header, body, footer の順で再構成
-            // まず全ての子要素を削除
+            // header/body/footer順で再構成し、その他要素は後ろに追加
             while (layout.firstChild) layout.removeChild(layout.firstChild);
-            for (const node of headerNodes) layout.appendChild(node);
-            layout.appendChild(layoutBody);
-            for (const node of footerNodes) layout.appendChild(node);
+            if (header) layout.appendChild(header);
+            layout.appendChild(body);
+            if (footer) layout.appendChild(footer);
+            for (const node of others) layout.appendChild(node);
         }
-        const newXml = new XMLSerializer().serializeToString(doc);
+        const newXml = doc.toString ? doc.toString() : doc.xml ? doc.xml : new XMLSerializer().serializeToString(doc);
         layouts[i][1] = newXml;
     }
     return newRoot;
