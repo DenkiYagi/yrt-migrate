@@ -5,21 +5,22 @@ import * as path from "path";
 import * as msgpack from "@msgpack/msgpack";
 import assert from "node:assert";
 
-
+const CLI_ENTRY_POINT_FILE_PATH = "index.js";
 const execFileAsync = promisify(execFile);
 
 // テストケースごとに自動インクリメントするためのカウンタを保持
 const testCaseDirCounters = new Map();
 
 /**
- * CLI commandを実行するヘルパー関数
+ * `node index.js` を実行するヘルパー関数
+ *
  * @param {string[]} args - CLI引数の配列
- * @param {Object} options - 実行オプション
+ * @param {import("node:child_process").ExecFileOptionsWithBufferEncoding} options - 実行オプション
  * @returns {Promise<{stdout: string, stderr: string, exitCode: number}>}
  */
 export async function runYrtMigrate(args = [], options = {}) {
     try {
-        const { stdout, stderr } = await execFileAsync("node", ["index.js", ...args], {
+        const { stdout, stderr } = await execFileAsync("node", [CLI_ENTRY_POINT_FILE_PATH, ...args], {
             cwd: path.resolve(process.cwd()),
             ...options
         });
@@ -109,15 +110,13 @@ export async function prepareInputFile(originalPath, testCaseDir, fileName = nul
 }
 
 /**
- * test-outディレクトリをクリーンアップして再作成するヘルパー関数
- * @param {string} testOutDir - test-outディレクトリのパス
+ * 指定のディレクトリをクリーンアップして再作成するヘルパー関数
+ * @param {string} testOutDir - 指定のディレクトリのパス
  */
 export async function setupTestOutputDir(testOutDir) {
-    try {
-        await fs.rm(testOutDir, { recursive: true, force: true });
-    } catch (error) {
-        // ディレクトリが存在しない場合は無視
-    }
+    if (!testOutDir.startsWith("test-out")) throw new Error("Invalid test output directory");
+
+    await fs.rm(testOutDir, { recursive: true, force: true });
     await fs.mkdir(testOutDir, { recursive: true });
 }
 
