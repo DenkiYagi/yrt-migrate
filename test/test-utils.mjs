@@ -32,7 +32,7 @@ export async function runYrtMigrate(args = [], options = {}) {
 /**
  * 新YRT形式の構造を検証するヘルパー関数
  * @param {Buffer} data - YRTバイナリデータ
- * @returns {YrtRoot} - デコード済みのYRTルートデータ
+ * @returns {import("./types").DecodedYrt} - デコード後のYRTデータオブジェクト
  */
 export function decodeAndValidateNewFormatYrt(data) {
     const decoded = msgpack.decode(data);
@@ -99,9 +99,9 @@ export async function setupTestOutputDir(testOutDir) {
 }
 
 /**
- * マイグレート後のYRTファイルを読み込んでYrtRoot形式で返すヘルパー関数
+ * マイグレート後のYRTファイルを読み込んでデコード・検証する
  * @param {string} filePath - YRTファイル（新形式）のパス
- * @returns {Promise<YrtRoot>} - YRTルートオブジェクト
+ * @returns {Promise<import("./types").DecodedYrt>} - デコード後のYRTデータオブジェクト
  */
 export async function readAndValidateNewFormatYrtFile(filePath) {
     const data = await fs.readFile(filePath);

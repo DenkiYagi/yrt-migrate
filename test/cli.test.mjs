@@ -20,7 +20,7 @@ describe("yrt-migrate CLI統合テスト", () => {
     });
 
     describe("ヘルプとエラーハンドリング", () => {
-        test("引数なしで実行するとエラーメッセージを表示", async () => {
+        test("引数なしで実行すると入力ファイルの指定を促すエラーメッセージを表示", async () => {
             const result = await runYrtMigrate([]);
             assert.strictEqual(result.exitCode, 1);
             assert(result.stderr.includes("入力ファイルを指定してください"));
@@ -38,6 +38,8 @@ describe("yrt-migrate CLI統合テスト", () => {
             const result = await runYrtMigrate(["-h"]);
             assert.strictEqual(result.exitCode, 0);
             assert(result.stdout.includes("Usage: npx yrt-migrate"));
+            assert(result.stdout.includes("--input"));
+            assert(result.stdout.includes("--output"));
         });
     });
 
@@ -55,16 +57,11 @@ describe("yrt-migrate CLI統合テスト", () => {
 
             assert.strictEqual(result.exitCode, 0);
 
-            // 出力ファイルの存在確認
-            assert.strictEqual(await fileExists(outputFile), true);
+            // 出力形式の基本検証（詳細な内容検証は別途）
+            const yrt = await readAndValidateNewFormatYrtFile(outputFile);
 
-            // 出力形式の基本検証（詳細な内容検証は「YRT内容検証テスト」で実施）
-            const yrtRoot = await readAndValidateNewFormatYrtFile(outputFile);
-            const body = yrtRoot[2];
-
-            // 基本的なYRT構造の確認のみ
-            assert(Array.isArray(body.l), "LayoutXMLs配列が存在することを確認");
-            assert(body.l.length > 0, "少なくとも1つのLayoutXMLが存在することを確認");
+            // アセットの確認
+            assert.strictEqual(yrt[2].a, null, "入力がXMLのときアセットを含まないこと");
         });
 
         test("XMLファイルをdry-runモードで実行", async () => {
@@ -93,7 +90,8 @@ describe("yrt-migrate CLI統合テスト", () => {
             ]);
 
             assert.strictEqual(result.exitCode, 0);
-            assert.strictEqual(await fileExists(outputFile), true);
+            await readAndValidateNewFormatYrtFile(outputFile);
+
         });
     });
 
@@ -117,18 +115,18 @@ describe("yrt-migrate CLI統合テスト", () => {
 
             assert.strictEqual(result.exitCode, 0);
 
-            // 出力ファイルの存在確認
-            assert.strictEqual(await fileExists(outputFile), true);
+            // 出力形式の基本検証（詳細な内容検証は別途）
+            const yrt = await readAndValidateNewFormatYrtFile(outputFile);
+            const body = yrt[2];
 
-            // 出力形式の基本検証（詳細な内容検証は「YRT内容検証テスト」で実施）
-            const yrtRoot = await readAndValidateNewFormatYrtFile(outputFile);
-            const body = yrtRoot[2];
-
-            // 基本的なYRT構造の確認のみ
-            assert(Array.isArray(body.l), "LayoutXMLs配列が存在することを確認");
-            assert(body.l.length > 0, "少なくとも1つのLayoutXMLが存在することを確認");
-            assert(body.a, "アセットが存在することを確認");
-            assert(body.a["image"], "画像アセットが存在することを確認");
+            // アセットの確認
+            assert.deepStrictEqual(
+                body.a,
+                {
+                    image: await fs.readFile("test/fixtures/image.png")
+                },
+                "入力された legacy_complex.yrt と同じアセットが含まれること"
+            );
         });
 
         test("YRTファイルのインプレース変換（バックアップ作成）", async () => {
@@ -244,8 +242,8 @@ describe("yrt-migrate CLI統合テスト", () => {
                     assert.strictEqual(result.exitCode, 0);
 
                     // YRT内容の詳細検証
-                    const yrtRoot = await readAndValidateNewFormatYrtFile(outputFile);
-                    const body = yrtRoot[2];
+                    const yrt = await readAndValidateNewFormatYrtFile(outputFile);
+                    const body = yrt[2];
 
                     // LayoutXMLの数の確認
                     assert.strictEqual(body.l.length, 1, "1つのLayoutXMLを含むべき");
@@ -275,8 +273,8 @@ describe("yrt-migrate CLI統合テスト", () => {
 
                     assert.strictEqual(result.exitCode, 0);
 
-                    const yrtRoot = await readAndValidateNewFormatYrtFile(outputFile);
-                    const body = yrtRoot[2];
+                    const yrt = await readAndValidateNewFormatYrtFile(outputFile);
+                    const body = yrt[2];
 
                     assert.strictEqual(body.s, null, "StyleXMLを含まないこと");
                 });
@@ -284,40 +282,40 @@ describe("yrt-migrate CLI統合テスト", () => {
 
             describe("異なる入力形式に対する挙動一貫性の検証", () => {
                 test("入力がYRT形式の場合も、入力がXML形式の場合と完全に同じXMLを生成する", async () => {
-                    // XML入力からの変換
-                    const xmlTestCaseDir = await createTestCaseDir(testOutDir, "content-01-minimal-xml-compare");
-                    const xmlInputFile = path.resolve("test/fixtures/legacy_minimal.xml");
-                    const xmlOutputFile = path.join(xmlTestCaseDir, "from-xml.yrt");
+                    const testCaseDir = await createTestCaseDir(testOutDir, "content-01-minimal-xml-yrt-compare");
 
-                    const xmlResult = await runYrtMigrate([
-                        "--input", xmlInputFile,
-                        "--output", xmlOutputFile
+                    // XML入力からの変換
+                    const inputFileLegacyXml = path.resolve("test/fixtures/legacy_minimal.xml");
+                    const outputFileFromLegacyXml = path.join(testCaseDir, "from-xml.yrt");
+
+                    const resultFromLegacyXml = await runYrtMigrate([
+                        "--input", inputFileLegacyXml,
+                        "--output", outputFileFromLegacyXml
                     ]);
-                    assert.strictEqual(xmlResult.exitCode, 0);
+                    assert.strictEqual(resultFromLegacyXml.exitCode, 0);
 
                     // YRT入力からの変換
-                    const yrtTestCaseDir = await createTestCaseDir(testOutDir, "content-02-minimal-yrt-compare");
                     const originalYrtFile = path.resolve("test/fixtures/legacy_minimal.yrt");
-                    const yrtInputFile = path.join(yrtTestCaseDir, "input.yrt");
-                    await fs.copyFile(originalYrtFile, yrtInputFile);
-                    const yrtOutputFile = path.join(yrtTestCaseDir, "from-yrt.yrt");
+                    const inputFileLegacyYrt = path.join(testCaseDir, "input.yrt");
+                    await fs.copyFile(originalYrtFile, inputFileLegacyYrt);
+                    const outputFileFromLegacyYrt = path.join(testCaseDir, "from-yrt.yrt");
 
-                    const yrtResult = await runYrtMigrate([
-                        "--input", yrtInputFile,
-                        "--output", yrtOutputFile
+                    const resultFromLegacyYrt = await runYrtMigrate([
+                        "--input", inputFileLegacyYrt,
+                        "--output", outputFileFromLegacyYrt
                     ]);
-                    assert.strictEqual(yrtResult.exitCode, 0);
+                    assert.strictEqual(resultFromLegacyYrt.exitCode, 0);
 
                     // 結果の比較
-                    const xmlYrtRoot = await readAndValidateNewFormatYrtFile(xmlOutputFile);
-                    const yrtYrtRoot = await readAndValidateNewFormatYrtFile(yrtOutputFile);
+                    const yrtFromLegacyXml = await readAndValidateNewFormatYrtFile(outputFileFromLegacyXml);
+                    const yrtFromLegacyYrt = await readAndValidateNewFormatYrtFile(outputFileFromLegacyYrt);
 
-                    const xmlBody = xmlYrtRoot[2];
-                    const yrtBody = yrtYrtRoot[2];
+                    const bodyFromXml = yrtFromLegacyXml[2];
+                    const bodyFromYrt = yrtFromLegacyYrt[2];
 
                     // 全XMLが同じであることを確認（アセットは除外）
-                    assert.deepStrictEqual(xmlBody.l, yrtBody.l, "LayoutXMLsの内容が完全に一致すべき");
-                    assert.strictEqual(xmlBody.s, yrtBody.s, "StyleXMLの内容が完全に一致すべき");
+                    assert.deepStrictEqual(bodyFromXml.l, bodyFromYrt.l, "LayoutXMLsの内容が完全に一致すること");
+                    assert.strictEqual(bodyFromXml.s, bodyFromYrt.s, "StyleXMLの内容が完全に一致すること");
                 });
             });
         });
@@ -338,8 +336,8 @@ describe("yrt-migrate CLI統合テスト", () => {
                     assert.strictEqual(result.exitCode, 0);
 
                     // YRT内容の詳細検証
-                    const yrtRoot = await readAndValidateNewFormatYrtFile(outputFile);
-                    const body = yrtRoot[2];
+                    const yrt = await readAndValidateNewFormatYrtFile(outputFile);
+                    const body = yrt[2];
 
                     // LayoutXMLの数の確認
                     assert.strictEqual(body.l.length, 2, "2つのLayoutXMLを含むこと");
@@ -378,8 +376,8 @@ describe("yrt-migrate CLI統合テスト", () => {
 
                     assert.strictEqual(result.exitCode, 0);
 
-                    const yrtRoot = await readAndValidateNewFormatYrtFile(outputFile);
-                    const body = yrtRoot[2];
+                    const yrt = await readAndValidateNewFormatYrtFile(outputFile);
+                    const body = yrt[2];
 
                     // StyleXMLの確認
                     assert(body.s !== null, "StyleXMLを含むこと");
@@ -391,23 +389,23 @@ describe("yrt-migrate CLI統合テスト", () => {
 
             describe("異なる入力形式に対する挙動一貫性の検証", () => {
                 test("入力がYRT形式の場合も、入力がXML形式の場合と完全に同じXMLを生成する", async () => {
+                    const testCaseDir = await createTestCaseDir(testOutDir, "content-03-complex-xml-yrt-compare");
+
                     // XML入力からの変換
-                    const xmlTestCaseDir = await createTestCaseDir(testOutDir, "content-03-complex-xml-compare");
-                    const xmlInputFile = path.resolve("test/fixtures/legacy_complex.xml");
-                    const xmlOutputFile = path.join(xmlTestCaseDir, "from-xml.yrt");
+                    const inputFileLegacyXml = path.resolve("test/fixtures/legacy_complex.xml");
+                    const outputFileFromLegacyXml = path.join(testCaseDir, "from-xml.yrt");
 
                     const xmlResult = await runYrtMigrate([
-                        "--input", xmlInputFile,
-                        "--output", xmlOutputFile
+                        "--input", inputFileLegacyXml,
+                        "--output", outputFileFromLegacyXml
                     ]);
                     assert.strictEqual(xmlResult.exitCode, 0);
 
                     // YRT入力からの変換
-                    const yrtTestCaseDir = await createTestCaseDir(testOutDir, "content-04-complex-yrt-compare");
                     const originalYrtFile = path.resolve("test/fixtures/legacy_complex.yrt");
-                    const yrtInputFile = path.join(yrtTestCaseDir, "input.yrt");
+                    const yrtInputFile = path.join(testCaseDir, "input.yrt");
                     await fs.copyFile(originalYrtFile, yrtInputFile);
-                    const yrtOutputFile = path.join(yrtTestCaseDir, "from-yrt.yrt");
+                    const yrtOutputFile = path.join(testCaseDir, "from-yrt.yrt");
 
                     const yrtResult = await runYrtMigrate([
                         "--input", yrtInputFile,
@@ -416,15 +414,15 @@ describe("yrt-migrate CLI統合テスト", () => {
                     assert.strictEqual(yrtResult.exitCode, 0);
 
                     // 結果の比較
-                    const xmlYrtRoot = await readAndValidateNewFormatYrtFile(xmlOutputFile);
-                    const yrtYrtRoot = await readAndValidateNewFormatYrtFile(yrtOutputFile);
+                    const yrtFromLegacyXml = await readAndValidateNewFormatYrtFile(outputFileFromLegacyXml);
+                    const yrtFromLegacyYrt = await readAndValidateNewFormatYrtFile(yrtOutputFile);
 
-                    const xmlBody = xmlYrtRoot[2];
-                    const yrtBody = yrtYrtRoot[2];
+                    const xmlBody = yrtFromLegacyXml[2];
+                    const yrtBody = yrtFromLegacyYrt[2];
 
                     // 全XMLが同じであることを確認（アセットは除外）
-                    assert.deepStrictEqual(xmlBody.l, yrtBody.l, "LayoutXMLsの内容が完全に一致すべき");
-                    assert.strictEqual(xmlBody.s, yrtBody.s, "StyleXMLの内容が完全に一致すべき");
+                    assert.deepStrictEqual(xmlBody.l, yrtBody.l, "LayoutXMLsの内容が完全に一致すること");
+                    assert.strictEqual(xmlBody.s, yrtBody.s, "StyleXMLの内容が完全に一致すること");
                 });
             });
         });
