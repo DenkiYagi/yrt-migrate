@@ -1,0 +1,5 @@
+‘Ùu<LayoutXml>
+  <StackLayout>
+    <Text x="0" y="0" width="100">Minimal Layout</Text>
+  </StackLayout>
+</LayoutXml>
