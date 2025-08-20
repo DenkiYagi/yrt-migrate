@@ -46,7 +46,7 @@ export function removeIndents(xml) {
         console.warn(`[WARNING] TAB文字が検出されました。半角スペースx2 に変換します。`);
         xml = xml.replace(/\t/g, '  ');
     }
-    const lines = xml.split('\n');
+    const lines = xml.split(/\r\n|\r|\n/);
 
     // エッジケース: 空文字列、1行のみの場合はそのまま返す
     if (lines.length <= 1) {
