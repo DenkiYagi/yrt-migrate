@@ -26,15 +26,13 @@ function convertDasharray(doc) {
     const elements = doc.getElementsByTagName("*");
     for (let i = 0; i < elements.length; i++) {
         const el = elements[i];
-        const val = el.getAttribute && el.getAttribute("borderStyle");
+        if (!el.hasAttribute("borderStyle")) continue;
+        const val = el.getAttribute("borderStyle");
         if (typeof val === "string") {
-            const m = val.match(/^\s*dasharray\((.*)\)\s*$/i);
-            if (m) {
-                // dasharray(...) の中身を安全に抽出
-                const inner = m[1];
-                const colon = inner.split(/\s*,\s*/).join(":");
-                el.setAttribute("borderStyle", colon);
-            }
+            const replaced = val.replace(/dasharray\(([^)]*)\)/gi, (_, inner) => {
+                return inner.split(/\s*,\s*/).map(s => s.trim()).join(":");
+            });
+            el.setAttribute("borderStyle", replaced);
         }
     }
 }

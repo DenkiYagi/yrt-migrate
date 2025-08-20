@@ -1,4 +1,3 @@
-import { jest } from '@jest/globals';
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 import { migrate } from "./color_notation_illustrator.mjs";
 import { toYrtRoot, fromYrtRoot } from "./utils.js";
@@ -156,6 +155,25 @@ describe("カラー記法のIllustrator寄り変換マイグレーション", ()
             const out = new XMLSerializer().serializeToString(doc.documentElement);
             expect(out).toContain('headerBackgroundColor="K80"');
             expect(out).toContain('footerBackgroundColor="R10G20B30"');
+        });
+    });
+
+    describe("4方向系カラー属性のスペース区切り複数値", () => {
+        it("4方向系カラー属性がスペース区切りで複数値の場合、すべて変換される", () => {
+            const inputXml = '<?xml version="1.0" encoding="UTF-8"?>\n<LayoutXml>\n  <Grid borderColor="grayscale(0.0) grayscale(0.5) grayscale(1.0)" outerBorderColor="rgb(1,0,0) rgb(0,1,0) rgb(0,0,1)">\n    <Text>test</Text>\n  </Grid>\n</LayoutXml>';
+            const yrt = migrate(toYrtRoot({ layouts: [inputXml] }));
+            const { layouts } = fromYrtRoot(yrt);
+            // borderColor: K100 K50 K0, outerBorderColor: R100G0B0 R0G100B0 R0G0B100
+            expect(layouts[0]).toContain('borderColor="K100 K50 K0"');
+            expect(layouts[0]).toContain('outerBorderColor="R100G0B0 R0G100B0 R0G0B100"');
+        });
+
+        it("4方向系カラー属性がスペース複数区切りでもすべて変換される", () => {
+            const inputXml = '<?xml version="1.0" encoding="UTF-8"?>\n<LayoutXml>\n  <Grid borderColor="grayscale(0.0)   grayscale(1.0)" outerBorderColor="rgb(1,0,0)   rgb(0,0,1)">\n    <Text>test</Text>\n  </Grid>\n</LayoutXml>';
+            const yrt = migrate(toYrtRoot({ layouts: [inputXml] }));
+            const { layouts } = fromYrtRoot(yrt);
+            expect(layouts[0]).toContain('borderColor="K100 K0"');
+            expect(layouts[0]).toContain('outerBorderColor="R100G0B0 R0G0B100"');
         });
     });
 });

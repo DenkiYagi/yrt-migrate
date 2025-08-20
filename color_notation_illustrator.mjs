@@ -41,9 +41,17 @@ function migrateNode(node) {
     for (const attr of COLOR_ATTRS) {
         if (node.hasAttribute(attr)) {
             const val = node.getAttribute(attr).trim();
-            let newVal = null;
-            newVal = toK(val) || toRGB(val) || toCMYK(val);
-            if (newVal) node.setAttribute(attr, newVal);
+            const colorPattern = /(grayscale\([^)]*\)|rgb\([^)]*\)|cmyk\([^)]*\))/gi;
+            const matches = val.match(colorPattern);
+            if (matches && matches.length > 1) {
+                // 複数マッチ → 個別変換
+                const converted = matches.map(v => toK(v) || toRGB(v) || toCMYK(v) || v);
+                node.setAttribute(attr, converted.join(' '));
+            } else {
+                // 単一値 or マッチなし → そのまま変換
+                let newVal = toK(val) || toRGB(val) || toCMYK(val);
+                if (newVal) node.setAttribute(attr, newVal);
+            }
         }
     }
     if (node.childNodes) {
