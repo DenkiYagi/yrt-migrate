@@ -21,7 +21,8 @@ import * as path from "path";
 import * as msgpack from "@msgpack/msgpack";
 import * as util from "util";
 import { yrtRootToPackage, packageToYrtRoot } from "./yrt_format.js";
-import { formatXml, isAlreadyMigrated, normalizeAssets } from "./utils.js";
+import { isAlreadyMigrated, normalizeAssets } from "./utils.js";
+import { formatXmlPretty, removeIndents } from "./formatter.mjs";
 import { migrate as layoutsToMultipleXmls } from "./multiple_xmls.mjs";
 import { migrate as removeContentElements } from "./remove_content_elements.mjs";
 import { migrate as styleElementMigrate } from "./style_element.mjs";
@@ -43,7 +44,7 @@ import { migrate as borderAdjacentLineWarning } from "./border_adjacent_line_war
 import { migrate as warnSpanColorBinding } from "./span_color_binding_warn.mjs";
 import { migrate as applySchema } from "./apply_schema.mjs";
 
-// dry-run時のXML整形出力を制御
+// XML整形出力を制御
 const DO_FORMAT_XML = true;
 
 function migrate(newYrtRoot) {
@@ -183,10 +184,10 @@ async function main() {
         }
 
         const migratedYrtRoot = migrate(inputYrtRoot);
-        // レイアウトXMLとStyle XMLを整形
-        migratedYrtRoot[2].l = migratedYrtRoot[2].l.map(([name, xml]) => [name, DO_FORMAT_XML ? formatXml(xml) : xml]);
+        // LayoutXMLとStyleXMLを整形（それぞれ別の関数を使用することに注意）
+        migratedYrtRoot[2].l = migratedYrtRoot[2].l.map(([name, xml]) => [name, DO_FORMAT_XML ? removeIndents(xml) : xml]);
         if (migratedYrtRoot[2].s) {
-            migratedYrtRoot[2].s = DO_FORMAT_XML ? formatXml(migratedYrtRoot[2].s) : migratedYrtRoot[2].s;
+            migratedYrtRoot[2].s = DO_FORMAT_XML ? formatXmlPretty(migratedYrtRoot[2].s) : migratedYrtRoot[2].s;
         }
         const migratedPkg = yrtRootToPackage(migratedYrtRoot);
         const outputFile = msgpack.encode(migratedYrtRoot);
