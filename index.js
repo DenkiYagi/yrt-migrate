@@ -23,6 +23,7 @@ import * as util from "util";
 import { yrtRootToPackage, packageToYrtRoot } from "./yrt_format.js";
 import { formatXmlPretty, removeIndents } from "./formatter.mjs";
 import { migrate as layoutsToMultipleXmls } from "./multiple_xmls.mjs";
+import { migrate as removeUnspecifiedAttr } from "./remove_unspecified_attr.mjs";
 import { migrate as removeContentElements } from "./remove_content_elements.mjs";
 import { migrate as styleElementMigrate } from "./style_element.mjs";
 import { migrate as foreachHiddenToLogicMigrate } from "./foreach_hidden_to_logic.mjs";
@@ -49,6 +50,7 @@ const DO_FORMAT_XML = true;
 
 function migrate(newYrtRoot) {
     newYrtRoot = layoutsToMultipleXmls(newYrtRoot);
+    newYrtRoot = removeUnspecifiedAttr(newYrtRoot);
     newYrtRoot = styleElementMigrate(newYrtRoot);
     newYrtRoot = removeContentElements(newYrtRoot);
     newYrtRoot = foreachHiddenToLogicMigrate(newYrtRoot);
