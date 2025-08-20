@@ -1,5 +1,3 @@
-import xmlFormat from "xml-formatter";
-
 /**
  * 任意の値をUint8Arrayに変換する
  * @param {any} val
@@ -122,13 +120,4 @@ export function getXPath(node) {
         current = parent && parent.nodeType === 1 ? parent : null;
     }
     return path;
-}
-
-export function formatXml(xml) {
-    // xml-formatter を使って2スペースインデントで整形
-    return xmlFormat(xml, {
-        indentation: "  ",
-        lineSeparator: "\n",
-        whiteSpaceAtEndOfSelfclosingTag: true,
-    });
 }

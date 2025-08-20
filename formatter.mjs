@@ -1,3 +1,22 @@
+import xmlFormat from "xml-formatter";
+
+/**
+ * xml-formatter を使って2スペースインデントで整形します。
+ *
+ * 主に StyleXML に対して使用します。
+ * LayoutXML にはこの関数ではなく `removeIndents()` のほうを使用してください。
+ * 
+ * @param {string} xml XML文字列
+ * @returns {string} 整形済みXML
+ */
+export function formatXmlPretty(xml) {
+    return xmlFormat(xml, {
+        indentation: "  ",
+        lineSeparator: "\n",
+        whiteSpaceAtEndOfSelfclosingTag: true,
+    });
+}
+
 /**
  * 与えられたXML文字列について、2行目以降の共通インデントを除去することで整形します。
  *
