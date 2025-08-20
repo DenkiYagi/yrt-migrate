@@ -126,5 +126,8 @@ export function getXPath(node) {
 
 export function formatXml(xml) {
     // xml-formatter を使って2スペースインデントで整形
-    return xmlFormat(xml, { indentation: "  " });
+    return xmlFormat(xml, {
+        indentation: "  ",
+        whiteSpaceAtEndOfSelfclosingTag: true,
+    });
 }
