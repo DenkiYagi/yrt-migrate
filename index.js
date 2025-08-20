@@ -44,7 +44,7 @@ import { migrate as borderAdjacentLineWarning } from "./border_adjacent_line_war
 import { migrate as warnSpanColorBinding } from "./span_color_binding_warn.mjs";
 import { migrate as applySchema } from "./apply_schema.mjs";
 
-// dry-run時のXML整形出力を制御
+// XML整形出力を制御
 const DO_FORMAT_XML = true;
 
 function migrate(newYrtRoot) {
