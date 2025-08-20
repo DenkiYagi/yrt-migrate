@@ -1,5 +1,6 @@
 import { migrate } from "./style_element.mjs";
 import { toYrtRoot, fromYrtRoot } from "./utils.js";
+import { jest } from '@jest/globals';
 
 describe("style_element", () => {
     it("GridStyle要素がStyle XMLに移行し、レイアウトXMLから削除される", () => {
@@ -48,8 +49,6 @@ describe("style_element", () => {
             '<CellRange borderColor="blue" col="1" row="2"'
         );
     });
-
-
 
     it("ColumnTextStyle要素がStyle XMLに移行し、レイアウトXMLから削除される", () => {
         const inputXml = `<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<LayoutXml>\n  <ColumnText>\n    <ColumnTextStyle borderColor=\"green\"/>\n    <ColumnTextContent>abc</ColumnTextContent>\n  </ColumnText>\n</LayoutXml>`;
@@ -156,5 +155,19 @@ describe("style_element", () => {
         const yrt = migrate(toYrtRoot({ layouts: [inputXml] }));
         const { styleXml } = fromYrtRoot(yrt);
         expect(!styleXml || styleXml.trim() === '').toBe(true);
+    });
+
+    it("XxxStyle要素の属性にバインド変数が含まれる場合、StyleXMLに移行しつつ警告が出る", () => {
+        const inputXml = '<?xml version="1.0" encoding="UTF-8"?>\n<LayoutXml>\n  <Grid>\n    <GridStyle borderColor="${foo}" foreach="${foo}"/>\n    <Text>test</Text>\n  </Grid>\n</LayoutXml>';
+        const spy = jest.spyOn(console, 'warn').mockImplementation(() => { });
+        const yrt = migrate(toYrtRoot({ layouts: [inputXml] }));
+        const { styleXml } = fromYrtRoot(yrt);
+        const cellRangeMatch = styleXml.match(/<CellRange[^>]*>/);
+        expect(cellRangeMatch).not.toBeNull();
+        const cellRangeTag = cellRangeMatch[0];
+        expect(cellRangeTag).toContain('borderColor="${foo}"');
+        expect(cellRangeTag).toContain('foreach="${foo}"');
+        expect(spy).toHaveBeenCalled();
+        spy.mockRestore();
     });
 });

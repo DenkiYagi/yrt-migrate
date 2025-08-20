@@ -11,6 +11,7 @@
  */
 
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
+import { getXPath } from "./utils.js";
 
 /**
  * YrtRootのみを受け取り、layouts配列のxmlを変換し、sプロパティにStyle XMLを格納して返す
@@ -53,6 +54,14 @@ export function migrate(yrtRoot) {
                     for (let j = 0; j < styleElem.attributes.length; j++) {
                         const attr = styleElem.attributes[j];
                         cellRange.setAttribute(attr.name, attr.value);
+                        // バインド変数判定: ${...} で始まり終わるもののみ
+                        if (
+                            typeof attr.value === "string" &&
+                            /^\$\{[^}]+\}$/.test(attr.value)
+                        ) {
+                            const xpath = getXPath(styleElem);
+                            console.warn(`[WARNING] ${tag} の ${attr.name} 属性値にバインド変数 (${attr.value}) が含まれています（${xpath}）`);
+                        }
                     }
                     if (!cellRange.hasAttribute("col")) {
                         cellRange.setAttribute("col", "all");
