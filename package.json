@@ -7,7 +7,10 @@
     "yrt-migrate": "index.js"
   },
   "scripts": {
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    "test": "yarn test:unit && yarn test:integration",
+    "test:unit": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testPathIgnorePatterns=test/",
+    "test:integration": "node --test test/cli.test.mjs test/integration.test.mjs",
+    "test:generate-fixtures": "node test/generate-fixtures.mjs"
   },
   "author": "DenkiYagi Inc.",
   "license": "Apache-2.0",
