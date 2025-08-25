@@ -1,4 +1,9 @@
 /**
+ * アセットオブジェクト（キー: 識別名、値: `Uint8Array`）
+ */
+export type AssetsObject = Partial<Record<string, Uint8Array>>;
+
+/**
  * msgpackでデコードした直後の YRT v1.0 データのbody部分
  *
  * ※ yagisan-report-devtool リポジトリーの YrtFormat モジュールより
@@ -17,7 +22,7 @@ export type DecodedYrtBody = {
     /**
      * アセット (nullable)
      */
-    a: { [key: string]: Uint8Array } | null
+    a: AssetsObject | null
 };
 
 /**
@@ -33,6 +38,6 @@ export type DecodedYrt = ["YRT", 1, DecodedYrtBody];
  * ※ yagisan-report-devtool リポジトリーの YrtFormat モジュールより
  *
  * - `[0]`: レイアウトXMLの文字列（ルート要素: `<LayoutXml>`）
- * - `[1]`: アセットのマッピングオブジェクト（キー: 識別名、値: `Uint8Array`）
+ * - `[1]`: アセットのマッピングオブジェクト
  */
-export type DecodedLegacyYrt = [string] | [string, Partial<Record<string, Uint8Array>>];
+export type DecodedLegacyYrt = [string] | [string, AssetsObject];
