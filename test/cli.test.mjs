@@ -323,6 +323,14 @@ describe("yrt-migrate CLIテスト", () => {
             assert(result.stderr.includes("YRTファイル形式が不正です"), "不正なYRT形式のエラーメッセージが出力されること");
         });
 
+        test("入力が旧形式のYRTだが、アセットが無効な型の場合、エラーメッセージが出力される", async () => {
+            const testCaseDir = await createTestCaseDir(testOutDir, "invalid-yrt-assets");
+            const invalidYrtFile = await prepareInputFile("test/fixtures/invalid_yrt_assets.yrt", testCaseDir);
+            const result = await runYrtMigrate([invalidYrtFile]);
+            assert.strictEqual(result.exitCode, 1);
+            assert(result.stderr.includes("YRTファイル形式が不正です"), "不正なアセット形式のエラーメッセージが出力されること");
+        });
+
         test("既にマイグレーション済みのYRTファイルを指定すると、警告を出して正常終了する", async () => {
             // 既にマイグレーション済みのYRTファイルを用意
             const testCaseDir = await createTestCaseDir(testOutDir, "already-migrated");

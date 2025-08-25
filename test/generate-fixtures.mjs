@@ -50,6 +50,14 @@ async function generateInvalidYrtFiles() {
     const invalidXml = await fs.readFile(invalidXmlPath, "utf-8");
     const invalidYrtArray = msgpack.encode([invalidXml]);
     await fs.writeFile(path.join(fixturesDir, "invalid_yrt_xml_root.yrt"), Buffer.from(invalidYrtArray));
+
+    // 無効なYRTファイル（有効なXMLだが、アセットが無効な型）
+    const minimalXmlPath = path.join(fixturesDir, "legacy_minimal.xml");
+    const minimalXml = await fs.readFile(minimalXmlPath, "utf-8");
+    const invalidAssets = [new Uint8Array([1, 2, 3])]; // 配列はRecord<string, Uint8Array>ではない
+    const invalidAssetsYrtData = [minimalXml, invalidAssets];
+    const invalidAssetsEncoded = msgpack.encode(invalidAssetsYrtData);
+    await fs.writeFile(path.join(fixturesDir, "invalid_yrt_assets.yrt"), Buffer.from(invalidAssetsEncoded));
 }
 
 async function main() {
