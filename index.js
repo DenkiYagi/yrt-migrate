@@ -42,7 +42,7 @@ import { migrate as borderstyleDasharrayToColonMigrate } from "./borderstyle_das
 import { migrate as borderAdjacentLineWarning } from "./border_adjacent_line_warning.mjs";
 import { migrate as warnSpanColorBinding } from "./span_color_binding_warn.mjs";
 import { migrate as applySchema } from "./apply_schema.mjs";
-import { isAssetsObject, isLegacyLayoutXml, isLegacyYrtFormat, isAlreadyMigrated } from "./yrt_format_legacy.mjs";
+import { validateXmlInput, validateYrtInput } from "./yrt_input_validator.mjs";
 
 // XML整形出力を制御
 const DO_FORMAT_XML = true;
@@ -152,41 +152,9 @@ async function main() {
     try {
         let inputYrtRoot;
         if (ext === ".xml") {
-            // 入力が旧形式のXMLの場合、マイグレーションの準備として
-            // 1レイアウトのみ・アセットなしの新形式YRTパッケージを生成
-            const inputLayoutXml = await fs.readFile(inputFileName, "utf-8");
-            if (!isLegacyLayoutXml(inputLayoutXml)) {
-                throw new Error("XMLファイル形式が不正です: alpha系旧XML形式ではありません");
-            }
-            const initialYrtPackage = {
-                layouts: [{ name: null, xml: inputLayoutXml }],
-                style: null,
-                assets: null,
-            };
-            inputYrtRoot = packageToYrtRoot(initialYrtPackage);
+            inputYrtRoot = await validateXmlInput(inputFileName);
         } else if (ext === ".yrt") {
-            // 入力が旧形式のYRTの場合、マイグレーションの準備として
-            // 1レイアウトのみの新形式YRTパッケージに変換（アセット維持）
-            const inputFile = await fs.readFile(inputFileName);
-            const decoded = msgpack.decode(inputFile);
-            if (isAlreadyMigrated(decoded)) {
-                console.warn("このYRTファイルはすでにマイグレーション済みです。処理をスキップします。");
-                process.exit(0);
-            }
-            if (!isLegacyYrtFormat(decoded)) {
-                throw new Error("YRTファイル形式が不正です: alpha系旧YRT形式ではありません");
-            }
-            const assetsObj = decoded[1];
-            if (assetsObj != null && !isAssetsObject(assetsObj)) {
-                console.log(assetsObj);
-                throw new Error("YRTファイル形式が不正です: アセットが Record<string, Uint8Array> ではありません");
-            }
-            const yrtPackage = {
-                layouts: [{ name: null, xml: decoded[0] }],
-                style: null,
-                assets: assetsObj ?? null,
-            };
-            inputYrtRoot = packageToYrtRoot(yrtPackage);
+            inputYrtRoot = await validateYrtInput(inputFileName);
         } else {
             console.error("非対応のファイル形式です");
             process.exit(1);
