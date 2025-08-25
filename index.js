@@ -153,7 +153,8 @@ async function main() {
     try {
         let inputYrtRoot;
         if (ext === ".xml") {
-            // XML入力の場合、1レイアウトのみのYRTパッケージを生成
+            // 入力が旧形式のXMLの場合、マイグレーションの準備として
+            // 1レイアウトのみ・アセットなしの新形式YRTパッケージを生成
             const inputLayoutXml = await fs.readFile(inputFileName, "utf-8");
             if (!isLegacyLayoutXml(inputLayoutXml)) {
                 throw new Error("XMLファイル形式が不正です: alpha系旧XML形式ではありません");
@@ -165,6 +166,8 @@ async function main() {
             };
             inputYrtRoot = packageToYrtRoot(initialYrtPackage);
         } else if (ext === ".yrt") {
+            // 入力が旧形式のYRTの場合、マイグレーションの準備として
+            // 1レイアウトのみの新形式YRTパッケージに変換（アセット維持）
             const inputFile = await fs.readFile(inputFileName);
             const decoded = msgpack.decode(inputFile);
             if (isAlreadyMigrated(decoded)) {
