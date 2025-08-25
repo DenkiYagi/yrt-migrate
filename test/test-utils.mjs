@@ -1,3 +1,5 @@
+// @ts-check
+
 import { execFile } from "child_process";
 import { promisify } from "util";
 import * as fs from "fs/promises";
@@ -15,14 +17,14 @@ const testCaseDirCounters = new Map();
  * `node index.js` を実行するヘルパー関数
  *
  * @param {string[]} args - CLI引数の配列
- * @param {import("node:child_process").ExecFileOptionsWithBufferEncoding} options - 実行オプション
+ * @param {import("node:child_process").ExecFileOptionsWithStringEncoding} options - 実行オプション
  * @returns {Promise<{stdout: string, stderr: string, exitCode: number}>}
  */
 export async function runYrtMigrate(args = [], options = {}) {
     try {
         const { stdout, stderr } = await execFileAsync("node", [CLI_ENTRY_POINT_FILE_PATH, ...args], {
             cwd: path.resolve(process.cwd()),
-            ...options
+            ...options,
         });
         return { stdout, stderr, exitCode: 0 };
     } catch (error) {
@@ -61,6 +63,7 @@ export function decodeAndValidateNewFormatYrt(data) {
         assert(xml.length > 0, "Layout XML should not be empty");
     });
 
+    // @ts-ignore
     return decoded;
 }
 
@@ -102,7 +105,7 @@ export async function createTestCaseDir(testOutDir, testCaseName) {
  * @param {string} [fileName] - 新しいファイル名（省略時は元ファイル名を使用）
  * @returns {Promise<string>} - コピー後のファイルパス
  */
-export async function prepareInputFile(originalPath, testCaseDir, fileName = null) {
+export async function prepareInputFile(originalPath, testCaseDir, fileName) {
     const newFileName = fileName || path.basename(originalPath);
     const newFilePath = path.join(testCaseDir, newFileName);
     await fs.copyFile(originalPath, newFilePath);
