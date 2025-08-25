@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+// @ts-check
+
 /**
  * テスト用YRTフィクスチャファイルを生成するスタンドアロンスクリプト
  * 使用方法: node test/generate-fixtures.mjs
@@ -22,7 +24,7 @@ async function generateYrtFiles() {
     const minimalLayoutXml = await fs.readFile(minimalXmlPath, "utf-8");
     const simpleYrtData = [minimalLayoutXml];
     const simpleEncoded = msgpack.encode(simpleYrtData);
-    await fs.writeFile(path.join(fixturesDir, "legacy_minimal.yrt"), Buffer.from(simpleEncoded));
+    await fs.writeFile(path.join(fixturesDir, "legacy_minimal.yrt"), simpleEncoded);
 
     // 複雑なレガシーYRTファイル（画像アセット付き）
     const complexXmlPath = path.join(fixturesDir, "legacy_complex.xml");
@@ -32,7 +34,7 @@ async function generateYrtFiles() {
     const assets = { image: new Uint8Array(imageData) };
     const complexYrtData = [complexLayoutXml, assets];
     const complexEncoded = msgpack.encode(complexYrtData);
-    await fs.writeFile(path.join(fixturesDir, "legacy_complex.yrt"), Buffer.from(complexEncoded));
+    await fs.writeFile(path.join(fixturesDir, "legacy_complex.yrt"), complexEncoded);
 }
 
 /**
@@ -43,13 +45,13 @@ async function generateInvalidYrtFiles() {
 
     // 無効なYRTファイル（空のオブジェクト）
     const invalidYrtObject = msgpack.encode({});
-    await fs.writeFile(path.join(fixturesDir, "invalid_yrt_object.yrt"), Buffer.from(invalidYrtObject));
+    await fs.writeFile(path.join(fixturesDir, "invalid_yrt_object.yrt"), invalidYrtObject);
 
     // 無効なYRTファイル（配列だがXMLが旧形式でない）
     const invalidXmlPath = path.join(fixturesDir, "invalid_xml_root.xml");
     const invalidXml = await fs.readFile(invalidXmlPath, "utf-8");
     const invalidYrtArray = msgpack.encode([invalidXml]);
-    await fs.writeFile(path.join(fixturesDir, "invalid_yrt_xml_root.yrt"), Buffer.from(invalidYrtArray));
+    await fs.writeFile(path.join(fixturesDir, "invalid_yrt_xml_root.yrt"), invalidYrtArray);
 
     // 無効なYRTファイル（有効なXMLだが、アセットが無効な型）
     const minimalXmlPath = path.join(fixturesDir, "legacy_minimal.xml");
@@ -57,7 +59,7 @@ async function generateInvalidYrtFiles() {
     const invalidAssets = [new Uint8Array([1, 2, 3])]; // 配列はRecord<string, Uint8Array>ではない
     const invalidAssetsYrtData = [minimalXml, invalidAssets];
     const invalidAssetsEncoded = msgpack.encode(invalidAssetsYrtData);
-    await fs.writeFile(path.join(fixturesDir, "invalid_yrt_assets.yrt"), Buffer.from(invalidAssetsEncoded));
+    await fs.writeFile(path.join(fixturesDir, "invalid_yrt_assets.yrt"), invalidAssetsEncoded);
 }
 
 async function main() {
