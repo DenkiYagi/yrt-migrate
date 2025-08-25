@@ -15,7 +15,7 @@ export async function validateXmlInput(inputFileName) {
     const inputLayoutXml = await fs.readFile(inputFileName, "utf-8");
     const xmlValidation = validateLegacyLayoutXml(inputLayoutXml);
     if (xmlValidation.type === 'warning') {
-        console.warn(xmlValidation.message);
+        console.warn(`[WARNING] 入力されたXMLファイルの検証中に警告が発生しました: ${xmlValidation.message}`);
     } else if (xmlValidation.type === 'error') {
         throw new Error(`XMLファイル形式が不正です: ${xmlValidation.message}`);
     }
@@ -47,7 +47,7 @@ export async function validateYrtInput(inputFileName) {
 
     const legacyYrtValidationResult = validateLegacyYrtFormat(decoded);
     if (legacyYrtValidationResult.type === 'warning') {
-        console.warn(legacyYrtValidationResult.message);
+        console.warn(`[WARNING] 入力されたYRTファイルの検証中に警告が発生しました: ${legacyYrtValidationResult.message}`);
     } else if (legacyYrtValidationResult.type === 'error') {
         throw new Error(`YRTファイル形式が不正です: ${legacyYrtValidationResult.message}`);
     }
