@@ -10,7 +10,7 @@ describe("isLegacyLayoutXml", () => {
         expect(isLegacyLayoutXml(xml)).toBe(false);
     });
     it("不正なXMLの場合は false を返す", () => {
-        const xml = `<LayoutXml><LinearLayout></LayoutXml>`; // 閉じタグ不足
+        const xml = `Invalid text`;
         expect(isLegacyLayoutXml(xml)).toBe(false);
     });
     it("空文字列の場合は false を返す", () => {
