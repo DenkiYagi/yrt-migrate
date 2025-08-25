@@ -1,3 +1,4 @@
+import { isAssetsObject } from "./yrt_format_legacy.mjs";
 import { isLegacyYrtFormat, isLegacyLayoutXml } from "./yrt_format_legacy.mjs";
 
 describe("isLegacyLayoutXml", () => {
@@ -75,5 +76,40 @@ describe("isLegacyYrtFormat", () => {
     });
     it("[文字列以外] の場合は false を返す", () => {
         expect(isLegacyYrtFormat([123])).toBe(false);
+    });
+});
+
+describe("isAssetsObject", () => {
+    it("すべての値が Uint8Array のオブジェクトの場合は true を返す", () => {
+        const obj = { a: new Uint8Array([1]), b: new Uint8Array([2, 3]) };
+        expect(isAssetsObject(obj)).toBe(true);
+    });
+
+    it("値の中に Uint8Array 以外が含まれている場合は false を返す", () => {
+        const obj = { a: new Uint8Array([1]), b: 123 };
+        expect(isAssetsObject(obj)).toBe(false);
+    });
+
+    it("配列の場合は false を返す", () => {
+        expect(isAssetsObject([new Uint8Array([1])])).toBe(false);
+    });
+
+    it("null やオブジェクト以外の型の場合は false を返す", () => {
+        expect(isAssetsObject(null)).toBe(false);
+        expect(isAssetsObject(undefined)).toBe(false);
+        expect(isAssetsObject(123)).toBe(false);
+        expect(isAssetsObject("str")).toBe(false);
+    });
+
+    it("空オブジェクトの場合は true を返す", () => {
+        expect(isAssetsObject({})).toBe(true);
+    });
+
+    it("Map インスタンスの場合は false を返す", () => {
+        const map = new Map([["image", new Uint8Array([1, 2, 3])]]);
+        expect(isAssetsObject(map)).toBe(false);
+
+        // msgpack は専用 codec を使わなければ Map をエンコードできないので、
+        // 実際にはこのケースは発生しない想定です。
     });
 });

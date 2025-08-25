@@ -35,7 +35,7 @@ export function isLegacyLayoutXml(xml) {
  * - レイアウトXMLが旧形式であること
  * 
  * @param {unknown} decoded
- * @returns {boolean}
+ * @returns {decoded is DecodedLegacyYrt}
  */
 export function isLegacyYrtFormat(decoded) {
     if (!Array.isArray(decoded)) return false;
@@ -52,4 +52,22 @@ export function isLegacyYrtFormat(decoded) {
     } else {
         return false;
     }
+}
+
+/**
+ * 有効なアセット（プロパティーの値がすべて `Uint8Array` であるようなオブジェクト）であることを確認する
+ * 
+ * ※ アセットオブジェクトの形式は v1.0.0-alpha.13 と v1.0 で共通
+ * 
+ * @param {unknown} value
+ * @returns {value is Partial<Record<string, Uint8Array>>}
+ */
+export function isAssetsObject(value) {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+    if (value instanceof Map || value instanceof Set) return false; // 発生しない想定であるが一応判定
+    for (const v of Object.values(value)) {
+        if (!(v instanceof Uint8Array)) return false;
+    }
+
+    return true;
 }
