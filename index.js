@@ -21,7 +21,6 @@ import * as path from "path";
 import * as msgpack from "@msgpack/msgpack";
 import * as util from "util";
 import { yrtRootToPackage, packageToYrtRoot } from "./yrt_format.js";
-import { isAlreadyMigrated } from "./utils.js";
 import { formatXmlPretty, removeIndents } from "./formatter.mjs";
 import { migrate as layoutsToMultipleXmls } from "./multiple_xmls.mjs";
 import { migrate as removeContentElements } from "./remove_content_elements.mjs";
@@ -43,7 +42,7 @@ import { migrate as borderstyleDasharrayToColonMigrate } from "./borderstyle_das
 import { migrate as borderAdjacentLineWarning } from "./border_adjacent_line_warning.mjs";
 import { migrate as warnSpanColorBinding } from "./span_color_binding_warn.mjs";
 import { migrate as applySchema } from "./apply_schema.mjs";
-import { isAssetsObject, isLegacyLayoutXml, isLegacyYrtFormat } from "./yrt_format_legacy.mjs";
+import { isAssetsObject, isLegacyLayoutXml, isLegacyYrtFormat, isAlreadyMigrated } from "./yrt_format_legacy.mjs";
 
 // XML整形出力を制御
 const DO_FORMAT_XML = true;

@@ -71,3 +71,21 @@ export function isAssetsObject(value) {
 
     return true;
 }
+
+/**
+ * YRTが新フォーマット（マイグレーション済み）かどうか判定
+ * - `['YRT', 1, { l: [...], ... }]` 形式であること
+ * - `l` 配列の要素が1つ以上存在すること
+ *
+ * @param {unknown} maybeYrt
+ * @returns {boolean}
+ */
+export function isAlreadyMigrated(maybeYrt) {
+    if (!Array.isArray(maybeYrt) || maybeYrt.length < 3) return false;
+    if (maybeYrt[0] !== 'YRT' || maybeYrt[1] !== 1) return false;
+    const body = maybeYrt[2];
+    if (!body || typeof body !== 'object') return false;
+    if (!Array.isArray(body.l) || body.l.length === 0) return false;
+
+    return true;
+}

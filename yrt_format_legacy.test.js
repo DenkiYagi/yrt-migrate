@@ -1,4 +1,4 @@
-import { isAssetsObject } from "./yrt_format_legacy.mjs";
+import { isAssetsObject, isAlreadyMigrated } from "./yrt_format_legacy.mjs";
 import { isLegacyYrtFormat, isLegacyLayoutXml } from "./yrt_format_legacy.mjs";
 
 describe("isLegacyLayoutXml", () => {
@@ -111,5 +111,45 @@ describe("isAssetsObject", () => {
 
         // msgpack は専用 codec を使わなければ Map をエンコードできないので、
         // 実際にはこのケースは発生しない想定です。
+    });
+});
+
+describe("isAlreadyMigrated", () => {
+    it('新YRT（layouts配列あり）はマイグレーション済みと判定', () => {
+        const arr = ["YRT", 1, { l: [[null, "<StackLayout/>"]], s: null, a: null }];
+        expect(isAlreadyMigrated(arr)).toBe(true);
+    });
+
+    it('layout配列が空なら未マイグレーションと判定', () => {
+        const arr = ["YRT", 1, { l: [], s: null, a: null }];
+        expect(isAlreadyMigrated(arr)).toBe(false);
+    });
+
+    it('YRTヘッダーが不正なら未マイグレーションと判定', () => {
+        const arr1 = ["WRONG", 1, { l: [[null, "<StackLayout/>"]] }];
+        const arr2 = ["YRT", 2, { l: [[null, "<StackLayout/>"]] }];
+        expect(isAlreadyMigrated(arr1)).toBe(false);
+        expect(isAlreadyMigrated(arr2)).toBe(false);
+    });
+
+    it('不正なデータ構造は未マイグレーションと判定', () => {
+        expect(isAlreadyMigrated(null)).toBe(false);
+        expect(isAlreadyMigrated({})).toBe(false);
+        expect(isAlreadyMigrated([])).toBe(false);
+        expect(isAlreadyMigrated(["YRT", 1])).toBe(false);
+        expect(isAlreadyMigrated(["YRT", 1, null])).toBe(false);
+        expect(isAlreadyMigrated(["YRT", 1, "string"])).toBe(false);
+    });
+
+    it('複数のlayoutsがある場合もマイグレーション済みと判定', () => {
+        const arr = ["YRT", 1, {
+            l: [
+                [null, "<StackLayout/>"],
+                ["layout2", "<StackLayout/>"]
+            ],
+            s: "<Style/>",
+            a: { image: new Uint8Array([1, 2, 3]) }
+        }];
+        expect(isAlreadyMigrated(arr)).toBe(true);
     });
 });
