@@ -15,12 +15,26 @@ import { success, warning, error } from "./validation_result.mjs";
  */
 export function validateLegacyLayoutXml(xml) {
     try {
-        const doc = new DOMParser().parseFromString(xml, 'application/xml');
+        const warningMessages = [];
+        let errorMessage = null;
+        const doc = new DOMParser({
+            errorHandler: {
+                warning: (msg) => warningMessages.push(msg.toString()),
+                error: (msg) => errorMessage = msg,
+                fatalError: (msg) => errorMessage = msg,
+            }
+        }).parseFromString(xml, 'application/xml');
+        if (errorMessage != null) {
+            return error(`XMLパースエラーが発生しました: ${errorMessage}`);
+        }
         if (!doc || !doc.documentElement) {
             return error('XMLパースに失敗しました。');
         }
         if (doc.documentElement.nodeName !== 'LayoutXml') {
             return error('ルート要素が LayoutXml ではありません。');
+        }
+        if (warningMessages.length > 0) {
+            return warning(xml, `XMLパース中に警告が発生しました: ${warningMessages.join(" ; ")}`);
         }
         return success(xml);
     } catch (e) {
