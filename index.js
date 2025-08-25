@@ -43,6 +43,7 @@ import { migrate as borderstyleDasharrayToColonMigrate } from "./borderstyle_das
 import { migrate as borderAdjacentLineWarning } from "./border_adjacent_line_warning.mjs";
 import { migrate as warnSpanColorBinding } from "./span_color_binding_warn.mjs";
 import { migrate as applySchema } from "./apply_schema.mjs";
+import { isLegacyYrtFormat } from "./yrt_format_legacy.mjs";
 
 // XML整形出力を制御
 const DO_FORMAT_XML = true;
@@ -167,8 +168,7 @@ async function main() {
                 console.warn("このYRTファイルはすでにマイグレーション済みです。処理をスキップします。");
                 process.exit(0);
             }
-            // 旧YRT(alpha)形式: [xml, assets?]
-            if (!Array.isArray(decoded) || typeof decoded[0] !== 'string' || !decoded[0]) {
+            if (!isLegacyYrtFormat(decoded)) {
                 throw new Error("YRTファイル形式が不正です: alpha系旧YRT形式ではありません");
             }
             const assetsObj = normalizeAssets(decoded[1]);
