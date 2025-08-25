@@ -1,23 +1,17 @@
 // @ts-check
+// import types:
+/** @private @typedef {import("./types").DecodedLegacyYrt} DecodedLegacyYrt */
+/** @private @template T @typedef {import("./validation_result.mjs").Result<T>} Result<T> */
+/** @private @template T @typedef {import("./validation_result.mjs").SimpleResult<T>} SimpleResult<T> */
 
 import { DOMParser } from "@xmldom/xmldom";
 import { success, warning, error } from "./validation_result.mjs";
 
 /**
- * @typedef {[string] | [string, Partial<Record<string, Uint8Array>>]} DecodedLegacyYrt
- * msgpackでデコードした直後の旧形式YRT (v1.0.0-alpha.13) のデータ
- *
- * ※ yagisan-report-devtool リポジトリーの YrtFormat モジュールより
- *
- * - `[0]`: レイアウトXMLの文字列（`<LayoutXml>...</LayoutXml>`）
- * - `[1]`: アセットのマップオブジェクト（キー: 識別名、値: Uint8Array）
- */
-
-/**
  * 指定された文字列がXMLであり、かつルート要素が `<LayoutXml>` であることを確認する
  *
  * @param {string} xml
- * @returns {import("./validation_result.mjs").Result<string>}
+ * @returns {Result<string>}
  */
 export function validateLegacyLayoutXml(xml) {
     try {
@@ -41,7 +35,7 @@ export function validateLegacyLayoutXml(xml) {
  * - レイアウトXMLが旧形式であること
  * 
  * @param {unknown} decoded
- * @returns {import("./validation_result.mjs").Result<DecodedLegacyYrt>}
+ * @returns {Result<DecodedLegacyYrt>}
  */
 export function validateLegacyYrtFormat(decoded) {
     if (!Array.isArray(decoded)) {
@@ -86,7 +80,7 @@ export function validateLegacyYrtFormat(decoded) {
  * ※ アセットオブジェクトの形式は v1.0.0-alpha.13 と v1.0 で共通
  * 
  * @param {unknown} value
- * @returns {import("./validation_result.mjs").SimpleResult<Partial<Record<string, Uint8Array>>>}
+ * @returns {SimpleResult<Partial<Record<string, Uint8Array>>>}
  */
 export function validateAssetsObject(value) {
     if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -110,7 +104,7 @@ export function validateAssetsObject(value) {
  * - `l` 配列の要素が1つ以上存在すること
  *
  * @param {unknown} maybeYrt
- * @returns {import("./validation_result.mjs").SimpleResult<unknown>}
+ * @returns {SimpleResult<unknown>}
  */
 export function validateAlreadyMigrated(maybeYrt) {
     if (!Array.isArray(maybeYrt) || maybeYrt.length < 3) {
