@@ -18,7 +18,7 @@ import {
  * - エラーがあれば `Error` を reject
  *
  * @param {string} inputFileName - XMLファイルのパス
- * @returns {Promise<import("./types.js").DecodedYrt>}
+ * @returns {Promise<import("./yrt_types.js").DecodedYrt>}
  */
 export async function validateXmlInput(inputFileName) {
     const inputLayoutXml = await fs.readFile(inputFileName, "utf-8");
@@ -46,7 +46,7 @@ export async function validateXmlInput(inputFileName) {
  * - エラーがあれば `Error` を reject
  *
  * @param {string} inputFileName - YRTファイルのパス
- * @returns {Promise<import("./types.js").DecodedYrt>}
+ * @returns {Promise<import("./yrt_types.js").DecodedYrt>}
  */
 export async function validateYrtInput(inputFileName) {
     const inputFile = await fs.readFile(inputFileName);

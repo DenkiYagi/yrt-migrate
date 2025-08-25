@@ -1,6 +1,6 @@
 // @ts-check
 // import types:
-/** @private @typedef {import("./types").DecodedLegacyYrt} DecodedLegacyYrt */
+/** @private @typedef {import("./yrt_types").DecodedLegacyYrt} DecodedLegacyYrt */
 /** @private @template T @typedef {import("./validation_result.mjs").Result<T>} Result<T> */
 /** @private @template T @typedef {import("./validation_result.mjs").SimpleResult<T>} SimpleResult<T> */
 
