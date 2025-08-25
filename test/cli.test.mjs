@@ -8,7 +8,7 @@ import {
     readAndValidateNewFormatYrtFile,
     prepareInputFile
 } from "./test-utils.mjs";
-import { readdir, readFile, writeFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 
 describe("yrt-migrate CLIテスト", () => {
@@ -16,7 +16,7 @@ describe("yrt-migrate CLIテスト", () => {
 
     before(async () => {
         await setupTestOutputDir(testOutDir);
-        // Note: YRT fixture files should be generated manually using:
+        // Note: YRT fixture files can be regenerated using:
         // node test/generate-fixtures.mjs
     });
 
@@ -290,15 +290,37 @@ describe("yrt-migrate CLIテスト", () => {
             assert(result.stderr.includes("ENOENT"));
         });
 
-        test("入力として無関係な形式のファイルを指定すると、非対応の形式である旨のエラーメッセージが出力される", async () => {
+        test("入力として無効な拡張子のファイルを指定すると、非対応の形式である旨のエラーメッセージが出力される", async () => {
             const testCaseDir = await createTestCaseDir(testOutDir, "invalid-file");
-
-            const invalidFile = join(testCaseDir, "invalid.txt");
-            await writeFile(invalidFile, "This is not a valid file");
+            const invalidFile = await prepareInputFile("test/fixtures/invalid_extension.txt", testCaseDir);
 
             const result = await runYrtMigrate([invalidFile]);
             assert.strictEqual(result.exitCode, 1);
             assert(result.stderr.includes("非対応のファイル形式です"));
+        });
+
+        test("旧形式でない（ルート要素が LayoutXml ではない）XMLファイルが入力されたとき、エラーメッセージが出力される", async () => {
+            const testCaseDir = await createTestCaseDir(testOutDir, "invalid-xml-root");
+            const invalidXmlFile = await prepareInputFile("test/fixtures/invalid_xml_root.xml", testCaseDir);
+            const result = await runYrtMigrate([invalidXmlFile]);
+            assert.strictEqual(result.exitCode, 1);
+            assert(result.stderr.includes("XMLファイル形式が不正です"), "不正なXML形式のエラーメッセージが出力されること");
+        });
+
+        test("旧形式でないYRTファイル（空のオブジェクトなど）が入力されたとき、エラーメッセージが出力される", async () => {
+            const testCaseDir = await createTestCaseDir(testOutDir, "invalid-yrt-object");
+            const invalidYrtFile = await prepareInputFile("test/fixtures/invalid_yrt_object.yrt", testCaseDir);
+            const result = await runYrtMigrate([invalidYrtFile]);
+            assert.strictEqual(result.exitCode, 1);
+            assert(result.stderr.includes("YRTファイル形式が不正です"), "不正なYRT形式のエラーメッセージが出力されること");
+        });
+
+        test("入力が旧形式のYRTだが、それに含まれるXMLが旧形式でない（ルート要素が LayoutXml ではない）場合、エラーメッセージが出力される", async () => {
+            const testCaseDir = await createTestCaseDir(testOutDir, "invalid-yrt-xml-root");
+            const invalidYrtFile = await prepareInputFile("test/fixtures/invalid_yrt_xml_root.yrt", testCaseDir);
+            const result = await runYrtMigrate([invalidYrtFile]);
+            assert.strictEqual(result.exitCode, 1);
+            assert(result.stderr.includes("YRTファイル形式が不正です"), "不正なYRT形式のエラーメッセージが出力されること");
         });
 
         test("既にマイグレーション済みのYRTファイルを指定すると、警告を出して正常終了する", async () => {

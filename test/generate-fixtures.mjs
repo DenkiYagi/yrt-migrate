@@ -35,12 +35,34 @@ async function generateYrtFiles() {
     await fs.writeFile(path.join(fixturesDir, "legacy_complex.yrt"), Buffer.from(complexEncoded));
 }
 
+/**
+ * テスト用の無効なYRTファイルを生成する
+ */
+async function generateInvalidYrtFiles() {
+    const fixturesDir = path.resolve("test/fixtures");
+
+    // 無効なYRTファイル（空のオブジェクト）
+    const invalidYrtObject = msgpack.encode({});
+    await fs.writeFile(path.join(fixturesDir, "invalid_yrt_object.yrt"), Buffer.from(invalidYrtObject));
+
+    // 無効なYRTファイル（配列だがXMLが旧形式でない）
+    const invalidXmlPath = path.join(fixturesDir, "invalid_xml_root.xml");
+    const invalidXml = await fs.readFile(invalidXmlPath, "utf-8");
+    const invalidYrtArray = msgpack.encode([invalidXml]);
+    await fs.writeFile(path.join(fixturesDir, "invalid_yrt_xml_root.yrt"), Buffer.from(invalidYrtArray));
+}
+
 async function main() {
     const fixturesDir = path.resolve("test/fixtures");
 
-    console.log("テスト用YRTファイルを生成中...");
+    console.log("正常系テスト用YRTファイルを生成中...");
     await generateYrtFiles();
-    console.log("✅ テスト用YRTファイルの生成が完了しました");
+    console.log("✅ 正常系テスト用YRTファイルの生成が完了しました");
+    
+    console.log("異常系テスト用YRTファイルを生成中...");
+    await generateInvalidYrtFiles();
+    console.log("✅ 異常系テスト用YRTファイルの生成が完了しました");
+    
     console.log(`📁 場所: ${fixturesDir}`);
 }
 
