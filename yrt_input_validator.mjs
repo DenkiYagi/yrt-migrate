@@ -3,11 +3,20 @@
 import * as fs from "fs/promises";
 import * as msgpack from "@msgpack/msgpack";
 import { packageToYrtRoot } from "./yrt_format.js";
-import { validateAssetsObject, validateLegacyLayoutXml, validateLegacyYrtFormat, validateAlreadyMigrated } from "./yrt_format_legacy.mjs";
+import {
+    validateAssetsObject,
+    validateLegacyLayoutXml,
+    validateLegacyYrtFormat,
+    validateAlreadyMigrated
+} from "./yrt_format_legacy.mjs";
 
 /**
  * マイグレーションの準備として、XMLファイルを検証し、データ型だけ新形式YRTに変換する。
- * XMLは旧形式の状態であることに注意
+ * XML自体は旧形式のままの状態であることに注意
+ *
+ * - 警告があれば `console.warn("[WARNING] ...")`
+ * - エラーがあれば `Error` を reject
+ *
  * @param {string} inputFileName - XMLファイルのパス
  * @returns {Promise<import("./types.js").DecodedYrt>}
  */
@@ -31,7 +40,11 @@ export async function validateXmlInput(inputFileName) {
 
 /**
  * マイグレーションの準備として、YRTファイルを検証し、データ型だけ新形式YRTに変換する。
- * XMLは旧形式の状態であることに注意
+ * XML自体は旧形式のままの状態であることに注意
+ *
+ * - 警告があれば `console.warn("[WARNING] ...")`
+ * - エラーがあれば `Error` を reject
+ *
  * @param {string} inputFileName - YRTファイルのパス
  * @returns {Promise<import("./types.js").DecodedYrt>}
  */

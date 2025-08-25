@@ -17,6 +17,7 @@ export function validateLegacyLayoutXml(xml) {
     try {
         const warningMessages = [];
         let errorMessage = null;
+        // NOTE: @xmldom/xmldom の最新バージョンでは errorHandler が deprecated になる可能性があるので注意
         const doc = new DOMParser({
             errorHandler: {
                 warning: (msg) => warningMessages.push(msg.toString()),
