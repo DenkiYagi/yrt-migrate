@@ -1,6 +1,7 @@
 // @ts-check
 
 import { DOMParser } from "@xmldom/xmldom";
+import { success, warning, error } from "./validation_result.mjs";
 
 /**
  * @typedef {[string] | [string, Partial<Record<string, Uint8Array>>]} DecodedLegacyYrt
@@ -16,15 +17,20 @@ import { DOMParser } from "@xmldom/xmldom";
  * 指定された文字列がXMLであり、かつルート要素が `<LayoutXml>` であることを確認する
  *
  * @param {string} xml
- * @returns {boolean}
+ * @returns {import("./validation_result.mjs").Result<string>}
  */
-export function isLegacyLayoutXml(xml) {
+export function validateLegacyLayoutXml(xml) {
     try {
         const doc = new DOMParser().parseFromString(xml, 'application/xml');
-        if (!doc || !doc.documentElement) return false;
-        return doc.documentElement.nodeName === 'LayoutXml';
+        if (!doc || !doc.documentElement) {
+            return error('XMLパースに失敗しました。');
+        }
+        if (doc.documentElement.nodeName !== 'LayoutXml') {
+            return error('ルート要素が LayoutXml ではありません。');
+        }
+        return success(xml);
     } catch (e) {
-        return false;
+        return error(`XMLパースエラーが発生しました: ${e.message}`);
     }
 }
 
@@ -35,22 +41,42 @@ export function isLegacyLayoutXml(xml) {
  * - レイアウトXMLが旧形式であること
  * 
  * @param {unknown} decoded
- * @returns {decoded is DecodedLegacyYrt}
+ * @returns {import("./validation_result.mjs").Result<DecodedLegacyYrt>}
  */
-export function isLegacyYrtFormat(decoded) {
-    if (!Array.isArray(decoded)) return false;
+export function validateLegacyYrtFormat(decoded) {
+    if (!Array.isArray(decoded)) {
+        return error('デコード結果が配列ではありません。');
+    }
 
     if (decoded.length === 1) {
         const [maybeXml] = decoded;
-        if (typeof maybeXml !== 'string') return false;
-        return isLegacyLayoutXml(maybeXml);
+        if (typeof maybeXml !== 'string') {
+            return error('最初の要素が文字列ではありません。');
+        }
+        const xmlValidationResult = validateLegacyLayoutXml(maybeXml);
+        if (xmlValidationResult.type === 'error') {
+            return error(`レイアウトXMLの検証に失敗しました: ${xmlValidationResult.message}`);
+        } else if (xmlValidationResult.type === 'warning') {
+            return warning(/** @type {DecodedLegacyYrt} */(decoded), xmlValidationResult.message); // propagate
+        }
+        return success(/** @type {DecodedLegacyYrt} */(decoded));
     } else if (decoded.length === 2) {
         const [maybeXml, maybeAssets] = decoded;
-        if (typeof maybeXml !== 'string') return false;
-        if (maybeAssets == null || typeof maybeAssets !== 'object') return false;
-        return isLegacyLayoutXml(maybeXml);
+        if (typeof maybeXml !== 'string') {
+            return error('最初の要素が文字列ではありません。');
+        }
+        if (maybeAssets == null || typeof maybeAssets !== 'object') {
+            return error('2番目の要素がオブジェクトではありません。');
+        }
+        const xmlValidationResult = validateLegacyLayoutXml(maybeXml);
+        if (xmlValidationResult.type === 'error') {
+            return error(`レイアウトXMLの検証に失敗しました: ${xmlValidationResult.message}`);
+        } else if (xmlValidationResult.type === 'warning') {
+            return warning(/** @type {DecodedLegacyYrt} */(decoded), xmlValidationResult.message); // propagate
+        }
+        return success(/** @type {DecodedLegacyYrt} */(decoded));
     } else {
-        return false;
+        return error(`配列の要素数が不正です。`);
     }
 }
 
@@ -60,16 +86,22 @@ export function isLegacyYrtFormat(decoded) {
  * ※ アセットオブジェクトの形式は v1.0.0-alpha.13 と v1.0 で共通
  * 
  * @param {unknown} value
- * @returns {value is Partial<Record<string, Uint8Array>>}
+ * @returns {import("./validation_result.mjs").SimpleResult<Partial<Record<string, Uint8Array>>>}
  */
-export function isAssetsObject(value) {
-    if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
-    if (value instanceof Map || value instanceof Set) return false; // 発生しない想定であるが一応判定
-    for (const v of Object.values(value)) {
-        if (!(v instanceof Uint8Array)) return false;
+export function validateAssetsObject(value) {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+        return error('アセットオブジェクトのデータ型が不正です。');
+    }
+    if (value instanceof Map || value instanceof Set) {
+        return error('アセットオブジェクトが有効なオブジェクトではありません。');
+    }
+    for (const [key, v] of Object.entries(value)) {
+        if (!(v instanceof Uint8Array)) {
+            return error(`アセット "${key}" の値がUint8Arrayではありません。`);
+        }
     }
 
-    return true;
+    return success(/** @type {Partial<Record<string, Uint8Array>>} */(value));
 }
 
 /**
@@ -78,14 +110,22 @@ export function isAssetsObject(value) {
  * - `l` 配列の要素が1つ以上存在すること
  *
  * @param {unknown} maybeYrt
- * @returns {boolean}
+ * @returns {import("./validation_result.mjs").SimpleResult<unknown>}
  */
-export function isAlreadyMigrated(maybeYrt) {
-    if (!Array.isArray(maybeYrt) || maybeYrt.length < 3) return false;
-    if (maybeYrt[0] !== 'YRT' || maybeYrt[1] !== 1) return false;
+export function validateAlreadyMigrated(maybeYrt) {
+    if (!Array.isArray(maybeYrt) || maybeYrt.length < 3) {
+        return error('YRT v1.0 の構造ではありません。');
+    }
+    if (maybeYrt[0] !== 'YRT' || maybeYrt[1] !== 1) {
+        return error('YRTのヘッダーが不正です。');
+    }
     const body = maybeYrt[2];
-    if (!body || typeof body !== 'object') return false;
-    if (!Array.isArray(body.l) || body.l.length === 0) return false;
+    if (!body || typeof body !== 'object') {
+        return error('YRTのボディが有効なオブジェクトではありません。');
+    }
+    if (!Array.isArray(body.l) || body.l.length === 0) {
+        return error('YRTのレイアウト配列が存在しないか空です。');
+    }
 
-    return true;
+    return success(maybeYrt);
 }
