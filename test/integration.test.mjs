@@ -1,3 +1,5 @@
+// @ts-check
+
 import { test, describe, before } from "node:test";
 import assert from "node:assert";
 import {

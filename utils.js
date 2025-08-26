@@ -30,49 +30,6 @@ export function toUint8Array(val) {
 }
 
 /**
- * Mapまたはオブジェクトを{[id]: Uint8Array}のプレーンなオブジェクトに変換
- * @param {object|Map} assets
- * @returns {Object.<string, Uint8Array>}
- */
-export function normalizeAssets(assets) {
-    if (!assets) return null;
-    if (typeof assets.entries === 'function') {
-        // Map型
-        return Object.fromEntries(Array.from(assets, ([k, v]) => [k, toUint8Array(v)]));
-    } else {
-        // プレーンオブジェクト
-        const obj = {};
-        for (const k in assets) {
-            if (Object.prototype.hasOwnProperty.call(assets, k)) {
-                obj[k] = toUint8Array(assets[k]);
-            }
-        }
-        return obj;
-    }
-}
-
-/**
- * YRTが新フォーマット（マイグレーション済み）かどうか判定
- * - ['YRT', 1, { l: [...], ... }] 形式であること
- * - l配列が1つ以上存在すること
- * - 旧フォーマット特有のLayoutXmlキーが存在しないこと
- * @param {any} yrtRoot
- * @returns {boolean}
- */
-export function isAlreadyMigrated(yrtRoot) {
-    if (!Array.isArray(yrtRoot) || yrtRoot.length < 3) return false;
-    const obj = yrtRoot[2];
-    if (!obj || typeof obj !== 'object') return false;
-    // layouts配列が1つ以上
-    if (!Array.isArray(obj.l) || obj.l.length === 0) return false;
-    // 旧フォーマットはLayoutXmlキーが必ず存在する
-    if (Object.prototype.hasOwnProperty.call(obj, 'LayoutXml')) {
-        return false;
-    }
-    return true;
-}
-
-/**
  * YRT構造から { layouts, styleXml, assets } を抽出するユーティリティ
  * @param {any[]} yrtRoot
  * @returns {{ layouts: string[], styleXml: string|null, assets: any|null }}

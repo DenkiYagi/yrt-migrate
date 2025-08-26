@@ -21,7 +21,6 @@ import * as path from "path";
 import * as msgpack from "@msgpack/msgpack";
 import * as util from "util";
 import { yrtRootToPackage, packageToYrtRoot } from "./yrt_format.js";
-import { isAlreadyMigrated, normalizeAssets } from "./utils.js";
 import { formatXmlPretty, removeIndents } from "./formatter.mjs";
 import { migrate as layoutsToMultipleXmls } from "./multiple_xmls.mjs";
 import { migrate as removeContentElements } from "./remove_content_elements.mjs";
@@ -43,6 +42,7 @@ import { migrate as borderstyleDasharrayToColonMigrate } from "./borderstyle_das
 import { migrate as borderAdjacentLineWarning } from "./border_adjacent_line_warning.mjs";
 import { migrate as warnSpanColorBinding } from "./span_color_binding_warn.mjs";
 import { migrate as applySchema } from "./apply_schema.mjs";
+import { validateXmlInput, validateYrtInput } from "./yrt_input_validator.mjs";
 
 // XML整形出力を制御
 const DO_FORMAT_XML = true;
@@ -152,32 +152,9 @@ async function main() {
     try {
         let inputYrtRoot;
         if (ext === ".xml") {
-            // XML入力の場合、1レイアウトのみのYRTパッケージを生成
-            const inputLayoutXml = await fs.readFile(inputFileName, "utf-8");
-            const initialYrtPackage = {
-                layouts: [{ name: null, xml: inputLayoutXml }],
-                style: null,
-                assets: null,
-            };
-            inputYrtRoot = packageToYrtRoot(initialYrtPackage);
+            inputYrtRoot = await validateXmlInput(inputFileName);
         } else if (ext === ".yrt") {
-            const inputFile = await fs.readFile(inputFileName);
-            const decoded = msgpack.decode(inputFile);
-            if (isAlreadyMigrated(decoded)) {
-                console.warn("このYRTファイルはすでにマイグレーション済みです。処理をスキップします。");
-                process.exit(0);
-            }
-            // 旧YRT(alpha)形式: [xml, assets?]
-            if (!Array.isArray(decoded) || typeof decoded[0] !== 'string' || !decoded[0]) {
-                throw new Error("YRTファイル形式が不正です: alpha系旧YRT形式ではありません");
-            }
-            const assetsObj = normalizeAssets(decoded[1]);
-            const yrtPackage = {
-                layouts: [{ name: null, xml: decoded[0] }],
-                style: null,
-                assets: assetsObj,
-            };
-            inputYrtRoot = packageToYrtRoot(yrtPackage);
+            inputYrtRoot = await validateYrtInput(inputFileName);
         } else {
             console.error("非対応のファイル形式です");
             process.exit(1);
