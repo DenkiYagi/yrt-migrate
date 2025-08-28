@@ -1,4 +1,5 @@
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
+import { getXPath } from "./utils.js";
 
 const ATTR_MAP = [
     {
@@ -63,25 +64,6 @@ const ATTR_MAP = [
     },
 ];
 
-function removeAttributeByName(element, name, ignoreCase = false) {
-    if (!element.attributes) return;
-    for (let i = element.attributes.length - 1; i >= 0; i--) {
-        if (ignoreCase) {
-            if (element.attributes[i].name.toLowerCase() === name.toLowerCase()) {
-                element.removeAttribute(element.attributes[i].name);
-            }
-        } else {
-            if (element.attributes[i].name === name) {
-                element.removeAttribute(element.attributes[i].name);
-            }
-        }
-    }
-}
-
-function isAllDefaultOrEmpty(values, def) {
-    return values.every(v => v === def || v === '' || v == null);
-}
-
 function getIndividualValues(element, keys) {
     return keys.map(key => {
         if (!element.attributes) return null;
@@ -104,7 +86,18 @@ function getUnifiedValue(element, base) {
     return null;
 }
 
-function mergeValues(attr, unified, individual) {
+function removeAttributes(element, names) {
+    if (!element.attributes || !Array.isArray(names)) return;
+    for (const name of names) {
+        for (let i = element.attributes.length - 1; i >= 0; i--) {
+            if (element.attributes[i].name === name) {
+                element.removeAttribute(element.attributes[i].name);
+            }
+        }
+    }
+}
+
+function mergeDirectionalValues(attr, unified, individual) {
     let merged;
     if (unified != null && unified.trim() !== '') {
         const arr = unified.trim().split(' ');
@@ -131,196 +124,240 @@ function mergeValues(attr, unified, individual) {
     return merged;
 }
 
-function removeDirectionalAttributes(element, attr) {
-    removeAttributeByName(element, attr.attr, true);
-    for (const indivKey of attr.keys) {
-        removeAttributeByName(element, indivKey);
-    }
-}
-
-function mergeDirectionalAttributes(element) {
+function normalizeDirectionalAttrsOnElement(element) {
     for (const attr of ATTR_MAP) {
-        // elements指定がワイルドカードまたは一致する場合のみ処理
         const elements = Array.isArray(attr.elements) ? attr.elements : [attr.elements];
         if (!elements.includes('*') && !elements.includes(element.tagName)) continue;
         const individual = getIndividualValues(element, attr.keys);
         const unified = getUnifiedValue(element, attr.attr);
         const hasAnyIndividual = individual.some(v => v !== null && v.trim() !== '');
         const hasUnified = unified !== null && unified.trim() !== '';
-        // 個別属性または一括指定値が1つでもあれば必ず統合処理を行う
         if (!(hasAnyIndividual || hasUnified)) continue;
-        const mergedRaw = mergeValues(attr, unified, individual);
-        // 未指定方向をATTR_MAPのデフォルト値で埋める
+        const mergedRaw = mergeDirectionalValues(attr, unified, individual);
         const merged = mergedRaw.map((v, i) => v ?? attr.default);
-        if (isAllDefaultOrEmpty(merged, attr.default)) {
-            removeDirectionalAttributes(element, attr);
-            continue;
-        }
-        removeDirectionalAttributes(element, attr);
+        removeAttributes(element, [attr.attr, ...attr.keys]);
         element.setAttribute(attr.attr, merged.map(s => s.trim()).join(' '));
     }
 }
 
-
-function traverseAndMerge(el) {
-    if (el.nodeType !== 1) return; // ELEMENT_NODE
-    if (el.childNodes) {
-        for (let i = 0; i < el.childNodes.length; i++) {
-            traverseAndMerge(el.childNodes[i]);
-        }
-    }
-    mergeDirectionalAttributes(el);
-}
-
-export function mergeDirectionalAttrsInXml(xmlString) {
+/**
+ * 方向系属性（border, margin, padding等）を一括指定・個別指定から正規化する
+ * @param {string} xmlString - XML文字列
+ * @returns {string} 正規化されたXML文字列
+ */
+function normalizeDirectionalAttrs(xmlString) {
     const doc = new DOMParser().parseFromString(xmlString, "text/xml");
-    traverseAndMerge(doc.documentElement);
+
+    function traverseAndNormalize(el) {
+        if (el.nodeType !== 1) return; // ELEMENT_NODE
+        if (el.childNodes) {
+            for (let i = 0; i < el.childNodes.length; i++) {
+                traverseAndNormalize(el.childNodes[i]);
+            }
+        }
+        normalizeDirectionalAttrsOnElement(el);
+    }
+
+    traverseAndNormalize(doc.documentElement);
     return new XMLSerializer().serializeToString(doc);
 }
 
-export function preprocessGridCellInheritance(layoutXml) {
-    // Grid→GridCellの4方向属性（borderThickness, borderStyle, borderColorなど）をすべて継承・統合
+/**
+ * Grid/Tableなどの親要素のborder系属性を子要素（GridCell, TableColumnTemplate等）に継承する
+ * @param {string} layoutXml - XML文字列
+ * @returns {string} border属性が子要素に継承されたXML文字列
+ */
+function inheritParentBorderAttrs(layoutXml) {
+    // レイアウト継承処理（Grid/Cell, Table/TableColumnTemplate など）
     const doc = new DOMParser().parseFromString(layoutXml, "text/xml");
-    const grid = doc.documentElement;
-    if (!grid || grid.tagName !== "Grid") return layoutXml;
-
-    // borderThickness のみ継承
-    const attr = "borderThickness";
-    const keys = ["borderTopThickness", "borderRightThickness", "borderBottomThickness", "borderLeftThickness"];
-    const def = "0";
-
-    let gridUnified = grid.getAttribute(attr);
-    let gridArr = [def, def, def, def];
-    if (gridUnified) {
-        const arr = gridUnified.split(" ");
-        for (let i = 0; i < 4; i++) {
-            gridArr[i] = arr[i] !== undefined ? arr[i] : arr[0];
+    const types = [
+        {
+            base: "borderThickness",
+            keys: ["borderTopThickness", "borderRightThickness", "borderBottomThickness", "borderLeftThickness"],
+            def: "0"
+        },
+        {
+            base: "borderStyle",
+            keys: ["borderTopStyle", "borderRightStyle", "borderBottomStyle", "borderLeftStyle"],
+            def: "solid"
+        },
+        {
+            base: "borderColor",
+            keys: ["borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor"],
+            def: "black"
         }
-    }
-    let gridAttrShouldRemove = false;
-    for (let i = 0; i < grid.childNodes.length; i++) {
-        const cell = grid.childNodes[i];
-        if (!cell || cell.nodeType !== 1 || cell.tagName !== "GridCell") continue;
-        // GridCellに一括指定値があれば何もしない
-        if (cell.getAttribute(attr)) continue;
-        // GridCellに個別値があればGridの一括指定値とマージ
-        let hasIndividual = false;
-        let cellArr = gridArr.slice();
-        for (let d = 0; d < 4; d++) {
-            const v = cell.getAttribute(keys[d]);
-            if (v != null && v !== "") {
-                cellArr[d] = v;
-                hasIndividual = true;
+    ];
+
+    const pairs = findLayoutInheritancePairs(doc.documentElement);
+    for (const { parent, child } of pairs) {
+        for (const type of types) {
+            if (child.getAttribute(type.base)) continue;
+            // 親値
+            let parentUnified = parent.getAttribute(type.base);
+            let parentArr = [type.def, type.def, type.def, type.def];
+            if (parentUnified) {
+                const arr = parentUnified.split(" ");
+                for (let i = 0; i < 4; i++) {
+                    parentArr[i] = arr[i] !== undefined ? arr[i] : arr[0];
+                }
             }
-        }
-        if (hasIndividual && gridUnified) {
-            // Gridの一括指定値と個別値をマージしてGridCellにセット
-            cell.setAttribute(attr, cellArr.join(" "));
-            // 個別属性削除
+            // 個別指定値
+            let childArr = [null, null, null, null];
+            let hasIndividual = false;
             for (let d = 0; d < 4; d++) {
-                cell.removeAttribute(keys[d]);
+                const v = child.getAttribute(type.keys[d]);
+                if (v != null && v !== "") {
+                    childArr[d] = v;
+                    hasIndividual = true;
+                }
             }
-            gridAttrShouldRemove = true;
+            if (hasIndividual) {
+                const mergedArr = childArr.map((v, d) => (v != null ? v : parentArr[d]));
+                child.setAttribute(type.base, mergedArr.join(" "));
+                for (let d = 0; d < 4; d++) {
+                    child.removeAttribute(type.keys[d]);
+                }
+                if (parentUnified) parent.removeAttribute(type.base);
+            }
         }
-        // 個別値のみの場合や何もない場合は何もしない
-    }
-    // Gridの属性は渡した場合のみ削除
-    if (gridAttrShouldRemove) {
-        grid.removeAttribute(attr);
     }
     return new XMLSerializer().serializeToString(doc);
 }
 
 /**
- * Gridのouter方向属性（Thickness, Style, Color）をGridCellの対応する方向属性に割り振る
+ * Grid/TableのouterBorder系属性を端の子要素（GridCell, TableColumnTemplate等）に伝播する
  * @param {string} layoutXml - XML文字列
- * @returns {string} - 変換後XML文字列
+ * @returns {string} outerBorder属性が端要素に割り振られたXML文字列
  */
-export function assignOuterBorderDirectionalAttributes(layoutXml) {
+function propagateOuterBorderToEdges(layoutXml) {
     const doc = new DOMParser().parseFromString(layoutXml, "text/xml");
-    const grid = doc.documentElement;
-    if (!grid || grid.tagName !== "Grid") return layoutXml;
+    const root = doc.documentElement;
+    if (!root) return layoutXml;
 
-    // 方向と属性種別
     const directions = ["Top", "Right", "Bottom", "Left"];
     const types = ["Thickness", "Style", "Color"];
 
-    // GridCellの位置判定用
-    // cols, rows: スペース区切りで数値配列
-    const cols = (grid.getAttribute("cols") || "").trim().split(/\s+/);
-    const rows = (grid.getAttribute("rows") || "").trim().split(/\s+/);
+    // 端判定関数
+    const gridEdgeChecks = {
+        Top: (rowIdx, rows, colIdx, cols) => rowIdx === 0,
+        Right: (rowIdx, rows, colIdx, cols) => colIdx === cols.length - 1,
+        Bottom: (rowIdx, rows, colIdx, cols) => rowIdx === rows.length - 1,
+        Left: (rowIdx, rows, colIdx, cols) => colIdx === 0,
+    };
+    const tableEdgeChecks = {
+        Top: (isFirst) => isFirst,
+        Bottom: (isLast) => isLast,
+        Left: (isColFirst) => isColFirst,
+        Right: (isColLast) => isColLast,
+    };
 
-    // outerXxx系属性をGridCellのxxx個別属性へ変換・付与のみ
-    for (let i = 0; i < grid.childNodes.length; i++) {
-        const cell = grid.childNodes[i];
-        if (!cell || cell.nodeType !== 1 || cell.tagName !== "GridCell") continue;
-        const colIdx = parseInt(cell.getAttribute("col"), 10);
-        const rowIdx = parseInt(cell.getAttribute("row"), 10);
-        // 端判定
-        const isTop = rowIdx === 0;
-        const isBottom = rowIdx === rows.length - 1;
-        const isLeft = colIdx === 0;
-        const isRight = colIdx === cols.length - 1;
-
-        // outerBorderThickness → borderTopThickness/borderRightThickness/...
-        if (isTop && grid.getAttribute("outerBorderTopThickness")) {
-            cell.setAttribute("borderTopThickness", grid.getAttribute("outerBorderTopThickness"));
-        }
-        if (isRight && grid.getAttribute("outerBorderRightThickness")) {
-            cell.setAttribute("borderRightThickness", grid.getAttribute("outerBorderRightThickness"));
-        }
-        if (isBottom && grid.getAttribute("outerBorderBottomThickness")) {
-            cell.setAttribute("borderBottomThickness", grid.getAttribute("outerBorderBottomThickness"));
-        }
-        if (isLeft && grid.getAttribute("outerBorderLeftThickness")) {
-            cell.setAttribute("borderLeftThickness", grid.getAttribute("outerBorderLeftThickness"));
-        }
-
-        // outerBorderColor → borderTopColor/borderRightColor/...
-        if (isTop && grid.getAttribute("outerBorderTopColor")) {
-            cell.setAttribute("borderTopColor", grid.getAttribute("outerBorderTopColor"));
-        }
-        if (isRight && grid.getAttribute("outerBorderRightColor")) {
-            cell.setAttribute("borderRightColor", grid.getAttribute("outerBorderRightColor"));
-        }
-        if (isBottom && grid.getAttribute("outerBorderBottomColor")) {
-            cell.setAttribute("borderBottomColor", grid.getAttribute("outerBorderBottomColor"));
-        }
-        if (isLeft && grid.getAttribute("outerBorderLeftColor")) {
-            cell.setAttribute("borderLeftColor", grid.getAttribute("outerBorderLeftColor"));
-        }
-
-        // outerBorderStyle → borderTopStyle/borderRightStyle/...
-        if (isTop && grid.getAttribute("outerBorderTopStyle")) {
-            cell.setAttribute("borderTopStyle", grid.getAttribute("outerBorderTopStyle"));
-        }
-        if (isRight && grid.getAttribute("outerBorderRightStyle")) {
-            cell.setAttribute("borderRightStyle", grid.getAttribute("outerBorderRightStyle"));
-        }
-        if (isBottom && grid.getAttribute("outerBorderBottomStyle")) {
-            cell.setAttribute("borderBottomStyle", grid.getAttribute("outerBorderBottomStyle"));
-        }
-        if (isLeft && grid.getAttribute("outerBorderLeftStyle")) {
-            cell.setAttribute("borderLeftStyle", grid.getAttribute("outerBorderLeftStyle"));
+    const gridCellPairs = findLayoutInheritancePairs(root);
+    for (const { parent, child: cell } of gridCellPairs) {
+        if (parent.tagName === "Grid") {
+            const cols = (parent.getAttribute("cols") || "").trim().split(/\s+/);
+            const rows = (parent.getAttribute("rows") || "").trim().split(/\s+/);
+            const colIdx = parseInt(cell.getAttribute("col"), 10);
+            const rowIdx = parseInt(cell.getAttribute("row"), 10);
+            for (const dir of directions) {
+                for (const type of types) {
+                    const outerAttr = `outerBorder${dir}${type}`;
+                    const cellAttr = `border${dir}${type}`;
+                    if (gridEdgeChecks[dir](rowIdx, rows, colIdx, cols) && parent.getAttribute(outerAttr)) {
+                        cell.setAttribute(cellAttr, parent.getAttribute(outerAttr));
+                    }
+                }
+            }
+        } else if (parent.tagName === "Table") {
+            const tableColumn = cell.parentNode;
+            if (!tableColumn || tableColumn.tagName !== "TableColumn") continue;
+            const siblings = Array.from(tableColumn.childNodes).filter(n => n.nodeType === 1);
+            const idx = siblings.indexOf(cell);
+            const isFirst = idx === 0;
+            const isLast = idx === siblings.length - 1;
+            const tableColumns = Array.from(parent.childNodes).filter(n => n.nodeType === 1 && n.tagName === "TableColumn");
+            const colIdx = tableColumns.indexOf(tableColumn);
+            const isColFirst = colIdx === 0;
+            const isColLast = colIdx === tableColumns.length - 1;
+            const hasHeader = siblings.some(n => n.tagName === "TableColumnHeader");
+            const hasFooter = siblings.some(n => n.tagName === "TableColumnFooter");
+            if (
+                cell.tagName === "TableColumnTemplate" &&
+                ((isFirst && !hasHeader) || (isLast && !hasFooter))
+            ) {
+                const xpath = getXPath(cell);
+                console.warn(`[WARNING] TableColumnHeader または TableColumnFooter が存在しないため、TableColumnTemplate に outerBorder 系属性が割り振られます。繰り返し描画部分に罫線が重複する可能性があります。(${xpath})`);
+            }
+            // Tableの端判定と属性コピー
+            for (const dir of directions) {
+                for (const type of types) {
+                    const outerAttr = `outerBorder${dir}${type}`;
+                    const cellAttr = `border${dir}${type}`;
+                    let isEdge = false;
+                    if (dir === "Top") isEdge = tableEdgeChecks.Top(isFirst);
+                    if (dir === "Bottom") isEdge = tableEdgeChecks.Bottom(isLast);
+                    if (dir === "Left") isEdge = tableEdgeChecks.Left(isColFirst);
+                    if (dir === "Right") isEdge = tableEdgeChecks.Right(isColLast);
+                    if (isEdge && parent.getAttribute(outerAttr)) {
+                        cell.setAttribute(cellAttr, parent.getAttribute(outerAttr));
+                    }
+                }
+            }
         }
     }
-    // outerBorder系属性はGridから削除
-    for (const dir of directions) {
-        for (const type of types) {
-            const outerAttr = `outerBorder${dir}${type}`;
-            grid.removeAttribute(outerAttr);
-        }
-    }
-    // outerBorder系属性はGridから削除
-    for (const dir of directions) {
-        for (const type of types) {
-            const outerAttr = `outerBorder${dir}${type}`;
-            grid.removeAttribute(outerAttr);
+
+    // 個別指定値のouterBorder系属性はGridから削除
+    for (const { parent } of gridCellPairs) {
+        for (const dir of directions) {
+            for (const type of types) {
+                const outerAttr = `outerBorder${dir}${type}`;
+                parent.removeAttribute(outerAttr);
+            }
         }
     }
     return new XMLSerializer().serializeToString(doc);
 }
 
+/**
+ * Grid/Tableなどの親要素と、その子孫要素（GridCell, TableColumnTemplate等）の親子ペアを抽出する
+ * @param {Element} root - XMLのルート要素
+ * @returns {Array<{parent: Element, child: Element}>}
+ */
+function findLayoutInheritancePairs(root) {
+    const pairs = [];
+    function traverse(node) {
+        if (!node || node.nodeType !== 1) return;
+        // Grid > GridCell
+        if (node.tagName === "Grid") {
+            for (let i = 0; i < node.childNodes.length; i++) {
+                const child = node.childNodes[i];
+                if (child && child.nodeType === 1 && child.tagName === "GridCell") {
+                    pairs.push({ parent: node, child });
+                }
+            }
+        }
+        // Table > TableColumn > TableColumn(Header|Template|Footer)
+        if (node.tagName === "Table") {
+            for (let i = 0; i < node.childNodes.length; i++) {
+                const tableColumn = node.childNodes[i];
+                if (tableColumn && tableColumn.nodeType === 1 && tableColumn.tagName === "TableColumn") {
+                    for (let j = 0; j < tableColumn.childNodes.length; j++) {
+                        const grandChild = tableColumn.childNodes[j];
+                        if (grandChild && grandChild.nodeType === 1 && (grandChild.tagName === "TableColumnTemplate" || grandChild.tagName === "TableColumnHeader" || grandChild.tagName === "TableColumnFooter")) {
+                            pairs.push({ parent: node, child: grandChild });
+                        }
+                    }
+                }
+            }
+        }
+        if (node.childNodes) {
+            for (let i = 0; i < node.childNodes.length; i++) {
+                traverse(node.childNodes[i]);
+            }
+        }
+    }
+    traverse(root);
+    return pairs;
+}
 
 export function migrate(yrtRoot) {
     if (!yrtRoot || !Array.isArray(yrtRoot) || yrtRoot.length < 3 || !Array.isArray(yrtRoot[2]?.l)) {
@@ -330,15 +367,15 @@ export function migrate(yrtRoot) {
         if (!layout) return layout;
         if (Array.isArray(layout) && layout.length === 2 && layout[1]) {
             let xml = layout[1];
-            xml = assignOuterBorderDirectionalAttributes(xml);
-            xml = preprocessGridCellInheritance(xml);
-            xml = mergeDirectionalAttrsInXml(xml);
+            xml = propagateOuterBorderToEdges(xml);
+            xml = inheritParentBorderAttrs(xml);
+            xml = normalizeDirectionalAttrs(xml);
             return [null, xml];
         } else if (typeof layout === "string") {
             let xml = layout;
-            xml = assignOuterBorderDirectionalAttributes(xml);
-            xml = preprocessGridCellInheritance(xml);
-            xml = mergeDirectionalAttrsInXml(xml);
+            xml = propagateOuterBorderToEdges(xml);
+            xml = inheritParentBorderAttrs(xml);
+            xml = normalizeDirectionalAttrs(xml);
             return xml;
         }
         return layout;

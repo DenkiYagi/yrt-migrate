@@ -1,8 +1,8 @@
+import { jest } from '@jest/globals';
 import { migrate } from './merge_directional_attrs.mjs';
 import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
 import { strict as assert } from 'assert';
 import { toYrtRoot, fromYrtRoot } from './utils.js';
-import { assignOuterBorderDirectionalAttributes } from './merge_directional_attrs.mjs';
 
 describe('mergeDirectionalAttributes', () => {
     describe('単一要素が解決できているか', () => {
@@ -241,6 +241,64 @@ describe('mergeDirectionalAttributes', () => {
             const output = new XMLSerializer().serializeToString(doc.documentElement);
             assert.equal(output, expected);
         });
+
+        it('LayoutBody配下のGrid, GridCell の継承を解消できる(2)', () => {
+            const input = [
+                '<LinearLayout>',
+                '  <LayoutBody>',
+                '    <Grid borderStyle="solid">',
+                '      <GridCell borderBottomStyle="regular">',
+                '        <Text>text</Text>',
+                '      </GridCell>',
+                '    </Grid>',
+                '  </LayoutBody>',
+                '</LinearLayout>'
+            ].join('\n');
+            const expected = [
+                '<LinearLayout>',
+                '  <LayoutBody>',
+                '    <Grid>',
+                '      <GridCell borderStyle="solid solid regular solid">',
+                '        <Text>text</Text>',
+                '      </GridCell>',
+                '    </Grid>',
+                '  </LayoutBody>',
+                '</LinearLayout>'
+            ].join('\n');
+            const yrtRoot = toYrtRoot({ layouts: [input] });
+            const migrated = migrate(yrtRoot);
+            const { layouts } = fromYrtRoot(migrated);
+            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
+            const output = new XMLSerializer().serializeToString(doc.documentElement);
+            assert.equal(output, expected);
+        });
+
+        it('TableColumnTemplate の個別指定値と Table の一括指定値が統合される', () => {
+            const input = [
+                '<Table borderStyle="double">',
+                '  <TableColumn>',
+                '    <TableColumnTemplate borderTopStyle="solid">',
+                '      <Text>text</Text>',
+                '    </TableColumnTemplate>',
+                '  </TableColumn>',
+                '</Table>'
+            ].join('\n');
+            const expected = [
+                '<Table>',
+                '  <TableColumn>',
+                '    <TableColumnTemplate borderStyle="solid double double double">',
+                '      <Text>text</Text>',
+                '    </TableColumnTemplate>',
+                '  </TableColumn>',
+                '</Table>'
+            ].join('\n');
+            const yrtRoot = toYrtRoot({ layouts: [input] });
+            const migrated = migrate(yrtRoot);
+            const { layouts } = fromYrtRoot(migrated);
+            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
+            const output = new XMLSerializer().serializeToString(doc.documentElement);
+            assert.equal(output, expected);
+        });
     });
 
     describe('親子関係でさらに outer の属性も絡んでくる複雑なケースの解決', () => {
@@ -283,13 +341,13 @@ describe('mergeDirectionalAttributes', () => {
             ].join('\n');
             const expected = [
                 '<Grid cols="100 100" rows="50 50">',
-                '  <GridCell col="0" row="1" borderStyle="solid solid solid solid">',
+                '  <GridCell col="0" row="1" borderStyle="solid solid solid solid" borderColor="black black #abc black">',
                 '    <Text>bottom left</Text>',
                 '  </GridCell>',
-                '  <GridCell col="1" row="1">',
+                '  <GridCell col="1" row="1" borderColor="black black #abc black">',
                 '    <Text>bottom right</Text>',
                 '  </GridCell>',
-                '  <GridCell col="0" row="0" borderColor="black black #abc black">',
+                '  <GridCell col="0" row="0" borderStyle="solid solid solid solid">',
                 '    <Text>top left</Text>',
                 '  </GridCell>',
                 '</Grid>'
@@ -302,77 +360,128 @@ describe('mergeDirectionalAttributes', () => {
             assert.equal(output, expected);
         });
 
-        // it('Grid の端以外のセルには outerBorder 属性は割り当てられない', () => {
-        //     const input = [
-        //         '<Grid cols="100 100" rows="50 50" outerBorderTopThickness="9">',
-        //         '  <GridCell col="1" row="1">',
-        //         '    <Text>not top edge</Text>',
-        //         '  </GridCell>',
-        //         '  <GridCell col="0" row="0">',
-        //         '    <Text>top left</Text>',
-        //         '  </GridCell>',
-        //         '</Grid>'
-        //     ].join('\n');
-        //     const expected = [
-        //         '<Grid cols="100 100" rows="50 50">',
-        //         '  <GridCell col="1" row="1">',
-        //         '    <Text>not top edge</Text>',
-        //         '  </GridCell>',
-        //         '  <GridCell col="0" row="0" borderThickness="9 0 0 0">',
-        //         '    <Text>top left</Text>',
-        //         '  </GridCell>',
-        //         '</Grid>'
-        //     ].join('\n');
-        //     const yrtRoot = toYrtRoot({ layouts: [input] });
-        //     const migrated = migrate(yrtRoot);
-        //     const { layouts } = fromYrtRoot(migrated);
-        //     const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-        //     const output = new XMLSerializer().serializeToString(doc.documentElement);
-        //     assert.equal(output, expected);
-        // });
-    });
-});
+        it('Table の outerBorder 系属性が TableColumnXxx に割り振られる（Header,Footerあり）', () => {
+            const input = [
+                '<Table outerBorderTopThickness="9" outerBorderBottomColor="#abc" outerBorderLeftStyle="double" outerBorderRightStyle="dotted">',
+                '  <TableColumn>',
+                '    <TableColumnHeader>',
+                '      <Text>header1</Text>',
+                '    </TableColumnHeader>',
+                '    <TableColumnTemplate>',
+                '      <Text>body1</Text>',
+                '    </TableColumnTemplate>',
+                '    <TableColumnFooter>',
+                '      <Text>footer1</Text>',
+                '    </TableColumnFooter>',
+                '  </TableColumn>',
+                '  <TableColumn>',
+                '    <TableColumnHeader>',
+                '      <Text>header2</Text>',
+                '    </TableColumnHeader>',
+                '    <TableColumnTemplate>',
+                '      <Text>body2</Text>',
+                '    </TableColumnTemplate>',
+                '    <TableColumnFooter>',
+                '      <Text>footer2</Text>',
+                '    </TableColumnFooter>',
+                '  </TableColumn>',
+                '</Table>'
+            ].join('\n');
+            const expected = [
+                '<Table>',
+                '  <TableColumn>',
+                '    <TableColumnHeader borderThickness="9 0 0 0" borderStyle="solid solid solid double">',
+                '      <Text>header1</Text>',
+                '    </TableColumnHeader>',
+                '    <TableColumnTemplate borderStyle="solid solid solid double">',
+                '      <Text>body1</Text>',
+                '    </TableColumnTemplate>',
+                '    <TableColumnFooter borderStyle="solid solid solid double" borderColor="black black #abc black">',
+                '      <Text>footer1</Text>',
+                '    </TableColumnFooter>',
+                '  </TableColumn>',
+                '  <TableColumn>',
+                '    <TableColumnHeader borderThickness="9 0 0 0" borderStyle="solid dotted solid solid">',
+                '      <Text>header2</Text>',
+                '    </TableColumnHeader>',
+                '    <TableColumnTemplate borderStyle="solid dotted solid solid">',
+                '      <Text>body2</Text>',
+                '    </TableColumnTemplate>',
+                '    <TableColumnFooter borderStyle="solid dotted solid solid" borderColor="black black #abc black">',
+                '      <Text>footer2</Text>',
+                '    </TableColumnFooter>',
+                '  </TableColumn>',
+                '</Table>'
+            ].join('\n');
+            const yrtRoot = toYrtRoot({ layouts: [input] });
+            const migrated = migrate(yrtRoot);
+            const { layouts } = fromYrtRoot(migrated);
+            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
+            const output = new XMLSerializer().serializeToString(doc.documentElement);
+            assert.equal(output, expected);
+        });
 
-describe('assignOuterBorderDirectionalAttributes 単体テスト', () => {
-    it('Grid の outerXxx を GridCell の xxx に割り振り', () => {
-        const input = [
-            '<Grid cols="100 100" rows="50 50" borderThickness="1" outerBorderTopThickness="2">',
-            '  <GridCell col="0" row="0">',
-            '    <Text>text</Text>',
-            '  </GridCell>',
-            '</Grid>'
-        ].join('\n');
-        const expected = [
-            '<Grid cols="100 100" rows="50 50" borderThickness="1">',
-            '  <GridCell col="0" row="0" borderTopThickness="2">',
-            '    <Text>text</Text>',
-            '  </GridCell>',
-            '</Grid>'
-        ].join('\n');
-        const output = assignOuterBorderDirectionalAttributes(input);
-        expect(output).toBe(expected);
-    });
+        it('Table の outerBorder 系属性が TableColumnXxx に割り振られつつ、レイアウトが変わる警告を出す（Header,Footerなし）', () => {
+            const input = [
+                '<Table outerBorderTopThickness="9" outerBorderBottomColor="#abc" outerBorderLeftStyle="double" outerBorderRightStyle="dotted">',
+                '  <TableColumn>',
+                '    <TableColumnTemplate>',
+                '      <Text>body1</Text>',
+                '    </TableColumnTemplate>',
+                '  </TableColumn>',
+                '  <TableColumn>',
+                '    <TableColumnTemplate>',
+                '      <Text>body2</Text>',
+                '    </TableColumnTemplate>',
+                '  </TableColumn>',
+                '</Table>'
+            ].join('\n');
+            const expected = [
+                '<Table>',
+                '  <TableColumn>',
+                '    <TableColumnTemplate borderThickness="9 0 0 0" borderStyle="solid solid solid double" borderColor="black black #abc black">',
+                '      <Text>body1</Text>',
+                '    </TableColumnTemplate>',
+                '  </TableColumn>',
+                '  <TableColumn>',
+                '    <TableColumnTemplate borderThickness="9 0 0 0" borderStyle="solid dotted solid solid" borderColor="black black #abc black">',
+                '      <Text>body2</Text>',
+                '    </TableColumnTemplate>',
+                '  </TableColumn>',
+                '</Table>'
+            ].join('\n');
+            const yrtRoot = toYrtRoot({ layouts: [input] });
+            const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
+            const migrated = migrate(yrtRoot);
+            const { layouts } = fromYrtRoot(migrated);
+            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
+            const output = new XMLSerializer().serializeToString(doc.documentElement);
+            assert.equal(output, expected);
+            expect(warnSpy).toHaveBeenCalled();
+            warnSpy.mockRestore();
+        });
 
-    it('Grid の複数 outerXxx を GridCell の xxx に割り振り', () => {
-        const input = [
-            '<Grid cols="100 100" rows="50 50" borderStyle="solid" outerBorderBottomColor="#abc" outerBorderLeftStyle="solid">',
-            '  <GridCell col="0" row="1">',
-            '    <Text>bottom left</Text>',
-            '  </GridCell>',
-            '  <GridCell col="1" row="1">',
-            '    <Text>bottom right</Text>',
-            '  </GridCell>',
-            '  <GridCell col="0" row="0">',
-            '    <Text>top left</Text>',
-            '  </GridCell>',
-            '</Grid>'
-        ].join('\n');
-        const output = assignOuterBorderDirectionalAttributes(input);
-        // 順序を許容し、属性の存在のみ確認
-        const cellMatch = output.match(/<GridCell col="0" row="1"([^>]*)>/);
-        expect(cellMatch).not.toBeNull();
-        const attrs = cellMatch[1];
-        expect(attrs).toContain('borderLeftStyle="solid"');
-        expect(attrs).toContain('borderBottomColor="#abc"');
+        it('関係ないセルには何も付与されない', () => {
+            const input = [
+                '<Grid cols="100 100 100" rows="50 50 50" outerBorderTopThickness="9">',
+                '  <GridCell col="1" row="1">',
+                '    <Text>not top edge</Text>',
+                '  </GridCell>',
+                '</Grid>'
+            ].join('\n');
+            const expected = [
+                '<Grid cols="100 100 100" rows="50 50 50">',
+                '  <GridCell col="1" row="1">',
+                '    <Text>not top edge</Text>',
+                '  </GridCell>',
+                '</Grid>'
+            ].join('\n');
+            const yrtRoot = toYrtRoot({ layouts: [input] });
+            const migrated = migrate(yrtRoot);
+            const { layouts } = fromYrtRoot(migrated);
+            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
+            const output = new XMLSerializer().serializeToString(doc.documentElement);
+            assert.equal(output, expected);
+        });
     });
 });
