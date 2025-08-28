@@ -1,5 +1,5 @@
 import { getXPath } from "./utils.js";
-import { DOMParser } from "xmldom";
+import { DOMParser } from "@xmldom/xmldom";
 
 /**
  * レイアウトの隣接部の罫線属性を検出し、警告を出すマイグレーション
