@@ -4,11 +4,11 @@
   "description": "yagisan-reportsのレイアウトXMLを最新の仕様にマイグレーションするツールです。 破壊的変更により廃止や非推奨になったコンポーネントを最新の仕様で置き換えます。",
   "type": "module",
   "bin": {
-    "yrt-migrate": "index.js"
+    "yrt-migrate": "src/index.js"
   },
   "scripts": {
     "test": "yarn test:unit && yarn test:integration",
-    "test:unit": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testPathIgnorePatterns=test/",
+    "test:unit": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:integration": "node --test test/cli.test.mjs test/integration.test.mjs",
     "test:generate-fixtures": "node test/generate-fixtures.mjs"
   },

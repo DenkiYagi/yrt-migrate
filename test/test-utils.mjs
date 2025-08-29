@@ -7,7 +7,7 @@ import * as path from "path";
 import * as msgpack from "@msgpack/msgpack";
 import assert from "node:assert";
 
-const CLI_ENTRY_POINT_FILE_PATH = "index.js";
+const CLI_ENTRY_POINT_FILE_PATH = "src/index.js";
 const execFileAsync = promisify(execFile);
 
 // テストケースごとに自動インクリメントするためのカウンタを保持
