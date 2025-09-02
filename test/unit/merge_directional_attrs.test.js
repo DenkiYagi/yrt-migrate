@@ -1,196 +1,168 @@
 import { jest } from '@jest/globals';
 import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
 import { migrate } from '../../src/migrate/merge_directional_attrs.mjs';
-import { toYrtRoot, fromYrtRoot } from '../../src/utils.js';
+
+/**
+ * XML文字列をDOMで正規化して返す
+ */
+function normalizeXml(xml) {
+    const doc = new DOMParser().parseFromString(xml, 'text/xml');
+    return new XMLSerializer().serializeToString(doc.documentElement);
+}
 
 describe('mergeDirectionalAttributes', () => {
     describe('単一要素が解決できているか', () => {
         it('margin の統合', () => {
             const input = '<StackLayout marginTop="1" marginRight="2" marginBottom="3" marginLeft="4"/>';
             const expected = '<StackLayout margin="1 2 3 4"/>';
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('margin の統合（値に前後空白あり）', () => {
             const input = '<StackLayout marginTop=" 1 " marginRight=" 2 " marginBottom=" 3 " marginLeft=" 4 "/>';
             const expected = '<StackLayout margin="1 2 3 4"/>';
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
-            // 他の属性については、同一ロジックであるため同種のテストは省略します。
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('borderColor の統合', () => {
             const input = '<LinearLayout borderTopColor="#111" borderRightColor="#222" borderBottomColor="#333" borderLeftColor="#444"/>';
             const expected = '<LinearLayout borderColor="#111 #222 #333 #444"/>';
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('borderStyle の統合', () => {
             const input = '<Grid borderTopStyle="solid" borderRightStyle="dashed" borderBottomStyle="dotted" borderLeftStyle="double"/>';
             const expected = '<Grid borderStyle="solid dashed dotted double"/>';
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('outerBorderThickness の統合', () => {
             const input = '<Table outerBorderTopThickness="1" outerBorderRightThickness="2" outerBorderBottomThickness="3" outerBorderLeftThickness="4"/>';
             const expected = '<Table outerBorderThickness="1 2 3 4"/>';
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('outerBorderColor の統合', () => {
             const input = '<Table outerBorderTopColor="#111" outerBorderRightColor="#222" outerBorderBottomColor="#333" outerBorderLeftColor="#444"/>';
             const expected = '<Table outerBorderColor="#111 #222 #333 #444"/>';
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('outerBorderStyle の統合', () => {
             const input = '<Table outerBorderTopStyle="solid" outerBorderRightStyle="dashed" outerBorderBottomStyle="dotted" outerBorderLeftStyle="double"/>';
             const expected = '<Table outerBorderStyle="solid dashed dotted double"/>';
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('borderRadius の統合', () => {
             const input = '<Rectangle borderTopLeftRadius="4" borderTopRightRadius="6" borderBottomRightRadius="8" borderBottomLeftRadius="10"/>';
             const expected = '<Rectangle borderRadius="4 6 8 10"/>';
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('4方向すべて指定', () => {
             const input = '<LinearLayout borderTopThickness="1" borderRightThickness="2" borderBottomThickness="3" borderLeftThickness="4"/>';
             const expected = '<LinearLayout borderThickness="1 2 3 4"/>';
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('上下のみ指定（4値で補完）', () => {
             const input = '<StackLayout paddingTop="8" paddingBottom="8"/>';
             const expected = '<StackLayout padding="8 0 8 0"/>';
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('一括指定と個別指定のマージ', () => {
             const input = '<Grid borderThickness="5" borderLeftThickness="2"/>';
             const expected = '<Grid borderThickness="5 5 5 2"/>';
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('すでに統合済みの場合は何もしない', () => {
             const input = '<Table margin="2 4 2 4"/>';
             const expected = '<Table margin="2 4 2 4"/>';
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('padding は初期値 0 で補完される', () => {
             const input = '<StackLayout paddingTop="8"/>';
             const expected = '<StackLayout padding="8 0 0 0"/>';
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('Grid, ColumnText などの borderThickness は初期値 0 で補完される', () => {
             const input = '<Grid borderLeftThickness="2"/>';
             const expected = '<Grid borderThickness="0 0 0 2"/>';
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('Table の borderThickness は初期値 regular で補完される', () => {
             const input = '<Table borderLeftThickness="2"/>';
             const expected = '<Table borderThickness="regular regular regular 2"/>';
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('borderStyle は初期値 solid で補完される', () => {
             const input = '<Grid borderTopStyle="none" borderLeftStyle="dotted"/>';
             const expected = '<Grid borderStyle="none solid solid dotted"/>';
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('borderColor は初期値 black で補完される', () => {
             const input = '<Grid borderTopColor="#111" borderLeftColor="#444"/>';
             const expected = '<Grid borderColor="#111 black black #444"/>';
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
     });
 
@@ -210,12 +182,10 @@ describe('mergeDirectionalAttributes', () => {
                 '  </GridCell>',
                 '</Grid>'
             ].join('\n');
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('Grid, GridCell の継承を解消できる(2)', () => {
@@ -233,12 +203,10 @@ describe('mergeDirectionalAttributes', () => {
                 '  </GridCell>',
                 '</Grid>'
             ].join('\n');
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('LayoutBody配下のGrid, GridCell の継承を解消できる(2)', () => {
@@ -264,12 +232,10 @@ describe('mergeDirectionalAttributes', () => {
                 '  </LayoutBody>',
                 '</LinearLayout>'
             ].join('\n');
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('TableColumnTemplate の個別指定値と Table の一括指定値が統合される', () => {
@@ -291,12 +257,10 @@ describe('mergeDirectionalAttributes', () => {
                 '  </TableColumn>',
                 '</Table>'
             ].join('\n');
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
     });
 
@@ -316,12 +280,10 @@ describe('mergeDirectionalAttributes', () => {
                 '  </GridCell>',
                 '</Grid>'
             ].join('\n');
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('Grid に outerBorderBottomColor, outerBorderLeftStyle が指定されているケース', () => {
@@ -351,12 +313,10 @@ describe('mergeDirectionalAttributes', () => {
                 '  </GridCell>',
                 '</Grid>'
             ].join('\n');
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('Table の outerBorder 系属性が TableColumnXxx に割り振られる（Header,Footerあり）', () => {
@@ -412,12 +372,10 @@ describe('mergeDirectionalAttributes', () => {
                 '  </TableColumn>',
                 '</Table>'
             ].join('\n');
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
 
         it('Table の outerBorder 系属性が TableColumnXxx に割り振られつつ、レイアウトが変わる警告を出す（Header,Footerなし）', () => {
@@ -449,13 +407,11 @@ describe('mergeDirectionalAttributes', () => {
                 '  </TableColumn>',
                 '</Table>'
             ].join('\n');
-            const yrtRoot = toYrtRoot({ layouts: [input] });
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
             const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
             expect(warnSpy).toHaveBeenCalled();
             warnSpy.mockRestore();
         });
@@ -475,12 +431,10 @@ describe('mergeDirectionalAttributes', () => {
                 '  </GridCell>',
                 '</Grid>'
             ].join('\n');
-            const yrtRoot = toYrtRoot({ layouts: [input] });
-            const migrated = migrate(yrtRoot);
-            const { layouts } = fromYrtRoot(migrated);
-            const doc = new DOMParser().parseFromString(layouts[0], 'text/xml');
-            const output = new XMLSerializer().serializeToString(doc.documentElement);
-            expect(output).toBe(expected);
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
         });
     });
 });

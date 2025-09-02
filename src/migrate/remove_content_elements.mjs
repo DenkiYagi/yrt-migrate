@@ -1,3 +1,5 @@
+// @ts-check
+
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
 const TARGET_TAGS = [
@@ -24,9 +26,10 @@ function removeContentElements(node) {
                 node.insertBefore(child.firstChild, ref);
             }
             node.removeChild(child);
-        } else if (child.nodeType === 1) {
+        }
+        if (child.nodeType === 1) {
             // 再帰的に探索
-            removeContentElements(child);
+            removeContentElements(/** @type {Element} */(child));
         }
     }
     // 子の展開後、親ノード全体に再帰的に適用（入れ子対応）
@@ -39,19 +42,30 @@ function removeContentElements(node) {
 }
 
 /**
- * マイグレーション本体（YRT構造対応）
- * @param {any} yrtRoot YRT構造
- * @returns {any} 新しいYRT構造
+ * マイグレーション本体（YrtDocument型のみ対応）
+ * @param {import('../yrt_format.js').YrtDocument} yrtDocument
+ * @returns {import('../yrt_format.js').YrtDocument} 新しいYrtDocument
  */
-export function migrate(yrtRoot) {
-    const newRoot = structuredClone(yrtRoot);
-    const layouts = newRoot[2].l;
-    for (let i = 0; i < layouts.length; i++) {
-        const [name, xml] = layouts[i];
+export function migrate(yrtDocument) {
+    const newLayouts = yrtDocument.layouts.map(({ name, xml }) => {
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         removeContentElements(doc);
         const newXml = new XMLSerializer().serializeToString(doc.documentElement);
-        layouts[i][1] = newXml;
-    }
-    return newRoot;
+        return { name, xml: newXml };
+    });
+    const newStyle = (() => {
+        const styleXml = yrtDocument.style ?? null;
+        if (typeof styleXml === "string" && styleXml.trim().length > 0) {
+            const styleDoc = new DOMParser().parseFromString(styleXml, "text/xml");
+            removeContentElements(styleDoc);
+            return new XMLSerializer().serializeToString(styleDoc.documentElement);
+        }
+        return styleXml;
+    })();
+
+    return {
+        layouts: newLayouts,
+        style: newStyle,
+        assets: yrtDocument.assets ?? null
+    };
 }

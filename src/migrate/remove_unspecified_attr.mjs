@@ -1,29 +1,30 @@
+// @ts-check
+
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
-export function migrate(yrtRoot) {
-    const newRoot = structuredClone(yrtRoot);
-    const layouts = newRoot[2].l;
-    for (let i = 0; i < layouts.length; i++) {
-        const [name, xml] = layouts[i];
-        const doc = new DOMParser().parseFromString(xml, "text/xml");
-        // 再帰的に全要素を走査
-        function removeUnspecifiedAttrs(node) {
-            if (node.nodeType !== 1) return;
-            // すべての属性をチェック
-            const attrs = Array.from(node.attributes);
-            for (const attr of attrs) {
-                if (attr.value === "unspecified") {
-                    node.removeAttribute(attr.name);
+export function migrate(doc) {
+    return {
+        layouts: doc.layouts.map(({ name, xml }) => {
+            const dom = new DOMParser().parseFromString(xml, "text/xml");
+            function removeUnspecifiedAttrs(node) {
+                if (node.nodeType !== 1) return;
+                const attrs = Array.from(node.attributes);
+                for (const attr of attrs) {
+                    if (attr.value === "unspecified") {
+                        node.removeAttribute(attr.name);
+                    }
+                }
+                for (let child = node.firstChild; child; child = child.nextSibling) {
+                    removeUnspecifiedAttrs(child);
                 }
             }
-            // 子要素も再帰
-            for (let child = node.firstChild; child; child = child.nextSibling) {
-                removeUnspecifiedAttrs(child);
-            }
-        }
-        removeUnspecifiedAttrs(doc.documentElement);
-        const newXml = new XMLSerializer().serializeToString(doc);
-        layouts[i][1] = newXml;
-    }
-    return newRoot;
+            removeUnspecifiedAttrs(dom.documentElement);
+            return {
+                name,
+                xml: new XMLSerializer().serializeToString(dom.documentElement)
+            };
+        }),
+        style: doc.style,
+        assets: doc.assets,
+    };
 }

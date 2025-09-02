@@ -1,9 +1,13 @@
+// @ts-check
+
+import xmlFormat from "xml-formatter";
+
 /**
  * 任意の値をUint8Arrayに変換する
  * @param {any} val
- * @returns {Uint8Array}
+ * @returns {Uint8Array | null}
  */
-export function toUint8Array(val) {
+function toUint8Array(val) {
     // Buffer型はUint8Arrayのサブクラスなので先に判定
     if (typeof Buffer !== 'undefined' && Buffer.isBuffer && Buffer.isBuffer(val)) {
         return new Uint8Array(val.buffer, val.byteOffset, val.byteLength);
@@ -30,30 +34,46 @@ export function toUint8Array(val) {
 }
 
 /**
- * YRT構造から { layouts, styleXml, assets } を抽出するユーティリティ
- * @param {any[]} yrtRoot
- * @returns {{ layouts: string[], styleXml: string|null, assets: any|null }}
+ * Mapまたはオブジェクトを{[id]: Uint8Array | null}のプレーンなオブジェクトに変換
+ * @param {object|Map} assets
+ * @returns {{ [x: string]: Uint8Array | null } | null}
  */
-export function fromYrtRoot(yrtRoot) {
-    if (!Array.isArray(yrtRoot) || yrtRoot.length < 3 || !yrtRoot[2]) {
-        throw new Error("fromYrtRoot: 入力がYRT構造ではありません");
+export function normalizeAssets(assets) {
+    if (!assets) return null;
+    if (typeof assets.entries === 'function') {
+        // Map型
+        return Object.fromEntries(Array.from(assets, ([k, v]) => [k, toUint8Array(v)]));
+    } else {
+        /** @type {{ [x: string]: Uint8Array | null }} */
+        const obj = {};
+        for (const k in assets) {
+            if (Object.prototype.hasOwnProperty.call(assets, k)) {
+                obj[k] = toUint8Array(assets[k]);
+            }
+        }
+        return obj;
     }
-    const layouts = (yrtRoot[2].l || []).map(pair => pair[1]);
-    const styleXml = yrtRoot[2].s ?? null;
-    const assets = yrtRoot[2].a ?? null;
-    return { layouts, styleXml, assets };
 }
 
 /**
- * YRT構造を生成するユーティリティ関数
- * @param {Object} params
- * @param {string[]} params.layouts - レイアウトXML文字列の配列
- * @param {string|null} [params.styleXml=null] - スタイルXML文字列（省略可）
- * @param {any} [params.assets=null] - アセット（省略可）
- * @returns {any[]} YRT構造
+ * YRTが新フォーマット（マイグレーション済み）かどうか判定
+ * - ['YRT', 1, { l: [...], ... }] 形式であること
+ * - l配列が1つ以上存在すること
+ * - 旧フォーマット特有のLayoutXmlキーが存在しないこと
+ * @param {any} yrtRoot
+ * @returns {boolean}
  */
-export function toYrtRoot({ layouts, styleXml = null, assets = null }) {
-    return ["YRT", 1, { l: layouts.map(xml => [null, xml]), s: styleXml, a: assets }];
+export function isAlreadyMigrated(yrtRoot) {
+    if (!Array.isArray(yrtRoot) || yrtRoot.length < 3) return false;
+    const obj = yrtRoot[2];
+    if (!obj || typeof obj !== 'object') return false;
+    // layouts配列が1つ以上
+    if (!Array.isArray(obj.l) || obj.l.length === 0) return false;
+    // 旧フォーマットはLayoutXmlキーが必ず存在する
+    if (Object.prototype.hasOwnProperty.call(obj, 'LayoutXml')) {
+        return false;
+    }
+    return true;
 }
 
 // XMLノードのXPathを取得するユーティリティ

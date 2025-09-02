@@ -1,31 +1,73 @@
 import { migrate } from "../../src/migrate/orientation_rename.mjs";
-import { toYrtRoot, fromYrtRoot } from "../../src/utils.js";
 
 describe("orientation_rename", () => {
     it("orientation=horizontal を landscape に変換する", () => {
-        const inputXml = '<?xml version="1.0" encoding="UTF-8"?>\n<LayoutXml>\n  <LinearLayout orientation="horizontal">\n    <Text>test</Text>\n  </LinearLayout>\n</LayoutXml>';
-        const yrt = migrate(toYrtRoot({ layouts: [inputXml] }));
-        const { layouts } = fromYrtRoot(yrt);
-        expect(layouts[0]).toContain('orientation="landscape"');
-        expect(layouts[0]).not.toContain('orientation="horizontal"');
+        const inputXml = [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<LayoutXml>',
+            '  <LinearLayout orientation="horizontal">',
+            '    <Text>test</Text>',
+            '  </LinearLayout>',
+            '</LayoutXml>'
+        ].join('\n');
+        const input = {
+            layouts: [{ name: null, xml: inputXml }],
+            style: null,
+            assets: null,
+        };
+        const yrt = migrate(input);
+        expect(yrt.layouts[0].xml).toContain('orientation="landscape"');
+        expect(yrt.layouts[0].xml).not.toContain('orientation="horizontal"');
     });
 
     it("orientation=vertical を portrait に変換する", () => {
-        const inputXml = '<?xml version="1.0" encoding="UTF-8"?>\n<LayoutXml>\n  <LinearLayout orientation="vertical">\n    <Text>test</Text>\n  </LinearLayout>\n</LayoutXml>';
-        const yrt = migrate(toYrtRoot({ layouts: [inputXml] }));
-        const { layouts } = fromYrtRoot(yrt);
-        expect(layouts[0]).toContain('orientation="portrait"');
-        expect(layouts[0]).not.toContain('orientation="vertical"');
+        const inputXml = [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<LayoutXml>',
+            '  <LinearLayout orientation="vertical">',
+            '    <Text>test</Text>',
+            '  </LinearLayout>',
+            '</LayoutXml>'
+        ].join('\n');
+        const input = {
+            layouts: [{ name: null, xml: inputXml }],
+            style: null,
+            assets: null,
+        };
+        const yrt = migrate(input);
+        expect(yrt.layouts[0].xml).toContain('orientation="portrait"');
+        expect(yrt.layouts[0].xml).not.toContain('orientation="vertical"');
     });
 
     it("レイアウトが2つあっても両方正しく変換される", () => {
-        const inputXml1 = '<?xml version="1.0" encoding="UTF-8"?>\n<LayoutXml>\n  <LinearLayout orientation="horizontal">\n    <Text>test1</Text>\n  </LinearLayout>\n</LayoutXml>';
-        const inputXml2 = '<?xml version="1.0" encoding="UTF-8"?>\n<LayoutXml>\n  <LinearLayout orientation="vertical">\n    <Text>test2</Text>\n  </LinearLayout>\n</LayoutXml>';
-        const yrt = migrate(toYrtRoot({ layouts: [inputXml1, inputXml2] }));
-        const { layouts } = fromYrtRoot(yrt);
-        expect(layouts[0]).toContain('orientation="landscape"');
-        expect(layouts[0]).not.toContain('orientation="horizontal"');
-        expect(layouts[1]).toContain('orientation="portrait"');
-        expect(layouts[1]).not.toContain('orientation="vertical"');
+        const inputXml1 = [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<LayoutXml>',
+            '  <LinearLayout orientation="horizontal">',
+            '    <Text>test1</Text>',
+            '  </LinearLayout>',
+            '</LayoutXml>'
+        ].join('\n');
+        const inputXml2 = [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<LayoutXml>',
+            '  <LinearLayout orientation="vertical">',
+            '    <Text>test2</Text>',
+            '  </LinearLayout>',
+            '</LayoutXml>'
+        ].join('\n');
+        const input = {
+            layouts: [
+                { name: null, xml: inputXml1 },
+                { name: null, xml: inputXml2 }
+            ],
+            style: null,
+            assets: null,
+        };
+        const yrt = migrate(input);
+        expect(yrt.layouts[0].xml).toContain('orientation="landscape"');
+        expect(yrt.layouts[0].xml).not.toContain('orientation="horizontal"');
+        expect(yrt.layouts[1].xml).toContain('orientation="portrait"');
+        expect(yrt.layouts[1].xml).not.toContain('orientation="vertical"');
     });
 });

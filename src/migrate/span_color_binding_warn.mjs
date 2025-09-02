@@ -1,3 +1,5 @@
+// @ts-check
+
 import { DOMParser } from "@xmldom/xmldom";
 import { getXPath } from "../utils.js";
 
@@ -21,10 +23,25 @@ function checkSpan(node) {
     }
 }
 
-export function migrate(yrtRoot) {
-    yrtRoot[2].l.forEach(layout => {
-        const xml = layout[1];
-        const doc = new DOMParser().parseFromString(xml, "text/xml");
-        checkSpan(doc.documentElement);
+/**
+ * <Span>要素のcolor属性がバインド変数なら警告を出す
+ * @param {import("../yrt_format.js").YrtDocument} yrtDocument - 変換対象のYrtDocument
+ * @returns {void} 警告のみ、値は返さない
+ */
+export function migrate(yrtDocument) {
+    if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) return;
+    yrtDocument.layouts.forEach(layoutEntry => {
+        if (!layoutEntry || typeof layoutEntry.xml !== "string") return;
+        const doc = new DOMParser().parseFromString(layoutEntry.xml, "text/xml");
+        if (doc.documentElement) {
+            checkSpan(doc.documentElement);
+        }
     });
+    // Style XMLにも同様の警告処理を適用
+    if (typeof yrtDocument.style === "string" && yrtDocument.style.trim().length > 0) {
+        const styleDoc = new DOMParser().parseFromString(yrtDocument.style, "text/xml");
+        if (styleDoc.documentElement) {
+            checkSpan(styleDoc.documentElement);
+        }
+    }
 }

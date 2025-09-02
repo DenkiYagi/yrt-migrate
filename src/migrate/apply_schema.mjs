@@ -64,24 +64,22 @@ function addSchemaToXml(xml, schemaUrl) {
 }
 
 /**
- * YrtRoot構造内のすべてのXMLに in-place でスキーマ属性を適用する
- *
- * @param {import('./yrt_format.js').YrtRoot} yrtRoot YRTルート構造
- * @returns {import('./yrt_format.js').YrtRoot} 変更されたYrtRoot
+ * YrtDocument構造内のすべてのXMLにスキーマ属性を適用する
+ * @param {import('../yrt_format.js').YrtDocument} yrtDocument - 変換対象のYrtDocument
+ * @returns {import('../yrt_format.js').YrtDocument} 変換後のYrtDocument
  */
-export function migrate(yrtRoot) {
-    const yrtBody = yrtRoot[2];
-    const layouts = yrtBody.l;
-
-    // すべてのレイアウトXMLにスキーマを適用
-    for (let i = 0; i < layouts.length; i++) {
-        layouts[i][1] = addSchemaToXml(layouts[i][1], SCHEMA_URLS.layout);
+export function migrate(yrtDocument) {
+    if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) return yrtDocument;
+    const migratedLayouts = yrtDocument.layouts.map(layoutEntry => {
+        if (!layoutEntry || typeof layoutEntry.xml !== "string") return layoutEntry;
+        return {
+            ...layoutEntry,
+            xml: addSchemaToXml(layoutEntry.xml, SCHEMA_URLS.layout)
+        };
+    });
+    let migratedStyle = yrtDocument.style;
+    if (typeof migratedStyle === "string" && migratedStyle.trim().length > 0) {
+        migratedStyle = addSchemaToXml(migratedStyle, SCHEMA_URLS.style);
     }
-
-    // スタイルXMLが存在する場合はスキーマを適用
-    if (yrtBody.s) {
-        yrtBody.s = addSchemaToXml(yrtBody.s, SCHEMA_URLS.style);
-    }
-
-    return yrtRoot;
+    return { ...yrtDocument, layouts: migratedLayouts, style: migratedStyle };
 }

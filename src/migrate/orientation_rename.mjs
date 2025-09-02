@@ -1,3 +1,5 @@
+// @ts-check
+
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
 /**
@@ -5,31 +7,31 @@ import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
  * - horizontal → landscape
  * - vertical → portrait
  *
- * @param {Array} yrtRoot
- * @returns {Array} 変換後のYrtRoot
+ * @param {import('../yrt_format.js').YrtDocument} doc
+ * @returns {import('../yrt_format.js').YrtDocument}
  */
-export function migrate(yrtRoot) {
-    if (!Array.isArray(yrtRoot) || yrtRoot.length < 3 || !yrtRoot[2] || !Array.isArray(yrtRoot[2].l)) {
-        throw new Error("orientation_rename.mjs: 入力がYRT構造ではありません");
-    }
-    const layouts = [];
-    for (let i = 0; i < yrtRoot[2].l.length; i++) {
-        const [name, xml] = yrtRoot[2].l[i];
-        const doc = new DOMParser().parseFromString(xml, "text/xml");
-        const allElems = doc.getElementsByTagName("*");
-        for (let j = 0; j < allElems.length; j++) {
-            const elem = allElems[j];
-            if (elem.hasAttribute("orientation")) {
-                const val = elem.getAttribute("orientation");
-                if (val === "horizontal") {
-                    elem.setAttribute("orientation", "landscape");
-                } else if (val === "vertical") {
-                    elem.setAttribute("orientation", "portrait");
+export function migrate(doc) {
+    return {
+        layouts: doc.layouts.map(({ name, xml }) => {
+            const dom = new DOMParser().parseFromString(xml, "text/xml");
+            const allElems = dom.getElementsByTagName("*");
+            for (let i = 0; i < allElems.length; i++) {
+                const elem = allElems[i];
+                if (elem.hasAttribute("orientation")) {
+                    const val = elem.getAttribute("orientation");
+                    if (val === "horizontal") {
+                        elem.setAttribute("orientation", "landscape");
+                    } else if (val === "vertical") {
+                        elem.setAttribute("orientation", "portrait");
+                    }
                 }
             }
-        }
-        layouts.push([name, new XMLSerializer().serializeToString(doc.documentElement)]);
-    }
-    yrtRoot[2].l = layouts;
-    return yrtRoot;
+            return {
+                name,
+                xml: new XMLSerializer().serializeToString(dom.documentElement)
+            };
+        }),
+        style: doc.style,
+        assets: doc.assets,
+    };
 }

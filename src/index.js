@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+// @ts-check
+
 /**
  * Copyright 2023 DenkiYagi Inc.
  *
@@ -20,8 +22,9 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import * as msgpack from "@msgpack/msgpack";
 import * as util from "util";
-import { yrtRootToPackage } from "./yrt_format.js";
+import { documentToYrtBinary } from "./yrt_format.js";
 import { formatXmlPretty, removeIndents } from "./formatter.mjs";
+import { isAlreadyMigrated, normalizeAssets } from "./utils.js"
 import { migrate as multipleXmls } from "./migrate/multiple_xmls.mjs";
 import { migrate as orientationRename } from "./migrate/orientation_rename.mjs";
 import { migrate as removeUnspecifiedAttr } from "./migrate/remove_unspecified_attr.mjs";
@@ -38,43 +41,42 @@ import { migrate as widthAutoRangeWarn } from "./migrate/width_auto_range_warn.m
 import { migrate as colorNotationIllustrator } from "./migrate/color_notation_illustrator.mjs";
 import { migrate as bindingRequiredWarn } from "./migrate/binding_required_warn.mjs";
 import { migrate as spanColorBindingWarn } from "./migrate/span_color_binding_warn.mjs";
-import { migrate as gridColsRowsRequiredWarn } from "./migrate/grid_cols_rows_required_warn.mjs";
+import { migrate as gridColsRowsRequired } from "./migrate/grid_cols_rows_required.mjs";
 import { migrate as rectangleBorderRadiusMultiWarn } from "./migrate/rectangle_border_radius_multi_warn.mjs";
 import { migrate as sizeCommaToSpace } from "./migrate/size_comma_to_space.mjs";
 import { migrate as borderstyleDasharrayToColon } from "./migrate/borderstyle_dasharray_to_colon.mjs";
 import { migrate as borderAdjacentLineWarn } from "./migrate/border_adjacent_line_warn.mjs";
 import { migrate as applySchema } from "./migrate/apply_schema.mjs";
->>>>>>> 8d98857 (ファイル整理 #19565):src/index.js
 
 // XML整形出力を制御
 const DO_FORMAT_XML = true;
 
-function migrate(newYrtRoot) {
-    newYrtRoot = multipleXmls(newYrtRoot);
-    newYrtRoot = orientationRename(newYrtRoot);
-    newYrtRoot = removeUnspecifiedAttr(newYrtRoot);
-    newYrtRoot = styleElementMigrate(newYrtRoot);
-    newYrtRoot = removeContentElements(newYrtRoot);
-    newYrtRoot = foreachHiddenToLogicMigrate(newYrtRoot);
-    newYrtRoot = removeDeprecatedLayoutAttrs(newYrtRoot);
-    newYrtRoot = addLayoutBody(newYrtRoot);
-    newYrtRoot = renameTableFrameElements(newYrtRoot);
-    newYrtRoot = imageWidthRequired(newYrtRoot);
-    newYrtRoot = renameAttrsMigrate(newYrtRoot);
-    newYrtRoot = mergeDirectionalAttrs(newYrtRoot);
-    widthAutoRangeWarn(newYrtRoot); // 警告のみ
-    newYrtRoot = colorNotationIllustrator(newYrtRoot);
-    bindingRequiredWarn(newYrtRoot); // 警告のみ
-    spanColorBindingWarn(newYrtRoot); // 警告のみ
-    gridColsRowsRequiredWarn(newYrtRoot); // 警告のみ
-    rectangleBorderRadiusMultiWarn(newYrtRoot); // 警告のみ
-    newYrtRoot = sizeCommaToSpace(newYrtRoot);
-    newYrtRoot = borderstyleDasharrayToColon(newYrtRoot);
-    borderAdjacentLineWarn(newYrtRoot); // 警告のみ
+function migrate(yrtOldDocument) {
+    let doc = multipleXmls(yrtOldDocument);
+    doc = orientationRename(doc);
+    doc = removeUnspecifiedAttr(doc);
+    doc = styleElementMigrate(doc);
+    doc = removeContentElements(doc);
+    doc = foreachHiddenToLogicMigrate(doc);
+    doc = removeDeprecatedLayoutAttrs(doc);
+    doc = addLayoutBody(doc);
+    doc = renameTableFrameElements(doc);
+    doc = imageWidthRequired(doc);
+    doc = renameAttrsMigrate(doc);
+    doc = mergeDirectionalAttrs(doc);
+    widthAutoRangeWarn(doc); // 警告のみ
+    doc = colorNotationIllustrator(doc);
+    bindingRequiredWarn(doc); // 警告のみ
+    spanColorBindingWarn(doc); // 警告のみ
+    doc = gridColsRowsRequired(doc);
+    rectangleBorderRadiusMultiWarn(doc); // 警告のみ
+    doc = sizeCommaToSpace(doc);
+    doc = borderstyleDasharrayToColon(doc);
+    borderAdjacentLineWarn(doc); // 警告のみ
 
     // 最後にスキーマ指定用の属性追加
-    newYrtRoot = applySchema(newYrtRoot);
-    return newYrtRoot;
+    doc = applySchema(doc);
+    return doc;
 }
 
 function printHelp() {
@@ -154,40 +156,56 @@ async function main() {
     }
 
     try {
-        let inputYrtRoot;
+        let inputYrtDoc;
         if (ext === ".xml") {
-            inputYrtRoot = await validateXmlInput(inputFileName);
+            // XML入力の場合、YrtOldDocument型（{ xml, assets })で渡す
+            const inputLayoutXml = await fs.readFile(inputFileName, "utf-8");
+            inputYrtDoc = { xml: inputLayoutXml, assets: null };
         } else if (ext === ".yrt") {
-            inputYrtRoot = await validateYrtInput(inputFileName);
+            const inputFile = await fs.readFile(inputFileName);
+            const decoded = msgpack.decode(inputFile);
+            if (isAlreadyMigrated(decoded)) {
+                console.warn("このYRTファイルはすでにマイグレーション済みです。処理をスキップします。");
+                process.exit(0);
+            }
+            // 旧YRT(alpha)形式: [xml, assets?]
+            if (!Array.isArray(decoded) || typeof decoded[0] !== 'string' || !decoded[0]) {
+                throw new Error("YRTファイル形式が不正です: alpha系旧YRT形式ではありません");
+            }
+            inputYrtDoc = { xml: decoded[0], assets: normalizeAssets(decoded[1]) };
         } else {
             console.error("非対応のファイル形式です");
             process.exit(1);
         }
 
-        const migratedYrtRoot = migrate(inputYrtRoot);
-        // LayoutXMLとStyleXMLを整形（それぞれ別の関数を使用することに注意）
-        migratedYrtRoot[2].l = migratedYrtRoot[2].l.map(([name, xml]) => [name, DO_FORMAT_XML ? removeIndents(xml) : xml]);
-        if (migratedYrtRoot[2].s) {
-            migratedYrtRoot[2].s = DO_FORMAT_XML ? formatXmlPretty(migratedYrtRoot[2].s) : migratedYrtRoot[2].s;
+        const migratedYrtDoc = migrate(inputYrtDoc);
+        if (DO_FORMAT_XML) {
+            migratedYrtDoc.layouts = migratedYrtDoc.layouts.map(layout => ({
+                ...layout,
+                xml: removeIndents(layout.xml)
+            }));
+            if (migratedYrtDoc.style) {
+                migratedYrtDoc.style = formatXmlPretty(migratedYrtDoc.style);
+            }
         }
-        const migratedPkg = yrtRootToPackage(migratedYrtRoot);
-        const outputFile = msgpack.encode(migratedYrtRoot);
+        const migratedYrtBinary = documentToYrtBinary(migratedYrtDoc);
+        const outputFile = msgpack.encode(migratedYrtBinary);
 
         if (args.values["dry-run"]) {
-            migratedPkg.layouts.forEach((layout, idx) => {
+            migratedYrtDoc.layouts.forEach((layout, idx) => {
                 console.log(`=== Layout ${idx} ===`);
                 console.log(layout.xml);
             });
-            if (migratedPkg.style) {
+            if (migratedYrtDoc.style) {
                 console.log("=== Style ===");
-                console.log(migratedPkg.style);
+                console.log(migratedYrtDoc.style);
             }
         } else {
             // 入力が .yrt で出力ファイル名が同じ場合のみバックアップを作成
             if (ext === ".yrt" && outputFileName === inputFileName) {
                 await fs.copyFile(inputFileName, backupFileName);
             }
-            await fs.writeFile(outputFileName, Buffer.from(outputFile));
+            await fs.writeFile(outputFileName, outputFile);
         }
     } catch (error) {
         console.error(error);

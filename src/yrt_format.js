@@ -1,6 +1,14 @@
+// @ts-check
+
+import * as fs from "fs/promises";
+import * as msgpack from "@msgpack/msgpack";
+import { normalizeAssets, isAlreadyMigrated } from "./utils.js";
+
 /**
- * YRTファイルのデータ構造モデル
- * TypeScriptでなくても使えるようJSDoc型で記述
+ * 旧YRT(alpha.13以前)やXML混在データ用の構造体
+ * @typedef {Object} YrtOldDocument
+ * @property {string} xml - レイアウト・スタイル混在XML
+ * @property {Object.<string, Uint8Array|null>|null} assets - アセット（Nullable、なければnull、値もnull可）
  */
 
 /**
@@ -10,7 +18,7 @@
  */
 
 /**
- * @typedef {Object} YrtPackage
+ * @typedef {Object} YrtDocument
  * @property {Array<YrtLayoutEntry>} layouts レイアウトXML配列（1つ以上必須）
  * @property {string|null} style スタイルXML（Nullable）
  * @property {Object.<string, Uint8Array>|null} assets アセット（Nullable、なければnull）
@@ -24,19 +32,19 @@
  */
 
 /**
- * @typedef {Array} YrtRoot
+ * @typedef {Array} YrtBinary
  * @property {string} [0] doctype ("YRT")
  * @property {number} [1] version (1)
  * @property {YrtBody} [2] body
  */
 
 /**
- * YrtRootからYrtPackageへ変換
- * @param {YrtRoot} yrtRoot
- * @returns {YrtPackage}
+ * YrtBinaryからYrtDocumentへ変換
+ * @param {YrtBinary} yrtBinary
+ * @returns {YrtDocument}
  */
-export function yrtRootToPackage(yrtRoot) {
-    const body = yrtRoot[2];
+export function yrtBinaryToDocument(yrtBinary) {
+    const body = yrtBinary[2];
     if (!body || typeof body !== "object") {
         throw new Error("YRTデータのbodyが不正です");
     }
@@ -51,18 +59,18 @@ export function yrtRootToPackage(yrtRoot) {
 }
 
 /**
- * YrtPackageからYrtRootへ変換
- * @param {YrtPackage} pkg
- * @returns {YrtRoot}
+ * YrtDocumentからYrtBinaryへ変換
+ * @param {YrtDocument} doc
+ * @returns {YrtBinary}
  */
-export function packageToYrtRoot(pkg) {
+export function documentToYrtBinary(doc) {
     return [
         "YRT",
         1,
         {
-            l: pkg.layouts.map((e) => [e.name, e.xml]),
-            s: pkg.style || null,
-            a: pkg.assets || null,
+            l: doc.layouts.map((e) => [e.name, e.xml]),
+            s: doc.style || null,
+            a: doc.assets || null,
         },
     ];
 }

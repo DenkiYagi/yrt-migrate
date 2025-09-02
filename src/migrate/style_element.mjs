@@ -1,13 +1,16 @@
+// @ts-check
+
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 import { getXPath } from "../utils.js";
 
+
 /**
- * YrtRootのみを受け取り、layouts配列のxmlを変換し、sプロパティにStyle XMLを格納して返す
- * @param {Array} yrtRoot
- * @returns {Array} 変換後のYrtRoot
+ * YrtDocument型のみを受け取り、layouts配列のxmlを変換し、styleプロパティにStyle XMLを格納して返す
+ * @param {import('../yrt_format.js').YrtDocument} yrtDocument
+ * @returns {import('../yrt_format.js').YrtDocument} 変換後のYrtDocument
  */
-export function migrate(yrtRoot) {
-    if (!Array.isArray(yrtRoot) || yrtRoot.length < 3 || !yrtRoot[2] || !Array.isArray(yrtRoot[2].l)) {
+export function migrate(yrtDocument) {
+    if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) {
         throw new Error("style_element.mjs: 入力がYRT構造ではありません");
     }
     const STYLE_TARGETS = [
@@ -23,9 +26,9 @@ export function migrate(yrtRoot) {
     );
     const styleRoot = styleDoc.documentElement;
 
-    const layouts = [];
-    for (let i = 0; i < yrtRoot[2].l.length; i++) {
-        const [name, xml] = yrtRoot[2].l[i];
+    const newLayouts = [];
+    for (const layoutEntry of yrtDocument.layouts) {
+        const { name, xml } = layoutEntry;
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         for (const { tag, styleTag } of STYLE_TARGETS) {
             const targets = Array.from(doc.getElementsByTagName(tag));
@@ -64,10 +67,11 @@ export function migrate(yrtRoot) {
             }
         }
         // 変換後のXMLをlayouts配列にpush
-        layouts.push([name, new XMLSerializer().serializeToString(doc.documentElement)]);
+        newLayouts.push({ name, xml: new XMLSerializer().serializeToString(doc.documentElement) });
     }
-    // YRT構造に反映
-    yrtRoot[2].l = layouts;
-    yrtRoot[2].s = styleAdded ? new XMLSerializer().serializeToString(styleRoot) : null;
-    return yrtRoot;
+    return {
+        layouts: newLayouts,
+        style: styleAdded ? new XMLSerializer().serializeToString(styleRoot) : null,
+        assets: yrtDocument.assets ?? null
+    };
 }

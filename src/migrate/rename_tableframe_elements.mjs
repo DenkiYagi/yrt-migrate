@@ -1,14 +1,13 @@
+// @ts-check
+
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
 /**
- * <TableFrame>関連要素をFrame系要素にリネームする（YRT構造対応）
- * @param {object} yrtRoot - { l: layouts, ... }
- * @returns {object} - 変換後のYRTルート構造
+ * <TableFrame>関連要素をFrame系要素にリネームする
+ * @param {import('../yrt_format.js').YrtDocument} yrtDocument
+ * @returns {import('../yrt_format.js').YrtDocument}
  */
-export function migrate(yrtRoot) {
-    // YRT配列形式 or オブジェクト形式どちらでも対応
-    const yrtObj = Array.isArray(yrtRoot) && yrtRoot[0] === "YRT" ? yrtRoot[2] : yrtRoot;
-    const { l: layouts = [], ...rest } = yrtObj;
+export function migrate(yrtDocument) {
     const renameMap = {
         TableFrame: "Frame",
         TableHeader: "FrameHeader",
@@ -26,16 +25,22 @@ export function migrate(yrtRoot) {
             rename(node.childNodes[i]);
         }
     }
-    const migratedLayouts = layouts.map(([_, xml]) => {
-        if (!xml) return [null, xml];
-        const doc = new DOMParser().parseFromString(xml, "text/xml");
-        if (!doc || !doc.documentElement) return [null, xml];
+    const newDoc = structuredClone(yrtDocument);
+    for (let i = 0; i < newDoc.layouts.length; i++) {
+        const entry = newDoc.layouts[i];
+        if (!entry.xml) continue;
+        const doc = new DOMParser().parseFromString(entry.xml, "text/xml");
+        if (!doc || !doc.documentElement) continue;
         rename(doc.documentElement);
-        return [null, new XMLSerializer().serializeToString(doc)];
-    });
-    if (Array.isArray(yrtRoot) && yrtRoot[0] === "YRT") {
-        return ["YRT", 1, { ...rest, l: migratedLayouts }];
-    } else {
-        return { ...yrtRoot, l: migratedLayouts };
+        entry.xml = new XMLSerializer().serializeToString(doc.documentElement);
     }
+    // Style XMLにも同様の処理を適用
+    if (typeof newDoc.style === "string" && newDoc.style.trim().length > 0) {
+        const styleDoc = new DOMParser().parseFromString(newDoc.style, "text/xml");
+        if (styleDoc && styleDoc.documentElement) {
+            rename(styleDoc.documentElement);
+            newDoc.style = new XMLSerializer().serializeToString(styleDoc.documentElement);
+        }
+    }
+    return newDoc;
 }

@@ -1,3 +1,5 @@
+// @ts-check
+
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 import { getXPath } from "../utils.js";
 
@@ -202,6 +204,7 @@ function inheritParentBorderAttrs(layoutXml) {
                 }
             }
             // 個別指定値
+            /** @type {(string|null)[]} */
             let childArr = [null, null, null, null];
             let hasIndividual = false;
             for (let d = 0; d < 4; d++) {
@@ -256,26 +259,34 @@ function propagateOuterBorderToEdges(layoutXml) {
         if (parent.tagName === "Grid") {
             const cols = (parent.getAttribute("cols") || "").trim().split(/\s+/);
             const rows = (parent.getAttribute("rows") || "").trim().split(/\s+/);
-            const colIdx = parseInt(cell.getAttribute("col"), 10);
-            const rowIdx = parseInt(cell.getAttribute("row"), 10);
+            const colStr = cell.getAttribute("col");
+            const rowStr = cell.getAttribute("row");
+            if (colStr === null || rowStr === null) continue;
+            const colIdx = parseInt(colStr, 10);
+            const rowIdx = parseInt(rowStr, 10);
             for (const dir of directions) {
                 for (const type of types) {
                     const outerAttr = `outerBorder${dir}${type}`;
                     const cellAttr = `border${dir}${type}`;
                     if (gridEdgeChecks[dir](rowIdx, rows, colIdx, cols) && parent.getAttribute(outerAttr)) {
-                        cell.setAttribute(cellAttr, parent.getAttribute(outerAttr));
+                        const val = parent.getAttribute(outerAttr);
+                        if (val !== null) cell.setAttribute(cellAttr, val);
                     }
                 }
             }
         } else if (parent.tagName === "Table") {
             const tableColumn = cell.parentNode;
-            if (!tableColumn || tableColumn.tagName !== "TableColumn") continue;
-            const siblings = Array.from(tableColumn.childNodes).filter(n => n.nodeType === 1);
+            if (!tableColumn || !("tagName" in tableColumn) || tableColumn.tagName !== "TableColumn") continue;
+            const siblings = Array.from(tableColumn.childNodes)
+                .filter(n => n.nodeType === 1)
+                .map(n => /** @type {Element} */(n));
             const idx = siblings.indexOf(cell);
             const isFirst = idx === 0;
             const isLast = idx === siblings.length - 1;
-            const tableColumns = Array.from(parent.childNodes).filter(n => n.nodeType === 1 && n.tagName === "TableColumn");
-            const colIdx = tableColumns.indexOf(tableColumn);
+            const tableColumns = Array.from(parent.childNodes)
+                .filter(n => n.nodeType === 1 && n["tagName"] === "TableColumn")
+                .map(n => /** @type {Element} */(n));
+            const colIdx = tableColumns.findIndex(col => col === tableColumn);
             const isColFirst = colIdx === 0;
             const isColLast = colIdx === tableColumns.length - 1;
             const hasHeader = siblings.some(n => n.tagName === "TableColumnHeader");
@@ -298,7 +309,8 @@ function propagateOuterBorderToEdges(layoutXml) {
                     if (dir === "Left") isEdge = tableEdgeChecks.Left(isColFirst);
                     if (dir === "Right") isEdge = tableEdgeChecks.Right(isColLast);
                     if (isEdge && parent.getAttribute(outerAttr)) {
-                        cell.setAttribute(cellAttr, parent.getAttribute(outerAttr));
+                        const val = parent.getAttribute(outerAttr);
+                        if (val !== null) cell.setAttribute(cellAttr, val);
                     }
                 }
             }
@@ -359,27 +371,29 @@ function findLayoutInheritancePairs(root) {
     return pairs;
 }
 
-export function migrate(yrtRoot) {
-    if (!yrtRoot || !Array.isArray(yrtRoot) || yrtRoot.length < 3 || !Array.isArray(yrtRoot[2]?.l)) {
-        return yrtRoot;
-    }
-    const layouts = yrtRoot[2].l.map(layout => {
-        if (!layout) return layout;
-        if (Array.isArray(layout) && layout.length === 2 && layout[1]) {
-            let xml = layout[1];
-            xml = propagateOuterBorderToEdges(xml);
-            xml = inheritParentBorderAttrs(xml);
-            xml = normalizeDirectionalAttrs(xml);
-            return [null, xml];
-        } else if (typeof layout === "string") {
-            let xml = layout;
-            xml = propagateOuterBorderToEdges(xml);
-            xml = inheritParentBorderAttrs(xml);
-            xml = normalizeDirectionalAttrs(xml);
-            return xml;
-        }
-        return layout;
+/**
+ * レイアウトXMLに方向系属性の正規化・継承・伝播処理を適用する
+ * @param {import('../yrt_format.js').YrtDocument} yrtDocument
+ * @returns {import('../yrt_format.js').YrtDocument}
+ */
+export function migrate(yrtDocument) {
+    if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) return yrtDocument;
+    const nextLayouts = yrtDocument.layouts.map(entry => {
+        if (!entry || typeof entry.xml !== 'string') return entry;
+        let xml = entry.xml;
+        xml = propagateOuterBorderToEdges(xml);
+        xml = inheritParentBorderAttrs(xml);
+        xml = normalizeDirectionalAttrs(xml);
+        return { ...entry, xml };
     });
-    const next = [yrtRoot[0], yrtRoot[1], { ...yrtRoot[2], l: layouts }];
-    return next;
+    // Style XMLにも同様の処理を適用
+    let nextStyle = yrtDocument.style;
+    if (typeof nextStyle === 'string' && nextStyle.trim().length > 0) {
+        let styleXml = nextStyle;
+        styleXml = propagateOuterBorderToEdges(styleXml);
+        styleXml = inheritParentBorderAttrs(styleXml);
+        styleXml = normalizeDirectionalAttrs(styleXml);
+        nextStyle = styleXml;
+    }
+    return { ...yrtDocument, layouts: nextLayouts, style: nextStyle };
 }

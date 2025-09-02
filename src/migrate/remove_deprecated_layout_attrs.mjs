@@ -1,22 +1,28 @@
+// @ts-check
+
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 import { getXPath } from "../utils.js";
 
 /**
- * YRT構造対応: 全レイアウトXMLに対して属性削除・警告を適用
- * @param {any} yrtRoot YRT構造
- * @returns {any} 新しいYRT構造
+ * YrtDocument型: 全レイアウトXMLに対して属性削除・警告を適用
+ * @param {import('../yrt_format.js').YrtDocument} yrtDocument
+ * @returns {import('../yrt_format.js').YrtDocument}
  */
-export function migrate(yrtRoot) {
-    const newRoot = structuredClone(yrtRoot);
-    const layouts = newRoot[2].l;
-    for (let i = 0; i < layouts.length; i++) {
-        const [name, xml] = layouts[i];
-        const doc = new DOMParser().parseFromString(xml, "text/xml");
+export function migrate(yrtDocument) {
+    const newDoc = structuredClone(yrtDocument);
+    for (let i = 0; i < newDoc.layouts.length; i++) {
+        const entry = newDoc.layouts[i];
+        const doc = new DOMParser().parseFromString(entry.xml, "text/xml");
         removeAttrsAndWarn(doc.documentElement);
-        const newXml = new XMLSerializer().serializeToString(doc.documentElement);
-        layouts[i][1] = newXml;
+        entry.xml = new XMLSerializer().serializeToString(doc.documentElement);
     }
-    return newRoot;
+    // Style XMLにも属性削除・警告処理を適用
+    if (typeof newDoc.style === "string" && newDoc.style.trim().length > 0) {
+        const styleDoc = new DOMParser().parseFromString(newDoc.style, "text/xml");
+        removeAttrsAndWarn(styleDoc.documentElement);
+        newDoc.style = new XMLSerializer().serializeToString(styleDoc.documentElement);
+    }
+    return newDoc;
 }
 
 function removeAttrsAndWarn(node) {

@@ -1,30 +1,28 @@
+// @ts-check
+
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
 /**
  * <LinearLayout>/<StackLayout> size属性 カンマ→スペース変換マイグレーション
- * @param {any} yrtRoot - YRT構造
- * @returns {any}
+ * @param {import("../yrt_format.js").YrtDocument} yrtDocument - 変換対象のYrtDocument
+ * @returns {import("../yrt_format.js").YrtDocument} 変換後のYrtDocument
  */
-export function migrate(yrtRoot) {
-    if (!yrtRoot || !Array.isArray(yrtRoot) || yrtRoot.length < 3 || !Array.isArray(yrtRoot[2]?.l)) {
-        return yrtRoot;
-    }
-    const layouts = yrtRoot[2].l.map(layout => {
-        if (!layout) return layout;
-        // [null, xmlString] 形式の場合は2番目のみ変換
-        if (Array.isArray(layout) && layout.length === 2 && layout[1]) {
-            const doc = new DOMParser().parseFromString(layout[1], "text/xml");
-            convertSizeCommaToSpace(doc);
-            return [null, new XMLSerializer().serializeToString(doc)];
-        } else if (typeof layout === "string") {
-            const doc = new DOMParser().parseFromString(layout, "text/xml");
-            convertSizeCommaToSpace(doc);
-            return new XMLSerializer().serializeToString(doc);
-        }
-        return layout;
+export function migrate(yrtDocument) {
+    if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) return yrtDocument;
+    const migratedLayouts = yrtDocument.layouts.map(layoutEntry => {
+        if (!layoutEntry || typeof layoutEntry.xml !== "string") return layoutEntry;
+        const doc = new DOMParser().parseFromString(layoutEntry.xml, "text/xml");
+        convertSizeCommaToSpace(doc);
+        return { ...layoutEntry, xml: new XMLSerializer().serializeToString(doc) };
     });
-    const next = [yrtRoot[0], yrtRoot[1], { ...yrtRoot[2], l: layouts }];
-    return next;
+    // Style XMLにも同じ変換処理を適用
+    let migratedStyle = yrtDocument.style;
+    if (typeof migratedStyle === "string" && migratedStyle.trim().length > 0) {
+        const styleDoc = new DOMParser().parseFromString(migratedStyle, "text/xml");
+        convertSizeCommaToSpace(styleDoc);
+        migratedStyle = new XMLSerializer().serializeToString(styleDoc);
+    }
+    return { ...yrtDocument, layouts: migratedLayouts, style: migratedStyle };
 }
 
 function convertSizeCommaToSpace(doc) {
