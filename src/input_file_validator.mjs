@@ -7,7 +7,7 @@ import {
     validateLegacyLayoutXml,
     validateLegacyYrtFormat,
     validateAlreadyMigrated
-} from "./yrt_format_legacy.mjs";
+} from "./yrt_format_validator.mjs";
 
 /**
  * マイグレーションの準備として、入力されたXMLファイルを検証し、

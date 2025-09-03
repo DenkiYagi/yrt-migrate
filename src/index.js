@@ -46,7 +46,7 @@ import { migrate as sizeCommaToSpace } from "./migrate/size_comma_to_space.mjs";
 import { migrate as borderstyleDasharrayToColon } from "./migrate/borderstyle_dasharray_to_colon.mjs";
 import { migrate as borderAdjacentLineWarn } from "./migrate/border_adjacent_line_warn.mjs";
 import { migrate as applySchema } from "./migrate/apply_schema.mjs";
-import { validateXmlInput, validateYrtInput } from "./yrt_input_validator.mjs";
+import { validateXmlInput, validateYrtInput } from "./input_file_validator.mjs";
 
 // XML整形出力を制御
 const DO_FORMAT_XML = true;

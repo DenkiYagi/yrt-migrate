@@ -1,5 +1,5 @@
-import { validateAssetsObject, validateAlreadyMigrated } from "../../src/yrt_format_legacy.mjs";
-import { validateLegacyYrtFormat, validateLegacyLayoutXml } from "../../src/yrt_format_legacy.mjs";
+import { validateAssetsObject, validateAlreadyMigrated } from "../../src/yrt_format_validator.mjs";
+import { validateLegacyYrtFormat, validateLegacyLayoutXml } from "../../src/yrt_format_validator.mjs";
 
 describe("validateLegacyLayoutXml", () => {
     describe("基本的な動作", () => {
