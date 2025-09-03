@@ -8,7 +8,7 @@ import { normalizeAssets, isAlreadyMigrated } from "./utils.js";
  * 旧YRT(alpha.13以前)やXML混在データ用の構造体
  * @typedef {Object} YrtOldDocument
  * @property {string} xml - レイアウト・スタイル混在XML
- * @property {Object.<string, Uint8Array|null>|null} assets - アセット（Nullable、なければnull、値もnull可）
+ * @property {Partial<Record<string, Uint8Array>>|null} assets - アセット（Nullable）
  */
 
 /**
@@ -21,14 +21,14 @@ import { normalizeAssets, isAlreadyMigrated } from "./utils.js";
  * @typedef {Object} YrtDocument
  * @property {Array<YrtLayoutEntry>} layouts レイアウトXML配列（1つ以上必須）
  * @property {string|null} style スタイルXML（Nullable）
- * @property {Object.<string, Uint8Array>|null} assets アセット（Nullable、なければnull）
+ * @property {Partial<Record<string, Uint8Array>>|null} assets アセット（Nullable）
  */
 
 /**
  * @typedef {Object} YrtBody
  * @property {Array<[string|null, string]>} l レイアウト配列（[name, xml]）
  * @property {string|null} s スタイルXML
- * @property {Object.<string, Uint8Array>|null} a アセット
+ * @property {Partial<Record<string, Uint8Array>>|null} a アセット（Nullable）
  */
 
 /**
