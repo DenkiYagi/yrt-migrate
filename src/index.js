@@ -24,7 +24,6 @@ import * as msgpack from "@msgpack/msgpack";
 import * as util from "util";
 import { documentToYrtBinary } from "./yrt_format.js";
 import { formatXmlPretty, removeIndents } from "./formatter.mjs";
-import { isAlreadyMigrated, normalizeAssets } from "./utils.js"
 import { migrate as multipleXmls } from "./migrate/multiple_xmls.mjs";
 import { migrate as orientationRename } from "./migrate/orientation_rename.mjs";
 import { migrate as removeUnspecifiedAttr } from "./migrate/remove_unspecified_attr.mjs";
@@ -47,6 +46,7 @@ import { migrate as sizeCommaToSpace } from "./migrate/size_comma_to_space.mjs";
 import { migrate as borderstyleDasharrayToColon } from "./migrate/borderstyle_dasharray_to_colon.mjs";
 import { migrate as borderAdjacentLineWarn } from "./migrate/border_adjacent_line_warn.mjs";
 import { migrate as applySchema } from "./migrate/apply_schema.mjs";
+import { validateXmlInput, validateYrtInput } from "./yrt_input_validator.mjs";
 
 // XML整形出力を制御
 const DO_FORMAT_XML = true;
@@ -158,21 +158,9 @@ async function main() {
     try {
         let inputYrtDoc;
         if (ext === ".xml") {
-            // XML入力の場合、YrtOldDocument型（{ xml, assets })で渡す
-            const inputLayoutXml = await fs.readFile(inputFileName, "utf-8");
-            inputYrtDoc = { xml: inputLayoutXml, assets: null };
+            inputYrtDoc = await validateXmlInput(inputFileName);
         } else if (ext === ".yrt") {
-            const inputFile = await fs.readFile(inputFileName);
-            const decoded = msgpack.decode(inputFile);
-            if (isAlreadyMigrated(decoded)) {
-                console.warn("このYRTファイルはすでにマイグレーション済みです。処理をスキップします。");
-                process.exit(0);
-            }
-            // 旧YRT(alpha)形式: [xml, assets?]
-            if (!Array.isArray(decoded) || typeof decoded[0] !== 'string' || !decoded[0]) {
-                throw new Error("YRTファイル形式が不正です: alpha系旧YRT形式ではありません");
-            }
-            inputYrtDoc = { xml: decoded[0], assets: normalizeAssets(decoded[1]) };
+            inputYrtDoc = await validateYrtInput(inputFileName);
         } else {
             console.error("非対応のファイル形式です");
             process.exit(1);

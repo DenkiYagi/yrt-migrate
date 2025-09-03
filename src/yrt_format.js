@@ -1,9 +1,5 @@
 // @ts-check
 
-import * as fs from "fs/promises";
-import * as msgpack from "@msgpack/msgpack";
-import { normalizeAssets, isAlreadyMigrated } from "./utils.js";
-
 /**
  * 旧YRT(alpha.13以前)やXML混在データ用の構造体
  * @typedef {Object} YrtOldDocument
