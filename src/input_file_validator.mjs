@@ -3,7 +3,6 @@
 import * as fs from "fs/promises";
 import * as msgpack from "@msgpack/msgpack";
 import {
-    validateAssetsObject,
     validateLegacyLayoutXml,
     validateLegacyYrtFormat,
     validateAlreadyMigrated
@@ -61,16 +60,8 @@ export async function validateYrtInput(inputFileName) {
     }
     const validatedDecoded = legacyYrtValidationResult.value;
 
-    const assetsObj = validatedDecoded[1];
-    if (assetsObj != null) {
-        const assetsValidationResult = validateAssetsObject(assetsObj);
-        if (assetsValidationResult.type === 'error') {
-            console.log(assetsObj);
-            throw new Error(`YRTファイル形式が不正です: ${assetsValidationResult.message}`);
-        }
-    }
     return {
         xml: validatedDecoded[0],
-        assets: assetsObj ?? null,
+        assets: validatedDecoded[1] ?? null,
     };
 }

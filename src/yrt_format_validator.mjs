@@ -82,7 +82,12 @@ export function validateLegacyYrtFormat(decoded) {
         const xmlValidationResult = validateLegacyLayoutXml(maybeXml);
         if (xmlValidationResult.type === 'error') {
             return error(`レイアウトXMLの検証に失敗しました: ${xmlValidationResult.message}`);
-        } else if (xmlValidationResult.type === 'warning') {
+        }
+        const assetsValidationResult = validateAssetsObject(maybeAssets);
+        if (assetsValidationResult.type === 'error') {
+            return error(`アセットの検証に失敗しました: ${assetsValidationResult.message}`);
+        }
+        if (xmlValidationResult.type === 'warning') {
             return warning(/** @type {LegacyYrtBinary} */(decoded), xmlValidationResult.message); // propagate
         }
         return success(/** @type {LegacyYrtBinary} */(decoded));
