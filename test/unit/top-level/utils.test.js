@@ -1,5 +1,5 @@
 import { DOMParser } from "@xmldom/xmldom";
-import { getXPath } from "../src/utils.js";
+import { getXPath } from "../../../src/utils.js";
 
 describe("getXPath", () => {
     it("単純な要素のXPathが正しく取得できる", () => {

@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import { removeIndents } from "../src/formatter.mjs";
+import { removeIndents } from "../../../src/formatter.mjs";
 
 describe("removeIndents", () => {
     it("典型ケース: 2行目以降の全行が余分なインデントを持つ", () => {
