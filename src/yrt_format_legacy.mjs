@@ -1,6 +1,8 @@
 // @ts-check
 // import types:
-/** @private @typedef {import("./yrt_types").DecodedLegacyYrt} DecodedLegacyYrt */
+/** @private @typedef {import("./yrt_format").YrtAssets} YrtAssets */
+/** @private @typedef {import("./yrt_format").YrtBinary} YrtBinary */
+/** @private @typedef {import("./yrt_format").LegacyYrtBinary} LegacyYrtBinary */
 /** @private @template T @typedef {import("./validation_result.mjs").Result<T>} Result<T> */
 /** @private @template T @typedef {import("./validation_result.mjs").SimpleResult<T>} SimpleResult<T> */
 
@@ -46,11 +48,11 @@ export function validateLegacyLayoutXml(xml) {
 /**
  * 旧YRT形式 (v1.0.0-alpha.13) かどうかを判定する
  * 
- * - `decoded` のデータ型が `DecodedLegacyYrt` に合致すること
+ * - `decoded` のデータ型が `LegacyYrtBinary` に合致すること
  * - レイアウトXMLが旧形式であること
  * 
  * @param {unknown} decoded
- * @returns {Result<DecodedLegacyYrt>}
+ * @returns {Result<LegacyYrtBinary>}
  */
 export function validateLegacyYrtFormat(decoded) {
     if (!Array.isArray(decoded)) {
@@ -66,9 +68,9 @@ export function validateLegacyYrtFormat(decoded) {
         if (xmlValidationResult.type === 'error') {
             return error(`レイアウトXMLの検証に失敗しました: ${xmlValidationResult.message}`);
         } else if (xmlValidationResult.type === 'warning') {
-            return warning(/** @type {DecodedLegacyYrt} */(decoded), xmlValidationResult.message); // propagate
+            return warning(/** @type {LegacyYrtBinary} */(decoded), xmlValidationResult.message); // propagate
         }
-        return success(/** @type {DecodedLegacyYrt} */(decoded));
+        return success(/** @type {LegacyYrtBinary} */(decoded));
     } else if (decoded.length === 2) {
         const [maybeXml, maybeAssets] = decoded;
         if (typeof maybeXml !== 'string') {
@@ -81,9 +83,9 @@ export function validateLegacyYrtFormat(decoded) {
         if (xmlValidationResult.type === 'error') {
             return error(`レイアウトXMLの検証に失敗しました: ${xmlValidationResult.message}`);
         } else if (xmlValidationResult.type === 'warning') {
-            return warning(/** @type {DecodedLegacyYrt} */(decoded), xmlValidationResult.message); // propagate
+            return warning(/** @type {LegacyYrtBinary} */(decoded), xmlValidationResult.message); // propagate
         }
-        return success(/** @type {DecodedLegacyYrt} */(decoded));
+        return success(/** @type {LegacyYrtBinary} */(decoded));
     } else {
         return error(`配列の要素数が不正です。`);
     }
@@ -95,7 +97,7 @@ export function validateLegacyYrtFormat(decoded) {
  * ※ アセットオブジェクトの形式は v1.0.0-alpha.13 と v1.0 で共通
  * 
  * @param {unknown} value
- * @returns {SimpleResult<Partial<Record<string, Uint8Array>>>}
+ * @returns {SimpleResult<YrtAssets>}
  */
 export function validateAssetsObject(value) {
     if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -110,7 +112,7 @@ export function validateAssetsObject(value) {
         }
     }
 
-    return success(/** @type {Partial<Record<string, Uint8Array>>} */(value));
+    return success(/** @type {YrtAssets} */(value));
 }
 
 /**
@@ -119,7 +121,7 @@ export function validateAssetsObject(value) {
  * - `l` 配列の要素が1つ以上存在すること
  *
  * @param {unknown} maybeYrt
- * @returns {SimpleResult<unknown>}
+ * @returns {SimpleResult<YrtBinary>}
  */
 export function validateAlreadyMigrated(maybeYrt) {
     if (!Array.isArray(maybeYrt) || maybeYrt.length < 3) {
@@ -136,5 +138,5 @@ export function validateAlreadyMigrated(maybeYrt) {
         return error('YRTのレイアウト配列が存在しないか空です。');
     }
 
-    return success(maybeYrt);
+    return success(/** @type {YrtBinary} */(maybeYrt));
 }
