@@ -1,5 +1,5 @@
-import { validateAssetsObject, validateAlreadyMigrated } from "./yrt_format_legacy.mjs";
-import { validateLegacyYrtFormat, validateLegacyLayoutXml } from "./yrt_format_legacy.mjs";
+import { validateAssetsObject, validateAlreadyMigrated } from "../../../src/yrt_format_validator.mjs";
+import { validateLegacyYrtFormat, validateLegacyLayoutXml } from "../../../src/yrt_format_validator.mjs";
 
 describe("validateLegacyLayoutXml", () => {
     describe("基本的な動作", () => {
@@ -200,55 +200,167 @@ describe("validateLegacyLayoutXml", () => {
 });
 
 describe("validateLegacyYrtFormat", () => {
-    it("[xml] でルートが <LayoutXml> の場合は success を返す", () => {
-        const arr = ["<LayoutXml><LinearLayout/></LayoutXml>"];
-        const result = validateLegacyYrtFormat(arr);
-        expect(result.type).toBe('success');
-        expect(result.value).toEqual(arr);
+    describe("基本的な動作", () => {
+        it("[xml] でルートが <LayoutXml> の場合は success を返す", () => {
+            const arr = ["<LayoutXml><LinearLayout/></LayoutXml>"];
+            const result = validateLegacyYrtFormat(arr);
+            expect(result.type).toBe('success');
+            expect(result.value).toEqual(arr);
+        });
+        it("[xml, assets] でルートが <LayoutXml> の場合は success を返す", () => {
+            const arr = ["<LayoutXml><LinearLayout/></LayoutXml>", { foo: new Uint8Array([1, 2, 3]) }];
+            const result = validateLegacyYrtFormat(arr);
+            expect(result.type).toBe('success');
+            expect(result.value).toEqual(arr);
+        });
+        it("[xml, 空のassets] でルートが <LayoutXml> の場合は success を返す", () => {
+            const arr = ["<LayoutXml><LinearLayout/></LayoutXml>", {}];
+            const result = validateLegacyYrtFormat(arr);
+            expect(result.type).toBe('success');
+            expect(result.value).toEqual(arr);
+        });
     });
-    it("[xml, assets] でルートが <LayoutXml> の場合は success を返す", () => {
-        const arr = ["<LayoutXml><LinearLayout/></LayoutXml>", { foo: new Uint8Array([1, 2, 3]) }];
-        const result = validateLegacyYrtFormat(arr);
-        expect(result.type).toBe('success');
-        expect(result.value).toEqual(arr);
+
+    describe("XMLの検証エラー", () => {
+        it("[xml] でルートが <LayoutXml> でない場合は error を返す", () => {
+            const arr = ["<OtherRoot></OtherRoot>"];
+            const result = validateLegacyYrtFormat(arr);
+            expect(result.type).toBe('error');
+            expect(result.message).toContain('レイアウトXML');
+        });
+        it("[xml, assets] でルートが <LayoutXml> でない場合は error を返す", () => {
+            const arr = ["<OtherRoot></OtherRoot>", { foo: new Uint8Array([1, 2, 3]) }];
+            const result = validateLegacyYrtFormat(arr);
+            expect(result.type).toBe('error');
+            expect(result.message).toContain('レイアウトXML');
+        });
+        it("[不正なXML] の場合は error を返す", () => {
+            const arr = ["Invalid XML"];
+            const result = validateLegacyYrtFormat(arr);
+            expect(result.type).toBe('error');
+            expect(result.message).toContain('レイアウトXML');
+        });
+        it("[不正なXML, assets] の場合は error を返す", () => {
+            const arr = ["Invalid XML", { foo: new Uint8Array([1, 2, 3]) }];
+            const result = validateLegacyYrtFormat(arr);
+            expect(result.type).toBe('error');
+            expect(result.message).toContain('レイアウトXML');
+        });
     });
-    it("[xml] でルートが <LayoutXml> でない場合は error を返す", () => {
-        const arr = ["<OtherRoot></OtherRoot>"];
-        const result = validateLegacyYrtFormat(arr);
-        expect(result.type).toBe('error');
-        expect(result.message).toContain('レイアウトXML');
+
+    describe("XMLの検証警告", () => {
+        it("[警告のあるXML] の場合は warning を返す", () => {
+            const xml = `<LayoutXml id=unquoted>content</LayoutXml>`;
+            const arr = [xml];
+            const result = validateLegacyYrtFormat(arr);
+            expect(result.type).toBe('warning');
+            expect(result.value).toEqual(arr);
+            expect(result.message).toContain('missed quot');
+        });
+        it("[警告のあるXML, assets] の場合は warning を返す", () => {
+            const xml = `<LayoutXml id=unquoted>content</LayoutXml>`;
+            const arr = [xml, { foo: new Uint8Array([1, 2, 3]) }];
+            const result = validateLegacyYrtFormat(arr);
+            expect(result.type).toBe('warning');
+            expect(result.value).toEqual(arr);
+            expect(result.message).toContain('missed quot');
+        });
     });
-    it("[xml, assets] でルートが <LayoutXml> でない場合は error を返す", () => {
-        const arr = ["<OtherRoot></OtherRoot>", { foo: new Uint8Array([1, 2, 3]) }];
-        const result = validateLegacyYrtFormat(arr);
-        expect(result.type).toBe('error');
-        expect(result.message).toContain('レイアウトXML');
+
+    describe("アセットの型検証", () => {
+        it("[xml, null] の場合は error を返す", () => {
+            const arr = ["<LayoutXml></LayoutXml>", null];
+            const result = validateLegacyYrtFormat(arr);
+            expect(result.type).toBe('error');
+            expect(result.message).toContain('オブジェクト');
+        });
+        it("[xml, オブジェクト以外] の場合は error を返す", () => {
+            const arr = ["<LayoutXml></LayoutXml>", 123];
+            const result = validateLegacyYrtFormat(arr);
+            expect(result.type).toBe('error');
+            expect(result.message).toContain('オブジェクト');
+        });
+        it("[xml, 文字列] の場合は error を返す", () => {
+            const arr = ["<LayoutXml></LayoutXml>", "string"];
+            const result = validateLegacyYrtFormat(arr);
+            expect(result.type).toBe('error');
+            expect(result.message).toContain('オブジェクト');
+        });
+        it("[xml, 配列] の場合は error を返す", () => {
+            const arr = ["<LayoutXml></LayoutXml>", [new Uint8Array([1, 2, 3])]];
+            const result = validateLegacyYrtFormat(arr);
+            expect(result.type).toBe('error');
+            expect(result.message).toContain('オブジェクト');
+        });
     });
-    it("[xml, null] の場合は error を返す", () => {
-        const arr = ["<LayoutXml></LayoutXml>", null];
-        const result = validateLegacyYrtFormat(arr);
-        expect(result.type).toBe('error');
-        expect(result.message).toContain('オブジェクト');
+
+    describe("アセットの内容検証", () => {
+        it("[xml, Uint8Array以外の値を含むassets] の場合は error を返す", () => {
+            const arr = ["<LayoutXml></LayoutXml>", { valid: new Uint8Array([1, 2, 3]), invalid: 123 }];
+            const result = validateLegacyYrtFormat(arr);
+            expect(result.type).toBe('error');
+            expect(result.message).toContain('アセット');
+            expect(result.message).toContain('Uint8Array');
+        });
+        it("[xml, 文字列値を含むassets] の場合は error を返す", () => {
+            const arr = ["<LayoutXml></LayoutXml>", { image: "not-uint8array" }];
+            const result = validateLegacyYrtFormat(arr);
+            expect(result.type).toBe('error');
+            expect(result.message).toContain('アセット');
+            expect(result.message).toContain('Uint8Array');
+        });
+        it("[xml, null値を含むassets] の場合は error を返す", () => {
+            const arr = ["<LayoutXml></LayoutXml>", { image: null }];
+            const result = validateLegacyYrtFormat(arr);
+            expect(result.type).toBe('error');
+            expect(result.message).toContain('アセット');
+            expect(result.message).toContain('Uint8Array');
+        });
+        it("[xml, 配列値を含むassets] の場合は error を返す", () => {
+            const arr = ["<LayoutXml></LayoutXml>", { image: [1, 2, 3] }];
+            const result = validateLegacyYrtFormat(arr);
+            expect(result.type).toBe('error');
+            expect(result.message).toContain('アセット');
+            expect(result.message).toContain('Uint8Array');
+        });
+        it("[xml, Mapインスタンス] の場合は error を返す", () => {
+            const map = new Map([["image", new Uint8Array([1, 2, 3])]]);
+            const arr = ["<LayoutXml></LayoutXml>", map];
+            const result = validateLegacyYrtFormat(arr);
+            expect(result.type).toBe('error');
+            expect(result.message).toContain('アセット');
+            expect(result.message).toContain('有効なオブジェクト');
+        });
+        it("[xml, Setインスタンス] の場合は error を返す", () => {
+            const set = new Set([new Uint8Array([1, 2, 3])]);
+            const arr = ["<LayoutXml></LayoutXml>", set];
+            const result = validateLegacyYrtFormat(arr);
+            expect(result.type).toBe('error');
+            expect(result.message).toContain('アセット');
+            expect(result.message).toContain('有効なオブジェクト');
+        });
     });
-    it("[xml, オブジェクト以外] の場合は error を返す", () => {
-        const arr = ["<LayoutXml></LayoutXml>", 123];
-        const result = validateLegacyYrtFormat(arr);
-        expect(result.type).toBe('error');
-        expect(result.message).toContain('オブジェクト');
-    });
-    it("配列でない入力の場合は error を返す", () => {
-        expect(validateLegacyYrtFormat(null).type).toBe('error');
-        expect(validateLegacyYrtFormat({}).type).toBe('error');
-        expect(validateLegacyYrtFormat("<LayoutXml></LayoutXml>").type).toBe('error');
-    });
-    it("配列長が不正な場合は error を返す", () => {
-        expect(validateLegacyYrtFormat([]).type).toBe('error');
-        expect(validateLegacyYrtFormat(["a", "b", "c"]).type).toBe('error');
-    });
-    it("[文字列以外] の場合は error を返す", () => {
-        const result = validateLegacyYrtFormat([123]);
-        expect(result.type).toBe('error');
-        expect(result.message).toContain('文字列');
+
+    describe("配列構造の検証", () => {
+        it("配列でない入力の場合は error を返す", () => {
+            expect(validateLegacyYrtFormat(null).type).toBe('error');
+            expect(validateLegacyYrtFormat({}).type).toBe('error');
+            expect(validateLegacyYrtFormat("<LayoutXml></LayoutXml>").type).toBe('error');
+        });
+        it("配列長が不正な場合は error を返す", () => {
+            expect(validateLegacyYrtFormat([]).type).toBe('error');
+            expect(validateLegacyYrtFormat(["a", "b", "c"]).type).toBe('error');
+        });
+        it("[文字列以外] の場合は error を返す", () => {
+            const result = validateLegacyYrtFormat([123]);
+            expect(result.type).toBe('error');
+            expect(result.message).toContain('文字列');
+        });
+        it("[文字列以外, assets] の場合は error を返す", () => {
+            const result = validateLegacyYrtFormat([123, { foo: new Uint8Array([1, 2, 3]) }]);
+            expect(result.type).toBe('error');
+            expect(result.message).toContain('文字列');
+        });
     });
 });
 
