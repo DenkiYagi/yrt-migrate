@@ -51,7 +51,7 @@ export function migrate(yrtDocument) {
                             /^\$\{[^}]+\}$/.test(attr.value)
                         ) {
                             const xpath = getXPath(styleElem);
-                            console.warn(`[WARNING] ${tag} の ${attr.name} 属性値にバインド変数 (${attr.value}) が含まれています（${xpath}）`);
+                            console.warn(`[WARNING] ${styleTag} の ${attr.name} 属性値にバインド変数 (${attr.value}) が含まれています（${xpath}）`);
                         }
                     }
                     if (!cellRange.hasAttribute("col")) {

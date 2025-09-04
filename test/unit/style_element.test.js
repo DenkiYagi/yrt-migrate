@@ -5,12 +5,12 @@ describe("style_element", () => {
     it("GridStyle要素がStyle XMLに移行し、レイアウトXMLから削除される", () => {
         const inputXml = [
             '<?xml version="1.0" encoding="UTF-8"?>',
-            '<LayoutXml>',
+            '<StackLayout>',
             '  <Grid>',
             '    <GridStyle borderColor="red" foreach="item"/>',
             '    <Text>test</Text>',
             '  </Grid>',
-            '</LayoutXml>'
+            '</StackLayout>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
         const migrated = migrate(yrtDocument);
@@ -28,12 +28,12 @@ describe("style_element", () => {
     it("GridStyleのcol/row範囲指定がCellRangeに正しく移行される", () => {
         const inputXml = [
             '<?xml version="1.0" encoding="UTF-8"?>',
-            '<LayoutXml>',
+            '<StackLayout>',
             '  <Grid>',
             '    <GridStyle borderColor="red" col="1" row="2"/>',
             '    <Text>test</Text>',
             '  </Grid>',
-            '</LayoutXml>'
+            '</StackLayout>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
         const migrated = migrate(yrtDocument);
@@ -43,7 +43,7 @@ describe("style_element", () => {
     it("TableStyle要素がStyle XMLに移行し、レイアウトXMLから削除される", () => {
         const inputXml = [
             '<?xml version="1.0" encoding="UTF-8"?>',
-            '<LayoutXml>',
+            '<StackLayout>',
             '  <Table>',
             '    <TableStyle borderColor="blue"/>',
             '    <TableColumn>',
@@ -52,7 +52,7 @@ describe("style_element", () => {
             '      </TableColumnTemplate>',
             '    </TableColumn>',
             '  </Table>',
-            '</LayoutXml>'
+            '</StackLayout>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
         const migrated = migrate(yrtDocument);
@@ -69,7 +69,7 @@ describe("style_element", () => {
     it("TableStyleのcol/row範囲指定がCellRangeに正しく移行される", () => {
         const inputXml = [
             '<?xml version="1.0" encoding="UTF-8"?>',
-            '<LayoutXml>',
+            '<StackLayout>',
             '  <Table>',
             '    <TableStyle borderColor="blue" col="1" row="2"/>',
             '    <TableColumn>',
@@ -78,7 +78,7 @@ describe("style_element", () => {
             '      </TableColumnTemplate>',
             '    </TableColumn>',
             '  </Table>',
-            '</LayoutXml>'
+            '</StackLayout>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
         const migrated = migrate(yrtDocument);
@@ -88,12 +88,12 @@ describe("style_element", () => {
     it("ColumnTextStyle要素がStyle XMLに移行し、レイアウトXMLから削除される", () => {
         const inputXml = [
             '<?xml version="1.0" encoding="UTF-8"?>',
-            '<LayoutXml>',
+            '<StackLayout>',
             '  <ColumnText>',
             '    <ColumnTextStyle borderColor="green"/>',
             '    <ColumnTextContent>abc</ColumnTextContent>',
             '  </ColumnText>',
-            '</LayoutXml>'
+            '</StackLayout>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
         const migrated = migrate(yrtDocument);
@@ -111,12 +111,12 @@ describe("style_element", () => {
     it("ColumnTextStyleのcol範囲指定がCellRangeに正しく移行される", () => {
         const inputXml = [
             '<?xml version="1.0" encoding="UTF-8"?>',
-            '<LayoutXml>',
+            '<StackLayout>',
             '  <ColumnText>',
             '    <ColumnTextStyle borderColor="green" col="2"/>',
             '    <ColumnTextContent>abc</ColumnTextContent>',
             '  </ColumnText>',
-            '</LayoutXml>'
+            '</StackLayout>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
         const migrated = migrate(yrtDocument);
@@ -126,22 +126,24 @@ describe("style_element", () => {
     it("複数のXxxStyle要素が複数レイアウトXMLに存在した場合に、1つのスタイルXMLに正しく集約される", () => {
         const inputXmls = [
             [
-                '<?xml version="1.0" encoding="UTF-8"?>',
-                '<Grid>',
-                '  <GridStyle borderColor="red"/>',
-                '  <Text>test</Text>',
-                '</Grid>'
+                '<StackLayout>',
+                '  <Grid>',
+                '    <GridStyle borderColor="red"/>',
+                '    <Text>test</Text>',
+                '  </Grid>',
+                '</StackLayout>'
             ].join('\n'),
             [
-                '<?xml version="1.0" encoding="UTF-8"?>',
-                '<Table>',
-                '  <TableStyle borderColor="blue"/>',
-                '  <TableColumn>',
-                '    <TableColumnTemplate>',
-                '      <Text>row</Text>',
-                '    </TableColumnTemplate>',
-                '  </TableColumn>',
-                '</Table>'
+                '<StackLayout>',
+                '  <Table>',
+                '    <TableStyle borderColor="blue"/>',
+                '    <TableColumn>',
+                '      <TableColumnTemplate>',
+                '        <Text>row</Text>',
+                '      </TableColumnTemplate>',
+                '    </TableColumn>',
+                '  </Table>',
+                '</StackLayout>'
             ].join('\n'),
         ];
         const yrtDocument = {
@@ -165,14 +167,14 @@ describe("style_element", () => {
     it("同一親要素内に複数のXxxStyle要素が存在した場合に、すべてが正しく移行される", () => {
         const inputXml = [
             '<?xml version="1.0" encoding="UTF-8"?>',
-            '<LayoutXml>',
+            '<StackLayout>',
             '  <Grid>',
             '    <GridStyle borderColor="red" col="1" row="1"/>',
             '    <GridStyle borderColor="blue" col="2" row="2"/>',
             '    <GridStyle borderColor="green" col="3" row="3"/>',
             '    <Text>test</Text>',
             '  </Grid>',
-            '</LayoutXml>'
+            '</StackLayout>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
         const migrated = migrate(yrtDocument);
@@ -190,12 +192,12 @@ describe("style_element", () => {
         it("GridStyleにcol/row属性がない場合、CellRangeに col=\"all\" row=\"all\" が自動追加される", () => {
             const inputXml = [
                 '<?xml version="1.0" encoding="UTF-8"?>',
-                '<LayoutXml>',
+                '<StackLayout>',
                 '  <Grid>',
                 '    <GridStyle borderColor="red" foreach="item"/>',
                 '    <Text>test</Text>',
                 '  </Grid>',
-                '</LayoutXml>'
+                '</StackLayout>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
             const migrated = migrate(yrtDocument);
@@ -205,7 +207,7 @@ describe("style_element", () => {
         it("TableStyleにcol属性のみがない場合、CellRangeに col=\"all\" が自動追加される", () => {
             const inputXml = [
                 '<?xml version="1.0" encoding="UTF-8"?>',
-                '<LayoutXml>',
+                '<StackLayout>',
                 '  <Table>',
                 '    <TableStyle borderColor="blue" row="1"/>',
                 '    <TableColumn>',
@@ -214,7 +216,7 @@ describe("style_element", () => {
                 '      </TableColumnTemplate>',
                 '    </TableColumn>',
                 '  </Table>',
-                '</LayoutXml>'
+                '</StackLayout>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
             const migrated = migrate(yrtDocument);
@@ -224,12 +226,12 @@ describe("style_element", () => {
         it("ColumnTextStyleにrow属性のみがない場合、CellRangeに row=\"all\" が自動追加される", () => {
             const inputXml = [
                 '<?xml version="1.0" encoding="UTF-8"?>',
-                '<LayoutXml>',
+                '<StackLayout>',
                 '  <ColumnText>',
                 '    <ColumnTextStyle borderColor="green" col="2"/>',
                 '    <ColumnTextContent>abc</ColumnTextContent>',
                 '  </ColumnText>',
-                '</LayoutXml>'
+                '</StackLayout>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
             const migrated = migrate(yrtDocument);
@@ -239,12 +241,12 @@ describe("style_element", () => {
         it("既にcol/row属性が存在する場合は上書きされない", () => {
             const inputXml = [
                 '<?xml version="1.0" encoding="UTF-8"?>',
-                '<LayoutXml>',
+                '<StackLayout>',
                 '  <Grid>',
                 '    <GridStyle borderColor="red" col="1" row="2"/>',
                 '    <Text>test</Text>',
                 '  </Grid>',
-                '</LayoutXml>'
+                '</StackLayout>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
             const migrated = migrate(yrtDocument);
@@ -257,11 +259,11 @@ describe("style_element", () => {
     it('XxxStyle要素が存在しない場合はスタイル情報を生成しない', () => {
         const inputXml = [
             '<?xml version="1.0" encoding="UTF-8"?>',
-            '<LayoutXml>',
+            '<StackLayout>',
             '  <LinearLayout>',
             '    <Text>test</Text>',
             '  </LinearLayout>',
-            '</LayoutXml>'
+            '</StackLayout>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
         const migrated = migrate(yrtDocument);
@@ -271,12 +273,12 @@ describe("style_element", () => {
     it("XxxStyle要素の属性にバインド変数が含まれる場合、StyleXMLに移行しつつ警告が出る", () => {
         const inputXml = [
             '<?xml version="1.0" encoding="UTF-8"?>',
-            '<LayoutXml>',
+            '<StackLayout>',
             '  <Grid>',
             '    <GridStyle borderColor="${foo}" foreach="${foo}"/>',
             '    <Text>test</Text>',
             '  </Grid>',
-            '</LayoutXml>'
+            '</StackLayout>'
         ].join('\n');
         const spy = jest.spyOn(console, 'warn').mockImplementation(() => { });
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
@@ -287,6 +289,9 @@ describe("style_element", () => {
         expect(cellRangeTag).toContain('borderColor="${foo}"');
         expect(cellRangeTag).toContain('foreach="${foo}"');
         expect(spy).toHaveBeenCalled();
+        // 警告メッセージに対象要素（GridStyle）が含まれるかどうかを併せてチェック
+        const warnCalls = spy.mock.calls.map(args => args.join(' ')).join(' ');
+        expect(warnCalls).toContain('GridStyle');
         spy.mockRestore();
     });
 });
