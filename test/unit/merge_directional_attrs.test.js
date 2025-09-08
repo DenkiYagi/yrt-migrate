@@ -11,7 +11,7 @@ function normalizeXml(xml) {
 }
 
 describe('mergeDirectionalAttributes', () => {
-    describe('単一要素が解決できているか', () => {
+    describe('単一要素内での解決', () => {
         it('margin の統合', () => {
             const input = '<StackLayout marginTop="1" marginRight="2" marginBottom="3" marginLeft="4"/>';
             const expected = '<StackLayout margin="1 2 3 4"/>';
@@ -84,7 +84,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('4方向すべて指定', () => {
+        it('borderThickness の統合', () => {
             const input = '<LinearLayout borderTopThickness="1" borderRightThickness="2" borderBottomThickness="3" borderLeftThickness="4"/>';
             const expected = '<LinearLayout borderThickness="1 2 3 4"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
@@ -93,7 +93,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('上下のみ指定（4値で補完）', () => {
+        it('上下のみ指定した場合は4値で補完しつつ、足りない部分をデフォルト値で補完する', () => {
             const input = '<StackLayout paddingTop="8" paddingBottom="8"/>';
             const expected = '<StackLayout padding="8 0 8 0"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
@@ -102,7 +102,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('一括指定と個別指定のマージ', () => {
+        it('一括指定値と個別指定値があった場合は、一括指定値を個別指定値で上書きする', () => {
             const input = '<Grid borderThickness="5" borderLeftThickness="2"/>';
             const expected = '<Grid borderThickness="5 5 5 2"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
@@ -164,6 +164,46 @@ describe('mergeDirectionalAttributes', () => {
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
+
+        it('TableColumnXxx の borderThickness は初期値 regular で補完される', () => {
+            const input = [
+                '<LinearLayout>',
+                '  <LayoutBody>',
+                '    <Table items="${items}">',
+                '      <TableColumn width="*">',
+                '        <TableColumnHeader borderTopThickness="extrathick">',
+                '          <Text>Column 1 Header</Text>',
+                '        </TableColumnHeader>',
+                '        <TableColumnTemplate>',
+                '          <Text>Column 1 Body</Text>',
+                '        </TableColumnTemplate>',
+                '      </TableColumn>',
+                '    </Table>',
+                '  </LayoutBody>',
+                '</LinearLayout>'
+            ].join('\n');
+            const expected = [
+                '<LinearLayout>',
+                '  <LayoutBody>',
+                '    <Table items="${items}">',
+                '      <TableColumn width="*">',
+                '        <TableColumnHeader borderThickness="extrathick regular regular regular">',
+                '          <Text>Column 1 Header</Text>',
+                '        </TableColumnHeader>',
+                '        <TableColumnTemplate>',
+                '          <Text>Column 1 Body</Text>',
+                '        </TableColumnTemplate>',
+                '      </TableColumn>',
+                '    </Table>',
+                '  </LayoutBody>',
+                '</LinearLayout>'
+            ].join('\n');
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
+        });
+
     });
 
     describe('親子関係のある要素の解決', () => {
@@ -319,7 +359,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('Table の outerBorder 系属性が TableColumnXxx に割り振られる（Header,Footerあり）', () => {
+        it('Table の outerBorder(Thickness|Style|Color) が TableColumnXxx に割り振られ、値がないところは regular, black, solid となる （Header,Footerあり）', () => {
             const input = [
                 '<Table outerBorderTopThickness="9" outerBorderBottomColor="#abc" outerBorderLeftStyle="double" outerBorderRightStyle="dotted">',
                 '  <TableColumn>',
@@ -349,7 +389,7 @@ describe('mergeDirectionalAttributes', () => {
             const expected = [
                 '<Table>',
                 '  <TableColumn>',
-                '    <TableColumnHeader borderThickness="9 0 0 0" borderStyle="solid solid solid double">',
+                '    <TableColumnHeader borderThickness="9 regular regular regular" borderStyle="solid solid solid double">',
                 '      <Text>header1</Text>',
                 '    </TableColumnHeader>',
                 '    <TableColumnTemplate borderStyle="solid solid solid double">',
@@ -360,7 +400,7 @@ describe('mergeDirectionalAttributes', () => {
                 '    </TableColumnFooter>',
                 '  </TableColumn>',
                 '  <TableColumn>',
-                '    <TableColumnHeader borderThickness="9 0 0 0" borderStyle="solid dotted solid solid">',
+                '    <TableColumnHeader borderThickness="9 regular regular regular" borderStyle="solid dotted solid solid">',
                 '      <Text>header2</Text>',
                 '    </TableColumnHeader>',
                 '    <TableColumnTemplate borderStyle="solid dotted solid solid">',
@@ -378,7 +418,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('Table の outerBorder 系属性が TableColumnXxx に割り振られつつ、レイアウトが変わる警告を出す（Header,Footerなし）', () => {
+        it('Table の outerBorder(Thickness|Style|Color) が TableColumnXxx に割り振られ、値がないところは regular, black, solid となる、レイアウトが変わる警告を出す （Header,Footerなし）', () => {
             const input = [
                 '<Table outerBorderTopThickness="9" outerBorderBottomColor="#abc" outerBorderLeftStyle="double" outerBorderRightStyle="dotted">',
                 '  <TableColumn>',
@@ -396,12 +436,12 @@ describe('mergeDirectionalAttributes', () => {
             const expected = [
                 '<Table>',
                 '  <TableColumn>',
-                '    <TableColumnTemplate borderThickness="9 0 0 0" borderStyle="solid solid solid double" borderColor="black black #abc black">',
+                '    <TableColumnTemplate borderThickness="9 regular regular regular" borderStyle="solid solid solid double" borderColor="black black #abc black">',
                 '      <Text>body1</Text>',
                 '    </TableColumnTemplate>',
                 '  </TableColumn>',
                 '  <TableColumn>',
-                '    <TableColumnTemplate borderThickness="9 0 0 0" borderStyle="solid dotted solid solid" borderColor="black black #abc black">',
+                '    <TableColumnTemplate borderThickness="9 regular regular regular" borderStyle="solid dotted solid solid" borderColor="black black #abc black">',
                 '      <Text>body2</Text>',
                 '    </TableColumnTemplate>',
                 '  </TableColumn>',

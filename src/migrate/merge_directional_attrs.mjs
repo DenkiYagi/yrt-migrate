@@ -17,13 +17,28 @@ const ATTR_MAP = [
         default: '0',
     },
     {
-        elements: ['Table', 'Ellipse', 'Rectangle'],
+        elements: [
+            'Table',
+            'TableColumnHeader',
+            'TableColumnTemplate',
+            'TableColumnFooter',
+            'Ellipse',
+            'Rectangle'
+        ],
         attr: 'borderThickness',
         keys: ['borderTopThickness', 'borderRightThickness', 'borderBottomThickness', 'borderLeftThickness'],
         default: 'regular',
     },
     {
-        elements: ['Grid', 'ColumnText', 'StackBlock', 'LinearBlock', 'StackLayout', 'LinearLayout'],
+        elements: [
+            'GridCell',
+            'Grid',
+            'ColumnText',
+            'StackBlock',
+            'LinearBlock',
+            'StackLayout',
+            'LinearLayout'
+        ],
         attr: 'borderThickness',
         keys: ['borderTopThickness', 'borderRightThickness', 'borderBottomThickness', 'borderLeftThickness'],
         default: '0',
@@ -209,6 +224,9 @@ function inheritParentBorderAttrs(layoutXml) {
                     parentArr[i] = arr[i] !== undefined ? arr[i] : arr[0];
                 }
             }
+            // 親が関連属性（統合値または個別値）を持っていない場合はスキップ
+            const parentHasAny = (parentUnified != null && parentUnified !== "") || type.keys.some(k => parent.getAttribute(k) != null && parent.getAttribute(k) !== "");
+            if (!parentHasAny) continue;
             // 個別指定値
             /** @type {(string|null)[]} */
             let childArr = [null, null, null, null];
