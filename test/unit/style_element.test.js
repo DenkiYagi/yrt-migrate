@@ -223,7 +223,7 @@ describe("style_element", () => {
             expect(migrated.style).toContain('<CellRange borderColor="blue" row="1" col="all"');
         });
 
-        it("ColumnTextStyleにrow属性のみがない場合、CellRangeに row=\"all\" が自動追加される", () => {
+        it("ColumnTextStyleにrow属性のみがない場合でも、CellRangeに row=\"all\" は追加されない", () => {
             const inputXml = [
                 '<?xml version="1.0" encoding="UTF-8"?>',
                 '<StackLayout>',
@@ -235,7 +235,7 @@ describe("style_element", () => {
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
             const migrated = migrate(yrtDocument);
-            expect(migrated.style).toContain('<CellRange borderColor="green" col="2" row="all"');
+            expect(migrated.style).toContain('<CellRange borderColor="green" col="2"');
         });
 
         it("既にcol/row属性が存在する場合は上書きされない", () => {

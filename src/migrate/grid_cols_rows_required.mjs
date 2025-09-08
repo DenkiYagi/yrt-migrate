@@ -33,10 +33,5 @@ export function migrate(yrtDocument) {
             xml: addGridColsRowsIfMissing(layoutEntry.xml)
         };
     });
-    // Style XMLにも同じ処理を適用
-    let migratedStyle = yrtDocument.style;
-    if (typeof migratedStyle === "string" && migratedStyle.trim().length > 0) {
-        migratedStyle = addGridColsRowsIfMissing(migratedStyle);
-    }
-    return { ...yrtDocument, layouts: migratedLayouts, style: migratedStyle };
+    return { ...yrtDocument, layouts: migratedLayouts };
 }

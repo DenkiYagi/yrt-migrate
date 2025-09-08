@@ -253,6 +253,46 @@ describe('remove_content_elements マイグレーション', () => {
         '</LinearLayout>'
       ]
     },
+    {
+      name: "TextContent内の前後ホワイトスペースはトリミングされない(1)",
+      input: [
+        '<LinearLayout>',
+        '  <LayoutBody>',
+        '    <Text>',
+        '      <TextContent>  ABC  </TextContent>',
+        '    </Text>',
+        '  </LayoutBody>',
+        '</LinearLayout>'
+      ],
+      expected: [
+        '<LinearLayout>',
+        '  <LayoutBody>',
+        '    <Text>  ABC  </Text>',
+        '  </LayoutBody>',
+        '</LinearLayout>'
+      ]
+    },
+    {
+      name: "TextContent内の前後ホワイトスペースはトリミングされない(2)",
+      input: [
+        '<LinearLayout>',
+        '  <LayoutBody>',
+        '    <Text>',
+        '      <TextContent>  ABC',
+        '      DEF  </TextContent>',
+        '    </Text>',
+        '  </LayoutBody>',
+        '</LinearLayout>'
+      ],
+      expected: [
+        '<LinearLayout>',
+        '  <LayoutBody>',
+        '    <Text>  ABC',
+        '      DEF  </Text>',
+        '  </LayoutBody>',
+        '</LinearLayout>'
+      ]
+    },
   ])('$name', ({ input, expected }) => {
     const inputXml = Array.isArray(input) ? input.join('\n') : input;
     const expectedXml = Array.isArray(expected) ? expected.join('\n') : expected;

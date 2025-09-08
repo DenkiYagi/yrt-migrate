@@ -48,4 +48,14 @@ describe("<Grid> cols, rows がなければそれぞれ \"*\" と \"auto\" を�
         migrate(yrtDocument);
         expect(warnSpy).not.toHaveBeenCalled();
     });
+
+    it("Style XML に移した Grid には cols, rows を補完しない", () => {
+        const styleXml = '<Style><Grid></Grid></Style>';
+        const yrtDocument = { layouts: [], style: styleXml, assets: null };
+        const result = migrate(yrtDocument);
+        // style内の<Grid>にはcols, rowsが追加されない
+        expect(result.style).toBe(styleXml);
+        // 警告も出ない
+        expect(warnSpy).not.toHaveBeenCalled();
+    });
 });

@@ -436,5 +436,29 @@ describe('mergeDirectionalAttributes', () => {
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
+
+        it('変更する必要がなければ XML は変化しない', () => {
+            const xml = [
+                '<LinearLayout>',
+                '    <LayoutBody>',
+                '',
+                '      <Grid cols="30" rows="10" borderThickness="1" outerBorderThickness="2">',
+                '        <GridCell col="0" row="0" borderThickness="3">',
+                '          <Text>text</Text>',
+                '        </GridCell>',
+                '      </Grid>',
+                '',
+                '      <Rectangle width="100" height="20" borderThickness="6"/>',
+                '',
+                '    </LayoutBody>',
+                '  </LinearLayout>'
+            ].join('\n');
+            const input = xml;
+            const expected = xml;
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = migrated.layouts[0].xml;
+            expect(output).toBe(expected);
+        });
     });
 });

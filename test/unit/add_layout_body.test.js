@@ -82,4 +82,28 @@ describe("add_layout_body", () => {
     expect(warnMock).toHaveBeenCalled();
     warnMock.mockRestore();
   });
+
+  it("LayoutBody の追加前後で LinearLayout の子要素の前後のホワイトスペースを変化させない", () => {
+    const xml = [
+      '<LinearLayout>',
+      '',
+      '  <LayoutHeader height="10">',
+      '    <Text>header</Text>',
+      '  </LayoutHeader>',
+      '',
+      '  <LayoutBody>',
+      '',
+      '    <Text>Line 1',
+      '  Line 2 (indent: 2 spaces)</Text>',
+      '',
+      '  </LayoutBody>',
+      '',
+      '</LinearLayout>'
+    ].join('\n');
+    const input = xml;
+    const expected = xml;
+    const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+    const migrated = migrate(yrtDocument);
+    expect(migrated.layouts[0].xml).toBe(expected);
+  })
 });

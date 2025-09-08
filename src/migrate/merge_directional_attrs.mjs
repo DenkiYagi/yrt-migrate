@@ -135,10 +135,16 @@ function normalizeDirectionalAttrsOnElement(element) {
         const hasAnyIndividual = individual.some(v => v !== null && v.trim() !== '');
         const hasUnified = unified !== null && unified.trim() !== '';
         if (!(hasAnyIndividual || hasUnified)) continue;
-        const mergedRaw = mergeDirectionalValues(attr, unified, individual);
-        const merged = mergedRaw.map((v, i) => v ?? attr.default);
         removeAttributes(element, [attr.attr, ...attr.keys]);
-        element.setAttribute(attr.attr, merged.map(s => s.trim()).join(' '));
+        if (hasAnyIndividual) {
+            // 個別値が1つでもあれば4方向展開してマージ
+            const mergedRaw = mergeDirectionalValues(attr, unified, individual);
+            const merged = mergedRaw.map((v, i) => v ?? attr.default);
+            element.setAttribute(attr.attr, merged.map(s => s.trim()).join(' '));
+        } else if (hasUnified) {
+            // 個別値がなければ一括値をそのまま残す
+            element.setAttribute(attr.attr, unified.trim());
+        }
     }
 }
 

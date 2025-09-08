@@ -1,6 +1,6 @@
 // @ts-check
 
-import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
+import { DOMParser } from "@xmldom/xmldom";
 import { getXPath } from "../utils.js";
 
 /**
@@ -12,48 +12,69 @@ export function migrate(yrtDocument) {
     const newDoc = structuredClone(yrtDocument);
     for (let i = 0; i < newDoc.layouts.length; i++) {
         const entry = newDoc.layouts[i];
-        const doc = new DOMParser().parseFromString(entry.xml, "text/xml");
-        extractLayoutBody(doc);
-        entry.xml = new XMLSerializer().serializeToString(doc);
+        entry.xml = extractLayoutBody(entry.xml);
     }
     // Style XMLにも同じ処理を適用
     if (typeof newDoc.style === "string" && newDoc.style.trim().length > 0) {
-        const styleDoc = new DOMParser().parseFromString(newDoc.style, "text/xml");
-        extractLayoutBody(styleDoc);
-        newDoc.style = new XMLSerializer().serializeToString(styleDoc);
+        newDoc.style = extractLayoutBody(newDoc.style);
     }
     return newDoc;
 }
 
-function extractLayoutBody(doc) {
-    const linearLayouts = Array.from(doc.getElementsByTagName("LinearLayout"));
-    for (const layout of linearLayouts) {
-        let header = null;
-        let body = null;
-        let footer = null;
-        const others = [];
-        for (let j = 0; j < layout.childNodes.length; j++) {
-            const node = layout.childNodes[j];
-            if (node.nodeType !== 1) continue;
-            if (node.nodeName === "LayoutHeader") {
-                header = node;
-            } else if (node.nodeName === "LayoutBody") {
-                body = node;
-            } else if (node.nodeName === "LayoutFooter") {
-                footer = node;
-            } else {
-                others.push(node);
-                console.warn(`[WARNING] LinearLayout直下にLayoutHeader, LayoutBody, LayoutFooter以外の要素: <${node.nodeName}> が存在します。XPath: ${getXPath(node)}`);
-            }
+export function extractLayoutBody(xml) {
+    const layoutMatch = xml.match(/<LinearLayout([^>]*)>([\s\S]*?)<\/LinearLayout>/);
+    if (!layoutMatch) return xml;
+    const attrs = layoutMatch[1];
+    const inner = layoutMatch[2];
+
+    if (/<LayoutBody[\s>]/.test(inner)) return xml;
+
+    const childRegex = /(\s*)(<([A-Za-z0-9]+)[^>]*>[\s\S]*?<\/\3>)(\s*)/g;
+    let children = [];
+    let lastIndex = 0;
+    let match;
+    while ((match = childRegex.exec(inner)) !== null) {
+        if (match.index > lastIndex) {
+            children.push(inner.slice(lastIndex, match.index));
         }
-        if (!body) {
-            body = doc.createElement("LayoutBody");
-        }
-        // header/body/footer順で再構成し、その他要素は後ろに追加
-        while (layout.firstChild) layout.removeChild(layout.firstChild);
-        if (header) layout.appendChild(header);
-        layout.appendChild(body);
-        if (footer) layout.appendChild(footer);
-        for (const node of others) layout.appendChild(node);
+        children.push(match[1] + match[2] + match[4]);
+        lastIndex = childRegex.lastIndex;
     }
+    if (lastIndex < inner.length) {
+        children.push(inner.slice(lastIndex));
+    }
+
+    const headers = [];
+    const footers = [];
+    const others = [];
+    for (const child of children) {
+        if (/<LayoutHeader[\s>]/.test(child)) {
+            headers.push(child);
+        } else if (/<LayoutFooter[\s>]/.test(child)) {
+            footers.push(child);
+        } else if (/<LayoutBody[\s>]/.test(child)) {
+            // 既存のLayoutBody（この分岐は本来不要だが保険）
+        } else if (/^\s*$/.test(child)) {
+            // 空白は無視
+        } else {
+            others.push(child);
+        }
+    }
+
+    if (others.length > 0 && others.some(e => e.trim())) {
+        let xpath = '/LinearLayout';
+        try {
+            const doc = new DOMParser().parseFromString(xml, 'application/xml');
+            const linearNode = doc.getElementsByTagName('LinearLayout')[0];
+            if (linearNode) {
+                xpath = getXPath(linearNode);
+            }
+        } catch (e) { }
+        console.warn(`add_layout_body: LayoutXxx系以外の要素がありました。手動で修正してください。 xpath=${xpath}`);
+    }
+
+    const layoutBody = `<LayoutBody></LayoutBody>`;
+
+    const result = `<LinearLayout${attrs}>${headers.join('')}${layoutBody}${footers.join('')}${others.join('')}</LinearLayout>`;
+    return xml.replace(/<LinearLayout([^>]*)>[\s\S]*?<\/LinearLayout>/, result);
 }

@@ -57,7 +57,8 @@ export function migrate(yrtDocument) {
                     if (!cellRange.hasAttribute("col")) {
                         cellRange.setAttribute("col", "all");
                     }
-                    if (!cellRange.hasAttribute("row")) {
+                    // ColumnText以外の場合のみrow="all"を補完
+                    if (tag !== "ColumnText" && !cellRange.hasAttribute("row")) {
                         cellRange.setAttribute("row", "all");
                     }
                     styleTargetElem.appendChild(cellRange);
