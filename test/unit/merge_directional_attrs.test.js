@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+import { it, jest } from '@jest/globals';
 import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
 import { migrate } from '../../src/migrate/merge_directional_attrs.mjs';
 
@@ -11,7 +11,7 @@ function normalizeXml(xml) {
 }
 
 describe('mergeDirectionalAttributes', () => {
-    describe('単一要素内での解決', () => {
+    describe('レイアウト系 XML の単一要素内での解決', () => {
         it('margin の統合', () => {
             const input = '<StackLayout marginTop="1" marginRight="2" marginBottom="3" marginLeft="4"/>';
             const expected = '<StackLayout margin="1 2 3 4"/>';
@@ -206,7 +206,7 @@ describe('mergeDirectionalAttributes', () => {
 
     });
 
-    describe('親子関係のある要素の解決', () => {
+    describe('レイアウト系 XML の親子関係のある要素の解決', () => {
         it('Grid, GridCell の継承を解消できる(1)', () => {
             const input = [
                 '<Grid borderThickness="1">',
@@ -304,7 +304,7 @@ describe('mergeDirectionalAttributes', () => {
         });
     });
 
-    describe('親子関係でさらに outer の属性も絡んでくる複雑なケースの解決', () => {
+    describe('レイアウト系 XML の親子関係でさらに outer の属性も絡んでくる複雑なケースの解決', () => {
         it('Grid に outerBorderTopThickness が指定されているケース', () => {
             const input = [
                 '<Grid cols="100 100" rows="50 50" borderThickness="1" outerBorderTopThickness="2">',
@@ -418,7 +418,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('Table の outerBorder(Thickness|Style|Color) が TableColumnXxx に割り振られ、値がないところは regular, black, solid となる、レイアウトが変わる警告を出す （Header,Footerなし）', () => {
+        it('Table の outerBorder(Thickness|Style|Color) が TableColumnXxx に割り振られ、値がないところは regular, solid, black となる、レイアウトが変わる警告を出す （Header,Footerなし）', () => {
             const input = [
                 '<Table outerBorderTopThickness="9" outerBorderBottomColor="#abc" outerBorderLeftStyle="double" outerBorderRightStyle="dotted">',
                 '  <TableColumn>',
@@ -499,6 +499,74 @@ describe('mergeDirectionalAttributes', () => {
             const migrated = migrate(yrtDocument);
             const output = migrated.layouts[0].xml;
             expect(output).toBe(expected);
+        });
+    });
+
+    describe('StyleXML 内の属性の解決および警告', () => {
+        it('border 系以外の属性は普通に変換される（margin, padding, borderRadius）', () => {
+            const layoutInput = [
+                '<LinearLayout>',
+                '  <LayoutBody>',
+                '    <Grid key="key1" cols="30 30 30" rows="30 30">',
+                '    </Grid>',
+                '  </LayoutBody>',
+                '</LinearLayout>'
+            ].join('\n');
+            const input = [
+                '<Style>',
+                '  <Grid key="key1">',
+                '    <CellRange col="0" row="0" margin="1" marginTop="2" />',
+                '    <CellRange col="1" row="1" padding="1" paddingTop="2" />',
+                '    <CellRange col="0" row="2" borderRadius="1" borderTopLeftRadius="2" />',
+                '  </Grid>',
+                '</Style>'
+            ].join('\n');
+
+            const expected = [
+                '<Style>',
+                '  <Grid key="key1">',
+                '    <CellRange col="0" row="0" margin="2 1 1 1" />',
+                '    <CellRange col="1" row="1" padding="2 1 1 1" />',
+                '    <CellRange col="0" row="2" borderRadius="2 1 1 1" />',
+                '  </Grid>',
+                '</Style>'
+            ].join('\n');
+            const yrtDocument = { layouts: [{ name: null, xml: layoutInput }], style: input, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.style);
+            expect(output).toBe(normalizeXml(expected));
+        });
+
+        it('border 系属性は一切変更せずに警告を出す', () => {
+            const layoutInput = [
+                '<LinearLayout>',
+                '  <LayoutBody>',
+                '    <Grid key="key1" cols="30 30 30" rows="30 30">',
+                '    </Grid>',
+                '  </LayoutBody>',
+                '</LinearLayout>'
+            ].join('\n');
+            const input = [
+                '<Style>',
+                '  <Grid key="key1">',
+                '    <CellRange col="0" row="0" borderTopThickness="2" />',
+                '    <CellRange col="1" row="1" borderRightStyle="double" />',
+                '    <CellRange col="0" row="2" borderBottomColor="red" />',
+                '  </Grid>',
+                '</Style>'
+            ].join('\n');
+
+            const expected = input;
+            const yrtDocument = { layouts: [{ name: null, xml: layoutInput }], style: input, assets: null };
+            const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.style);
+            expect(output).toBe(normalizeXml(expected));
+            expect(warnSpy).toHaveBeenCalled();
+            // 警告メッセージに key が含まれているか検証
+            const hasKeyInWarning = warnSpy.mock.calls.some(call => call[0].includes('key="key1"'));
+            expect(hasKeyInWarning).toBe(true);
+            warnSpy.mockRestore();
         });
     });
 });
