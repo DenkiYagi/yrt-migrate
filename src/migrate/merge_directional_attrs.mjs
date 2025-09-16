@@ -292,12 +292,11 @@ function propagateOuterBorderToEdges(layoutXml) {
     const directions = ["Top", "Right", "Bottom", "Left"];
     const types = ["Thickness", "Style", "Color"];
 
-    // 端判定関数
     const gridEdgeChecks = {
-        Top: (rowIdx, rows, colIdx, cols) => rowIdx === 0,
-        Right: (rowIdx, rows, colIdx, cols) => colIdx === cols.length - 1,
-        Bottom: (rowIdx, rows, colIdx, cols) => rowIdx === rows.length - 1,
-        Left: (rowIdx, rows, colIdx, cols) => colIdx === 0,
+        Top: (rowIdx, rows, colIdx, cols, rowspan = 1, colspan = 1) => rowIdx === 0,
+        Bottom: (rowIdx, rows, colIdx, cols, rowspan = 1, colspan = 1) => (rowIdx + rowspan) === rows.length,
+        Left: (rowIdx, rows, colIdx, cols, rowspan = 1, colspan = 1) => colIdx === 0,
+        Right: (rowIdx, rows, colIdx, cols, rowspan = 1, colspan = 1) => (colIdx + colspan) === cols.length,
     };
     const tableEdgeChecks = {
         Top: (isFirst) => isFirst,
@@ -305,7 +304,6 @@ function propagateOuterBorderToEdges(layoutXml) {
         Left: (isColFirst) => isColFirst,
         Right: (isColLast) => isColLast,
     };
-
     const gridCellPairs = findLayoutInheritancePairs(root);
     for (const { parent, child: cell } of gridCellPairs) {
         if (parent.tagName === "Grid") {
@@ -316,13 +314,19 @@ function propagateOuterBorderToEdges(layoutXml) {
             if (colStr === null || rowStr === null) continue;
             const colIdx = parseInt(colStr, 10);
             const rowIdx = parseInt(rowStr, 10);
+            const colspan = parseInt(cell.getAttribute("colspan") || "1", 10);
+            const rowspan = parseInt(cell.getAttribute("rowspan") || "1", 10);
+
             for (const dir of directions) {
                 for (const type of types) {
                     const outerAttr = `outerBorder${dir}${type}`;
                     const cellAttr = `border${dir}${type}`;
-                    if (gridEdgeChecks[dir](rowIdx, rows, colIdx, cols) && parent.getAttribute(outerAttr)) {
+                    const edgeResult = gridEdgeChecks[dir](rowIdx, rows, colIdx, cols, rowspan, colspan);
+                    if (edgeResult && parent.getAttribute(outerAttr)) {
                         const val = parent.getAttribute(outerAttr);
-                        if (val !== null) cell.setAttribute(cellAttr, val);
+                        if (val !== null) {
+                            cell.setAttribute(cellAttr, val);
+                        }
                     }
                 }
             }

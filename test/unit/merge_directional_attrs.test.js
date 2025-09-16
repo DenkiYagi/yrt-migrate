@@ -500,6 +500,75 @@ describe('mergeDirectionalAttributes', () => {
             const output = migrated.layouts[0].xml;
             expect(output).toBe(expected);
         });
+
+        it('一次的にテスト追加', () => {
+            const input = [
+                '<Grid cols="50 50 50" rows="30 30 30">',
+                '  <GridCell col="0" row="0" colspan="2" borderRightThickness="2" borderThickness="1">',
+                '    <Text>left top</Text>',
+                '  </GridCell>',
+                '  <GridCell col="0" row="1" rowspan="1" borderBottomThickness="2" borderThickness="1">',
+                '    <Text>left bottom</Text>',
+                '  </GridCell>',
+                '  <GridCell col="1" row="1" colspan="1" rowspan="1" borderRightThickness="2" borderBottomThickness="2" borderThickness="1">',
+                '    <Text>right bottom</Text>',
+                '  </GridCell>',
+                '</Grid>'
+            ].join('\n');
+            const expected = [
+                '<Grid cols="50 50 50" rows="30 30 30">',
+                '  <GridCell col="0" row="0" colspan="2" borderThickness="1 2 1 1">',
+                '    <Text>left top</Text>',
+                '  </GridCell>',
+                '  <GridCell col="0" row="1" rowspan="1" borderThickness="1 1 2 1">',
+                '    <Text>left bottom</Text>',
+                '  </GridCell>',
+                '  <GridCell col="1" row="1" colspan="1" rowspan="1" borderThickness="1 2 2 1">',
+                '    <Text>right bottom</Text>',
+                '  </GridCell>',
+                '</Grid>'
+            ].join('\n');
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
+        });
+
+        it('GridCell に colspan, rowspan があっても正しく端の判定をして変換できる', () => {
+            const prevDebug = process.env.DEBUG_PROPAGATE;
+            process.env.DEBUG_PROPAGATE = '1';
+            const input = [
+                '<Grid cols="50 50 50" rows="30 30 30" outerBorderRightThickness="2" outerBorderBottomThickness="2">',
+                '  <GridCell col="0" row="0" colspan="3" borderThickness="1">',
+                '    <Text>left top</Text>',
+                '  </GridCell>',
+                '  <GridCell col="0" row="1" rowspan="2" borderThickness="1">',
+                '    <Text>left bottom</Text>',
+                '  </GridCell>',
+                '  <GridCell col="1" row="1" colspan="2" rowspan="2" borderThickness="1">',
+                '    <Text>right bottom</Text>',
+                '  </GridCell>',
+                '</Grid>'
+            ].join('\n');
+            const expected = [
+                '<Grid cols="50 50 50" rows="30 30 30">',
+                '  <GridCell col="0" row="0" colspan="3" borderThickness="1 2 1 1">',
+                '    <Text>left top</Text>',
+                '  </GridCell>',
+                '  <GridCell col="0" row="1" rowspan="2" borderThickness="1 1 2 1">',
+                '    <Text>left bottom</Text>',
+                '  </GridCell>',
+                '  <GridCell col="1" row="1" colspan="2" rowspan="2" borderThickness="1 2 2 1">',
+                '    <Text>right bottom</Text>',
+                '  </GridCell>',
+                '</Grid>'
+            ].join('\n');
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
+            process.env.DEBUG_PROPAGATE = prevDebug;
+        });
     });
 
     describe('StyleXML 内の属性の解決および警告', () => {
