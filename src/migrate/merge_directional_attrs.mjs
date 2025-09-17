@@ -465,6 +465,181 @@ function findLayoutInheritancePairs(root) {
 }
 
 /**
+ * Grid内の兄弟セル間で4方向属性（borderThickness, borderStyle, borderColorなど）を伝播する
+ * @param {string} layoutXml - XML文字列
+ * @returns {string} 兄弟セル間で属性が伝播されたXML文字列
+ */
+export function propagateSiblingBorders(layoutXml) {
+    const doc = new DOMParser().parseFromString(layoutXml, "text/xml");
+    const root = doc.documentElement;
+    if (!root) return layoutXml;
+
+    const types = [
+        { base: "borderThickness", keys: ["borderTopThickness", "borderRightThickness", "borderBottomThickness", "borderLeftThickness"] },
+        { base: "borderStyle", keys: ["borderTopStyle", "borderRightStyle", "borderBottomStyle", "borderLeftStyle"] },
+        { base: "borderColor", keys: ["borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor"] },
+    ];
+
+    function expandBorderValues(cell, type) {
+        let values = [null, null, null, null];
+        if (cell.hasAttribute(type.base)) {
+            const arr = cell.getAttribute(type.base).split(/\s+/);
+            if (arr.length === 1) values = [arr[0], arr[0], arr[0], arr[0]];
+            else if (arr.length === 2) values = [arr[0], arr[1], arr[0], arr[1]];
+            else if (arr.length === 3) values = [arr[0], arr[1], arr[2], arr[1]];
+            else if (arr.length === 4) values = [arr[0], arr[1], arr[2], arr[3]];
+        }
+        type.keys.forEach((key, d) => {
+            if (cell.hasAttribute(key)) values[d] = cell.getAttribute(key);
+        });
+        return values;
+    }
+
+    function buildGridCellList(node, nRows, nCols) {
+        const cellList = [];
+        for (let i = 0; i < node.childNodes.length; i++) {
+            const child = node.childNodes[i];
+            if (child && child.nodeType === 1 && child.tagName === "GridCell") {
+                const col = parseInt(child.getAttribute("col") || "0", 10);
+                const row = parseInt(child.getAttribute("row") || "0", 10);
+                const colspan = parseInt(child.getAttribute("colspan") || "1", 10);
+                const rowspan = parseInt(child.getAttribute("rowspan") || "1", 10);
+                if (!isNaN(row) && !isNaN(col) && row < nRows && col < nCols) {
+                    cellList.push({ cell: child, row, col, colspan, rowspan });
+                }
+            }
+        }
+        return cellList;
+    }
+
+    function buildBoxLineModel(cellList, nRows, nCols) {
+        const borderLines = {};
+        for (const type of types) {
+            borderLines[type.base] = {
+                top: Array.from({ length: nRows + 1 }, () => Array(nCols).fill(null)),
+                bottom: Array.from({ length: nRows + 1 }, () => Array(nCols).fill(null)),
+                left: Array.from({ length: nRows }, () => Array(nCols + 1).fill(null)),
+                right: Array.from({ length: nRows }, () => Array(nCols + 1).fill(null)),
+            };
+        }
+
+        // 主要4方向のセット
+        function setMainDirections(border, values, r, c, dr, dc, rowspan, colspan) {
+            // top
+            if (values[0] != null) border.top[r][c] ??= values[0];
+            // left
+            if (values[3] != null) border.left[r][c] ??= values[3];
+            // right（セルの右端のみ）
+            if (values[1] != null && dc === colspan - 1) border.right[r][c + 1] ??= values[1];
+            // bottom（セルの下端のみ）
+            if (values[2] != null && dr === rowspan - 1) border.bottom[r + 1][c] ??= values[2];
+        }
+
+        // 隣接セルとの間の境界（adjacent）セット
+        function setAdjacentBorders(border, values, r, c, nRows, nCols) {
+            // 左隣セルの右罫線
+            if (values[3] != null && c > 0) border.right[r][c] ??= values[3];
+            // 右隣セルの左罫線
+            if (values[1] != null && c < nCols) border.left[r][c + 1] ??= values[1];
+            // 上隣セルの下罫線
+            if (values[0] != null && r > 0) border.bottom[r][c] ??= values[0];
+            // 下隣セルの上罫線
+            if (values[2] != null && r < nRows) border.top[r + 1][c] ??= values[2];
+        }
+
+        for (const { cell, row, col, colspan, rowspan } of cellList) {
+            for (const type of types) {
+                const values = expandBorderValues(cell, type);
+                // このセルが占有する全ての座標を事前展開
+                for (let dr = 0; dr < rowspan; dr++) {
+                    for (let dc = 0; dc < colspan; dc++) {
+                        const r = row + dr;
+                        const c = col + dc;
+                        setMainDirections(borderLines[type.base], values, r, c, dr, dc, rowspan, colspan);
+                        setAdjacentBorders(borderLines[type.base], values, r, c, nRows, nCols);
+                    }
+                }
+            }
+        }
+        return borderLines;
+    }
+
+    function reflectBoxLineToCells(cellList, borderLines, nRows, nCols) {
+        const directions = [
+            {
+                name: "top",
+                keyIdx: 0,
+                getValue: (border, row, col, colspan, rowspan, nRows, nCols) => {
+                    let v = border.top[row][col];
+                    if (row > 0) v = border.bottom[row][col] ?? v;
+                    return v;
+                },
+            },
+            {
+                name: "right",
+                keyIdx: 1,
+                getValue: (border, row, col, colspan, rowspan, nRows, nCols) => {
+                    let v = border.right[row][col + colspan];
+                    if (col + colspan < nCols) v = border.left[row][col + colspan] ?? v;
+                    return v;
+                },
+            },
+            {
+                name: "bottom",
+                keyIdx: 2,
+                getValue: (border, row, col, colspan, rowspan, nRows, nCols) => {
+                    let v = border.bottom[row + rowspan][col];
+                    if (row + rowspan < nRows) v = border.top[row + rowspan][col] ?? v;
+                    return v;
+                },
+            },
+            {
+                name: "left",
+                keyIdx: 3,
+                getValue: (border, row, col, colspan, rowspan, nRows, nCols) => {
+                    let v = border.left[row][col];
+                    if (col > 0) v = border.right[row][col] ?? v;
+                    return v;
+                },
+            },
+        ];
+        for (const { cell, row, col, colspan = 1, rowspan = 1 } of cellList) {
+            for (const type of types) {
+                if (cell.hasAttribute(type.base)) continue;
+                const hasAny = type.keys.some(key => cell.hasAttribute(key));
+                if (!hasAny) continue;
+                for (const dir of directions) {
+                    const key = type.keys[dir.keyIdx];
+                    if (!cell.hasAttribute(key)) {
+                        const v = dir.getValue(borderLines[type.base], row, col, colspan, rowspan, nRows, nCols);
+                        v != null ? cell.setAttribute(key, v) : cell.removeAttribute(key);
+                    }
+                }
+            }
+        }
+    }
+
+    function traverse(node) {
+        if (!node || node.nodeType !== 1) return;
+        if (node.tagName === "Grid") {
+            const cols = (node.getAttribute("cols") || "").trim().split(/\s+/);
+            const rows = (node.getAttribute("rows") || "").trim().split(/\s+/);
+            const nCols = cols.length, nRows = rows.length;
+            const cellList = buildGridCellList(node, nRows, nCols);
+            const borderLines = buildBoxLineModel(cellList, nRows, nCols);
+            reflectBoxLineToCells(cellList, borderLines, nRows, nCols);
+        }
+        if (node.childNodes) {
+            for (let i = 0; i < node.childNodes.length; i++) {
+                traverse(node.childNodes[i]);
+            }
+        }
+    }
+    traverse(root);
+    return new XMLSerializer().serializeToString(doc);
+}
+
+/**
  * レイアウトXMLに方向系属性の正規化・継承・伝播処理を適用する
  * @param {import('../yrt_format.js').YrtDocument} yrtDocument
  * @returns {import('../yrt_format.js').YrtDocument}
@@ -476,6 +651,7 @@ export function migrate(yrtDocument) {
         let xml = entry.xml;
         xml = propagateOuterBorderToEdges(xml);
         xml = inheritParentBorderAttrs(xml);
+        xml = propagateSiblingBorders(xml);
         xml = normalizeDirectionalAttrs(xml);
         return { ...entry, xml };
     });

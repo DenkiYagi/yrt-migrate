@@ -2,6 +2,7 @@ import { it, jest } from '@jest/globals';
 import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
 import { migrate } from '../../src/migrate/merge_directional_attrs.mjs';
 
+
 /**
  * XML文字列をDOMで正規化して返す
  */
@@ -206,7 +207,7 @@ describe('mergeDirectionalAttributes', () => {
 
     });
 
-    describe('レイアウト系 XML の親子関係のある要素の解決', () => {
+    describe('レイアウト系 XML の親子・兄弟関係のある要素の解決', () => {
         it('Grid, GridCell の継承を解消できる(1)', () => {
             const input = [
                 '<Grid borderThickness="1">',
@@ -296,6 +297,256 @@ describe('mergeDirectionalAttributes', () => {
                 '    </TableColumnTemplate>',
                 '  </TableColumn>',
                 '</Table>'
+            ].join('\n');
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
+        });
+
+        it('col="0",row="0" のセルの右端の値が初期値よりも優先される', () => {
+            const input = [
+                '  <LinearLayout>',
+                '    <LayoutBody>',
+                '',
+                '      <Grid cols="30 30" rows="10">',
+                '        <GridCell col="0" row="0" borderThickness="1">',
+                '          <Text>text</Text>',
+                '        </GridCell>',
+                '        <GridCell col="1" row="0" borderTopThickness="2">',
+                '          <Text>text</Text>',
+                '        </GridCell>',
+                '      </Grid>',
+                '',
+                '    </LayoutBody>',
+                '  </LinearLayout>',
+            ].join('\n');
+            const expected = [
+                '  <LinearLayout>',
+                '    <LayoutBody>',
+                '',
+                '      <Grid cols="30 30" rows="10">',
+                '        <GridCell col="0" row="0" borderThickness="1">',
+                '          <Text>text</Text>',
+                '        </GridCell>',
+                '        <GridCell col="1" row="0" borderThickness="2 0 0 1">',
+                '          <Text>text</Text>',
+                '        </GridCell>',
+                '      </Grid>',
+                '',
+                '    </LayoutBody>',
+                '  </LinearLayout>',
+            ].join('\n');
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
+        });
+
+        it('左隣セルのborderRightThicknessが右セルに伝播する', () => {
+            const input = [
+                '<Grid cols="10 10" rows="10">',
+                '  <GridCell col="0" row="0" borderRightThickness="5"/>',
+                '  <GridCell col="1" row="0" borderTopThickness="5"/>',
+                '</Grid>'
+            ].join('\n');
+            const expected = [
+                '<Grid cols="10 10" rows="10">',
+                '  <GridCell col="0" row="0" borderThickness="0 5 0 0"/>',
+                '  <GridCell col="1" row="0" borderThickness="5 0 0 5"/>',
+                '</Grid>'
+            ].join('\n');
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
+        });
+
+        it('上隣セルのborderBottomThicknessが下セルのborderTopThicknessに伝播する', () => {
+            const input = [
+                '<Grid cols="10" rows="10 10">',
+                '  <GridCell col="0" row="0" borderBottomThickness="3"/>',
+                '  <GridCell col="0" row="1" borderLeftThickness="3"/>',
+                '</Grid>'
+            ].join('\n');
+            const expected = [
+                '<Grid cols="10" rows="10 10">',
+                '  <GridCell col="0" row="0" borderThickness="0 0 3 0"/>',
+                '  <GridCell col="0" row="1" borderThickness="3 0 0 3"/>',
+                '</Grid>'
+            ].join('\n');
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
+        });
+
+        it('borderStyle, borderColor も伝播する', () => {
+            const input = [
+                '<Grid cols="10 10" rows="10">',
+                '  <GridCell col="0" row="0" borderRightStyle="dashed" borderRightColor="red"/>',
+                '  <GridCell col="1" row="0" borderRightStyle="dashed" borderRightColor="red"/>',
+                '</Grid>'
+            ].join('\n');
+            const expected = [
+                '<Grid cols="10 10" rows="10">',
+                '  <GridCell col="0" row="0" borderStyle="solid dashed solid solid" borderColor="black red black black"/>',
+                '  <GridCell col="1" row="0" borderStyle="solid dashed solid dashed" borderColor="black red black red"/>',
+                '</Grid>'
+            ].join('\n');
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
+        });
+
+        it('初期値で埋める必要がなければ変わらない（指定なし）', () => {
+            const input = [
+                '<Grid cols="10 10" rows="10">',
+                '  <GridCell col="0" row="0" borderRightThickness="5"/>',
+                '  <GridCell col="1" row="0"/>',
+                '</Grid>'
+            ].join('\n');
+            const expected = [
+                '<Grid cols="10 10" rows="10">',
+                '  <GridCell col="0" row="0" borderThickness="0 5 0 0"/>',
+                '  <GridCell col="1" row="0"/>',
+                '</Grid>'
+            ].join('\n');
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
+        });
+
+        it('初期値で埋める必要がなければ変わらない（指定あり）', () => {
+            const input = [
+                '<Grid cols="10 10" rows="10">',
+                '  <GridCell col="0" row="0" borderRightThickness="5"/>',
+                '  <GridCell col="1" row="0" borderThickness="1"/>',
+                '</Grid>'
+            ].join('\n');
+            const expected = [
+                '<Grid cols="10 10" rows="10">',
+                '  <GridCell col="0" row="0" borderThickness="0 5 0 0"/>',
+                '  <GridCell col="1" row="0" borderThickness="1"/>',
+                '</Grid>'
+            ].join('\n');
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
+        });
+
+        it('隣接しない場合は伝搬しない', () => {
+            const input = [
+                '<Grid cols="10 10" rows="10 10">',
+                '  <GridCell col="0" row="0" borderRightThickness="5"/>',
+                '  <GridCell col="1" row="1" borderTopThickness="5"/>',
+                '</Grid>'
+            ].join('\n');
+            const expected = [
+                '<Grid cols="10 10" rows="10 10">',
+                '  <GridCell col="0" row="0" borderThickness="0 5 0 0"/>',
+                '  <GridCell col="1" row="1" borderThickness="5 0 0 0"/>',
+                '</Grid>'
+            ].join('\n');
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
+        });
+
+        it('書いた順に優先される', () => {
+            const input = [
+                '<Grid cols="10 10" rows="10">',
+                '  <GridCell col="1" row="0" borderLeftThickness="5"/>',
+                '  <GridCell col="0" row="0" borderTopThickness="5"/>',
+                '</Grid>'
+            ].join('\n');
+            const expected = [
+                '<Grid cols="10 10" rows="10">',
+                '  <GridCell col="1" row="0" borderThickness="0 0 0 5"/>',
+                '  <GridCell col="0" row="0" borderThickness="5 5 0 0"/>',
+                '</Grid>'
+            ].join('\n');
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
+        });
+
+        it('書いた順に優先される（上下方向）', () => {
+            const input = [
+                '<Grid cols="10" rows="10 10">',
+                '  <GridCell col="0" row="1" borderTopStyle="double"/>',
+                '  <GridCell col="0" row="0" borderLeftStyle="double"/>',
+                '</Grid>'
+            ].join('\n');
+            const expected = [
+                '<Grid cols="10" rows="10 10">',
+                '  <GridCell col="0" row="1" borderStyle="double solid solid solid"/>',
+                '  <GridCell col="0" row="0" borderStyle="solid solid double double"/>',
+                '</Grid>'
+            ].join('\n');
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
+        });
+
+        it('書いた順に優先される（明示的な競合: 先に書いた値が優先）', () => {
+            const input = [
+                '<Grid cols="10 10" rows="10">',
+                '  <GridCell col="1" row="0" borderLeftThickness="5"/>',
+                '  <GridCell col="0" row="0" borderRightThickness="9" borderTopThickness="5"/>',
+                '</Grid>'
+            ].join('\n');
+            const expected = [
+                '<Grid cols="10 10" rows="10">',
+                '  <GridCell col="1" row="0" borderThickness="0 0 0 5"/>',
+                '  <GridCell col="0" row="0" borderThickness="5 9 0 0"/>',
+                '</Grid>'
+            ].join('\n');
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
+        });
+
+        it('書いた順に優先される（複数セル混在）', () => {
+            const input = [
+                '<Grid cols="10 10 10" rows="10">',
+                '  <GridCell col="2" row="0" borderLeftThickness="7"/>',
+                '  <GridCell col="0" row="0" borderTopThickness="3"/>',
+                '  <GridCell col="1" row="0" borderLeftThickness="5"/>',
+                '</Grid>'
+            ].join('\n');
+            const expected = [
+                '<Grid cols="10 10 10" rows="10">',
+                '  <GridCell col="2" row="0" borderThickness="0 0 0 7"/>',
+                '  <GridCell col="0" row="0" borderThickness="3 5 0 0"/>',
+                '  <GridCell col="1" row="0" borderThickness="0 7 0 5"/>',
+                '</Grid>'
+            ].join('\n');
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
+        });
+
+        it('書いた順に優先される（colspan, rowspan を含む）', () => {
+            const input = [
+                '<Grid cols="10 10 10" rows="10">',
+                '  <GridCell col="2" row="0" borderLeftThickness="7"/>',
+                '  <GridCell col="0" row="0" colspan="2" borderLeftThickness="5"/>',
+                '</Grid>'
+            ].join('\n');
+            const expected = [
+                '<Grid cols="10 10 10" rows="10">',
+                '  <GridCell col="2" row="0" borderThickness="0 0 0 7"/>',
+                '  <GridCell col="0" row="0" colspan="2" borderThickness="0 7 0 5"/>',
+                '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
             const migrated = migrate(yrtDocument);
@@ -501,42 +752,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(expected);
         });
 
-        it('一次的にテスト追加', () => {
-            const input = [
-                '<Grid cols="50 50 50" rows="30 30 30">',
-                '  <GridCell col="0" row="0" colspan="2" borderRightThickness="2" borderThickness="1">',
-                '    <Text>left top</Text>',
-                '  </GridCell>',
-                '  <GridCell col="0" row="1" rowspan="1" borderBottomThickness="2" borderThickness="1">',
-                '    <Text>left bottom</Text>',
-                '  </GridCell>',
-                '  <GridCell col="1" row="1" colspan="1" rowspan="1" borderRightThickness="2" borderBottomThickness="2" borderThickness="1">',
-                '    <Text>right bottom</Text>',
-                '  </GridCell>',
-                '</Grid>'
-            ].join('\n');
-            const expected = [
-                '<Grid cols="50 50 50" rows="30 30 30">',
-                '  <GridCell col="0" row="0" colspan="2" borderThickness="1 2 1 1">',
-                '    <Text>left top</Text>',
-                '  </GridCell>',
-                '  <GridCell col="0" row="1" rowspan="1" borderThickness="1 1 2 1">',
-                '    <Text>left bottom</Text>',
-                '  </GridCell>',
-                '  <GridCell col="1" row="1" colspan="1" rowspan="1" borderThickness="1 2 2 1">',
-                '    <Text>right bottom</Text>',
-                '  </GridCell>',
-                '</Grid>'
-            ].join('\n');
-            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
-            const output = normalizeXml(migrated.layouts[0].xml);
-            expect(output).toBe(normalizeXml(expected));
-        });
-
         it('GridCell に colspan, rowspan があっても正しく端の判定をして変換できる', () => {
-            const prevDebug = process.env.DEBUG_PROPAGATE;
-            process.env.DEBUG_PROPAGATE = '1';
             const input = [
                 '<Grid cols="50 50 50" rows="30 30 30" outerBorderRightThickness="2" outerBorderBottomThickness="2">',
                 '  <GridCell col="0" row="0" colspan="3" borderThickness="1">',
@@ -567,7 +783,6 @@ describe('mergeDirectionalAttributes', () => {
             const migrated = migrate(yrtDocument);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
-            process.env.DEBUG_PROPAGATE = prevDebug;
         });
     });
 
