@@ -91,6 +91,11 @@ const ATTR_MAP = [
     },
 ];
 
+/**
+ * @param {Element} element
+ * @param {string[]} keys
+ * @returns {(string|null)[]}
+ */
 function getIndividualValues(element, keys) {
     return keys.map(key => {
         if (!element.attributes) return null;
@@ -102,6 +107,11 @@ function getIndividualValues(element, keys) {
     });
 }
 
+/**
+ * @param {Element} element
+ * @param {string} base
+ * @returns {string|null}
+ */
 function getUnifiedValue(element, base) {
     if (!element.attributes) return null;
     const baseLower = base.toLowerCase();
@@ -113,6 +123,10 @@ function getUnifiedValue(element, base) {
     return null;
 }
 
+/**
+ * @param {Element} element
+ * @param {string[]} names
+ */
 function removeAttributes(element, names) {
     if (!element.attributes || !Array.isArray(names)) return;
     for (const name of names) {
@@ -124,6 +138,12 @@ function removeAttributes(element, names) {
     }
 }
 
+/**
+ * @param {{default: string, keys: string[]}} attr
+ * @param {string|null} unified
+ * @param {(string|null)[]} individual
+ * @returns {string[]}
+ */
 function mergeDirectionalValues(attr, unified, individual) {
     let merged;
     if (unified != null && unified.trim() !== '') {
@@ -144,13 +164,18 @@ function mergeDirectionalValues(attr, unified, individual) {
     }
     // 個別値でさらに上書き（個別値がnullでない部分だけ）
     for (let i = 0; i < attr.keys.length; i++) {
-        if (individual[i] !== null && individual[i].trim() !== '') {
-            merged[i] = individual[i];
+        const val = individual[i];
+        if (val !== null && val !== undefined && val.trim() !== '') {
+            merged[i] = val;
         }
     }
     return merged;
 }
 
+/**
+ * @param {Element} element
+ * @param {boolean} isStyleXml
+ */
 function normalizeDirectionalAttrsOnElement(element, isStyleXml) {
     for (const attr of ATTR_MAP) {
         const elements = Array.isArray(attr.elements) ? attr.elements : [attr.elements];
@@ -167,7 +192,9 @@ function normalizeDirectionalAttrsOnElement(element, isStyleXml) {
             let key = element.getAttribute('key');
             let parent = element.parentNode;
             while (!key && parent && parent.nodeType === 1) {
-                key = parent.getAttribute && parent.getAttribute('key');
+                if ('getAttribute' in parent && typeof parent.getAttribute === 'function') {
+                    key = parent.getAttribute('key');
+                }
                 parent = parent.parentNode;
             }
             const keyInfo = key ? `key="${key}"` : '';
@@ -199,11 +226,14 @@ function normalizeDirectionalAttrs(xmlString) {
     const doc = new DOMParser().parseFromString(xmlString, "text/xml");
     const isStyleXml = doc.documentElement && doc.documentElement.tagName === "Style";
 
+    /**
+     * @param {Element} el
+     */
     function traverseAndNormalize(el) {
         if (el.nodeType !== 1) return; // ELEMENT_NODE
         if (el.childNodes) {
             for (let i = 0; i < el.childNodes.length; i++) {
-                traverseAndNormalize(el.childNodes[i]);
+                traverseAndNormalize(/** @type {Element} */(el.childNodes[i]));
             }
         }
         normalizeDirectionalAttrsOnElement(el, isStyleXml);
@@ -292,12 +322,20 @@ function propagateOuterBorderToEdges(layoutXml) {
     const directions = ["Top", "Right", "Bottom", "Left"];
     const types = ["Thickness", "Style", "Color"];
 
+    /**
+     * @typedef {(rowIdx: number, rows: string[], colIdx: number, cols: string[], rowspan?: number, colspan?: number) => boolean} GridEdgeCheckFn
+     */
+    /** @type {{Top: GridEdgeCheckFn, Bottom: GridEdgeCheckFn, Left: GridEdgeCheckFn, Right: GridEdgeCheckFn}} */
     const gridEdgeChecks = {
         Top: (rowIdx, rows, colIdx, cols, rowspan = 1, colspan = 1) => rowIdx === 0,
         Bottom: (rowIdx, rows, colIdx, cols, rowspan = 1, colspan = 1) => (rowIdx + rowspan) === rows.length,
         Left: (rowIdx, rows, colIdx, cols, rowspan = 1, colspan = 1) => colIdx === 0,
         Right: (rowIdx, rows, colIdx, cols, rowspan = 1, colspan = 1) => (colIdx + colspan) === cols.length,
     };
+    /**
+     * @typedef {(flag: boolean) => boolean} TableEdgeCheckFn
+     */
+    /** @type {{Top: TableEdgeCheckFn, Bottom: TableEdgeCheckFn, Left: TableEdgeCheckFn, Right: TableEdgeCheckFn}} */
     const tableEdgeChecks = {
         Top: (isFirst) => isFirst,
         Bottom: (isLast) => isLast,
@@ -317,11 +355,13 @@ function propagateOuterBorderToEdges(layoutXml) {
             const colspan = parseInt(cell.getAttribute("colspan") || "1", 10);
             const rowspan = parseInt(cell.getAttribute("rowspan") || "1", 10);
 
+            /** @type {("Top"|"Bottom"|"Left"|"Right")[]} */
+            const directions = ["Top", "Bottom", "Left", "Right"];
             for (const dir of directions) {
                 for (const type of types) {
                     const outerAttr = `outerBorder${dir}${type}`;
                     const cellAttr = `border${dir}${type}`;
-                    const edgeResult = gridEdgeChecks[dir](rowIdx, rows, colIdx, cols, rowspan, colspan);
+                    const edgeResult = gridEdgeChecks[/** @type {"Top"|"Bottom"|"Left"|"Right"} */(dir)](rowIdx, rows, colIdx, cols, rowspan, colspan);
                     if (edgeResult && parent.getAttribute(outerAttr)) {
                         const val = parent.getAttribute(outerAttr);
                         if (val !== null) {
@@ -341,7 +381,7 @@ function propagateOuterBorderToEdges(layoutXml) {
                 const isFirst = idx === 0;
                 const isLast = idx === siblings.length - 1;
                 const tableColumns = Array.from(parent.childNodes)
-                    .filter(n => n.nodeType === 1 && n["tagName"] === "TableColumn")
+                    .filter(n => n.nodeType === 1 && 'tagName' in n && n.tagName === "TableColumn")
                     .map(n => /** @type {Element} */(n));
                 const colIdx = tableColumns.findIndex(col => col === tableColumn);
                 const isColFirst = colIdx === 0;
@@ -407,7 +447,11 @@ function propagateOuterBorderToEdges(layoutXml) {
  * @returns {Array<{parent: Element, child: Element}>}
  */
 function findLayoutInheritancePairs(root) {
+    /** @type {{parent: Element, child: Element}[]} */
     const pairs = [];
+    /**
+     * @param {any} node
+     */
     function traverse(node) {
         if (!node || node.nodeType !== 1) return;
         // Grid > GridCell, Grid > CellRange (StyleXml)
@@ -480,14 +524,20 @@ export function propagateSiblingBorders(layoutXml) {
         { base: "borderColor", keys: ["borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor"] },
     ];
 
+    /**
+     * @param {Element} cell
+     * @param {{base: string, keys: string[]}} type
+     * @returns {(string|null)[]} 4方向のborder値配列
+     */
     function expandBorderValues(cell, type) {
+        /** @type {(string|null)[]} */
         let values = [null, null, null, null];
         if (cell.hasAttribute(type.base)) {
-            const arr = cell.getAttribute(type.base).split(/\s+/);
-            if (arr.length === 1) values = [arr[0], arr[0], arr[0], arr[0]];
-            else if (arr.length === 2) values = [arr[0], arr[1], arr[0], arr[1]];
-            else if (arr.length === 3) values = [arr[0], arr[1], arr[2], arr[1]];
-            else if (arr.length === 4) values = [arr[0], arr[1], arr[2], arr[3]];
+            const arr = cell.getAttribute(type.base)?.split(/\s+/) ?? [];
+            if (arr.length === 1) values = [arr[0] ?? null, arr[0] ?? null, arr[0] ?? null, arr[0] ?? null];
+            else if (arr.length === 2) values = [arr[0] ?? null, arr[1] ?? null, arr[0] ?? null, arr[1] ?? null];
+            else if (arr.length === 3) values = [arr[0] ?? null, arr[1] ?? null, arr[2] ?? null, arr[1] ?? null];
+            else if (arr.length === 4) values = [arr[0] ?? null, arr[1] ?? null, arr[2] ?? null, arr[3] ?? null];
         }
         type.keys.forEach((key, d) => {
             if (cell.hasAttribute(key)) values[d] = cell.getAttribute(key);
@@ -495,24 +545,102 @@ export function propagateSiblingBorders(layoutXml) {
         return values;
     }
 
+    /**
+     * @param {Element} node
+     * @param {number} nRows
+     * @param {number} nCols
+     * @returns {Array<{cell: Element, row: number, col: number, colspan: number, rowspan: number}>}
+     */
     function buildGridCellList(node, nRows, nCols) {
         const cellList = [];
         for (let i = 0; i < node.childNodes.length; i++) {
             const child = node.childNodes[i];
-            if (child && child.nodeType === 1 && child.tagName === "GridCell") {
+            if (
+                child &&
+                child.nodeType === 1 &&
+                'tagName' in child &&
+                typeof child.tagName === "string" &&
+                'getAttribute' in child &&
+                typeof child.getAttribute === "function" &&
+                child.tagName === "GridCell"
+            ) {
                 const col = parseInt(child.getAttribute("col") || "0", 10);
                 const row = parseInt(child.getAttribute("row") || "0", 10);
                 const colspan = parseInt(child.getAttribute("colspan") || "1", 10);
                 const rowspan = parseInt(child.getAttribute("rowspan") || "1", 10);
                 if (!isNaN(row) && !isNaN(col) && row < nRows && col < nCols) {
-                    cellList.push({ cell: child, row, col, colspan, rowspan });
+                    cellList.push({ cell: /** @type {Element} */ (child), row, col, colspan, rowspan });
                 }
             }
         }
-        return cellList;
+        /** @type {{ cell: Element, row: number, col: number, colspan: number, rowspan: number }[]} */
+        const filteredCellList = cellList
+            .filter(item => 'tagName' in item.cell && typeof item.cell.tagName === 'string')
+            .map(item => ({ ...item, cell: /** @type {Element} */ (item.cell) }));
+        return /** @type {{ cell: Element, row: number, col: number, colspan: number, rowspan: number }[]} */ (filteredCellList);
     }
 
+    /**
+     * @param {Element} tableNode
+     * @returns {{cellList: Array<{cell: Element, row: number, col: number, colspan: number, rowspan: number}>, nRows: number, nCols: number}}
+     */
+    function buildTableCellList(tableNode) {
+        // TableColumnを左から右に並べる
+        const columns = [];
+        for (let i = 0; i < tableNode.childNodes.length; i++) {
+            const colNode = tableNode.childNodes[i];
+            if (
+                colNode &&
+                colNode.nodeType === 1 &&
+                'tagName' in colNode &&
+                colNode.tagName === "TableColumn"
+            ) {
+                columns.push(colNode);
+            }
+        }
+        // 各TableColumn内でHeader,Template,Footerの順で強い
+        const rowTypes = ["TableColumnHeader", "TableColumnTemplate", "TableColumnFooter"];
+        // 2次元配列: [row][col] 形式でcellListを作る
+        const cellList = [];
+        for (let rowIdx = 0; rowIdx < rowTypes.length; rowIdx++) {
+            const rowType = rowTypes[rowIdx];
+            for (let colIdx = 0; colIdx < columns.length; colIdx++) {
+                const colNode = columns[colIdx];
+                // 優先順で最初に見つかったものを採用
+                let cell = null;
+                for (let t = 0; t < rowTypes.length; t++) {
+                    const type = rowTypes[t];
+                    for (let j = 0; j < colNode.childNodes.length; j++) {
+                        const child = colNode.childNodes[j];
+                        if (child && child.nodeType === 1 && 'tagName' in child && child.tagName === type) {
+                            if (type === rowType) {
+                                cell = child;
+                                break;
+                            }
+                        }
+                    }
+                    if (cell) break;
+                }
+                if (cell) {
+                    cellList.push({ cell, row: rowIdx, col: colIdx, colspan: 1, rowspan: 1 });
+                }
+            }
+        }
+        /** @type {{ cell: Element, row: number, col: number, colspan: number, rowspan: number }[]} */
+        const filteredCellList = cellList
+            .filter(item => 'tagName' in item.cell && typeof item.cell.tagName === 'string')
+            .map(item => ({ ...item, cell: /** @type {Element} */ (item.cell) }));
+        return { cellList: /** @type {{ cell: Element, row: number, col: number, colspan: number, rowspan: number }[]} */ (filteredCellList), nRows: rowTypes.length, nCols: columns.length };
+    }
+
+    /**
+     * @param {Array<{cell: Element, row: number, col: number, colspan: number, rowspan: number}>} cellList
+     * @param {number} nRows
+     * @param {number} nCols
+     * @returns {Object<string, {top: any[][], bottom: any[][], left: any[][], right: any[][]}>}
+     */
     function buildBoxLineModel(cellList, nRows, nCols) {
+        /** @type {{ [key: string]: { top: any[][], bottom: any[][], left: any[][], right: any[][] } }} */
         const borderLines = {};
         for (const type of types) {
             borderLines[type.base] = {
@@ -524,6 +652,16 @@ export function propagateSiblingBorders(layoutXml) {
         }
 
         // 主要4方向のセット
+        /**
+         * @param {{top: any[][], bottom: any[][], left: any[][], right: any[][]}} border
+         * @param {(string|null)[]} values
+         * @param {number} r
+         * @param {number} c
+         * @param {number} dr
+         * @param {number} dc
+         * @param {number} rowspan
+         * @param {number} colspan
+         */
         function setMainDirections(border, values, r, c, dr, dc, rowspan, colspan) {
             // top
             if (values[0] != null) border.top[r][c] ??= values[0];
@@ -536,6 +674,14 @@ export function propagateSiblingBorders(layoutXml) {
         }
 
         // 隣接セルとの間の境界（adjacent）セット
+        /**
+         * @param {{top: any[][], bottom: any[][], left: any[][], right: any[][]}} border
+         * @param {(string|null)[]} values
+         * @param {number} r
+         * @param {number} c
+         * @param {number} nRows
+         * @param {number} nCols
+         */
         function setAdjacentBorders(border, values, r, c, nRows, nCols) {
             // 左隣セルの右罫線
             if (values[3] != null && c > 0) border.right[r][c] ??= values[3];
@@ -564,7 +710,27 @@ export function propagateSiblingBorders(layoutXml) {
         return borderLines;
     }
 
+    /**
+     * @param {Array<{cell: Element, row: number, col: number, colspan: number, rowspan: number}>} cellList
+     * @param {Object<string, {top: any[][], bottom: any[][], left: any[][], right: any[][]}>} borderLines
+     * @param {number} nRows
+     * @param {number} nCols
+     */
     function reflectBoxLineToCells(cellList, borderLines, nRows, nCols) {
+        /**
+         * @typedef {Object} BorderLineMatrix
+         * @property {any[][]} top
+         * @property {any[][]} bottom
+         * @property {any[][]} left
+         * @property {any[][]} right
+         */
+        /**
+         * @typedef {(border: BorderLineMatrix, row: number, col: number, colspan: number, rowspan: number, nRows: number, nCols: number) => any} BorderLineGetValueFn
+         */
+
+        /**
+         * @type {Array<{name: string, keyIdx: number, getValue: BorderLineGetValueFn}>}
+         */
         const directions = [
             {
                 name: "top",
@@ -619,15 +785,28 @@ export function propagateSiblingBorders(layoutXml) {
         }
     }
 
+    /**
+     * @param {Element | ChildNode | null | undefined} node
+     */
     function traverse(node) {
         if (!node || node.nodeType !== 1) return;
-        if (node.tagName === "Grid") {
-            const cols = (node.getAttribute("cols") || "").trim().split(/\s+/);
-            const rows = (node.getAttribute("rows") || "").trim().split(/\s+/);
-            const nCols = cols.length, nRows = rows.length;
-            const cellList = buildGridCellList(node, nRows, nCols);
-            const borderLines = buildBoxLineModel(cellList, nRows, nCols);
-            reflectBoxLineToCells(cellList, borderLines, nRows, nCols);
+        // 型ガード
+        if ('tagName' in node && typeof node.tagName === 'string') {
+            if (node.tagName === "Grid") {
+                const cols = (node.getAttribute("cols") || "").trim().split(/\s+/);
+                const rows = (node.getAttribute("rows") || "").trim().split(/\s+/);
+                const nCols = cols.length, nRows = rows.length;
+                const cellList = buildGridCellList(/** @type {Element} */(node), nRows, nCols);
+                const borderLines = buildBoxLineModel(cellList, nRows, nCols);
+                reflectBoxLineToCells(cellList, borderLines, nRows, nCols);
+            }
+            if (node.tagName === "Table") {
+                const { cellList, nRows, nCols } = buildTableCellList(/** @type {Element} */(node));
+                if (cellList.length > 0) {
+                    const borderLines = buildBoxLineModel(cellList, nRows, nCols);
+                    reflectBoxLineToCells(cellList, borderLines, nRows, nCols);
+                }
+            }
         }
         if (node.childNodes) {
             for (let i = 0; i < node.childNodes.length; i++) {

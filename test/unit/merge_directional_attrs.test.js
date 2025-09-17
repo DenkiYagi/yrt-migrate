@@ -1,7 +1,7 @@
 import { it, jest } from '@jest/globals';
 import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
 import { migrate } from '../../src/migrate/merge_directional_attrs.mjs';
-
+import { propagateSiblingBorders } from '../../src/migrate/merge_directional_attrs.mjs';
 
 /**
  * XML文字列をDOMで正規化して返す
@@ -852,5 +852,103 @@ describe('mergeDirectionalAttributes', () => {
             expect(hasKeyInWarning).toBe(true);
             warnSpy.mockRestore();
         });
+    });
+});
+
+
+describe('propagateSiblingBorders', () => {
+    it('TableColumnXxx の横方向の継承を解消できる', () => {
+        const input = [
+            '<Table>',
+            '  <TableColumn>',
+            '    <TableColumnHeader borderRightThickness="extrathick">',
+            '      <Text>header1</Text>',
+            '    </TableColumnHeader>',
+            '    <TableColumnTemplate borderRightStyle="double">',
+            '      <Text>body1</Text>',
+            '    </TableColumnTemplate>',
+            '    <TableColumnFooter borderRightColor="blue">',
+            '      <Text>footer1</Text>',
+            '    </TableColumnFooter>',
+            '  </TableColumn>',
+            '  <TableColumn>',
+            '    <TableColumnHeader borderRightThickness="thin">',
+            '      <Text>header2</Text>',
+            '    </TableColumnHeader>',
+            '    <TableColumnTemplate borderTopStyle="double">',
+            '      <Text>body2</Text>',
+            '    </TableColumnTemplate>',
+            '    <TableColumnFooter borderBottomColor="blue">',
+            '      <Text>footer2</Text>',
+            '    </TableColumnFooter>',
+            '  </TableColumn>',
+            '</Table>'
+        ].join('\n');
+        const expected = [
+            '<Table>',
+            '  <TableColumn>',
+            '    <TableColumnHeader borderRightThickness="extrathick">',
+            '      <Text>header1</Text>',
+            '    </TableColumnHeader>',
+            '    <TableColumnTemplate borderRightStyle="double">',
+            '      <Text>body1</Text>',
+            '    </TableColumnTemplate>',
+            '    <TableColumnFooter borderRightColor="blue">',
+            '      <Text>footer1</Text>',
+            '    </TableColumnFooter>',
+            '  </TableColumn>',
+            '  <TableColumn>',
+            '    <TableColumnHeader borderRightThickness="thin" borderLeftThickness="extrathick">',
+            '      <Text>header2</Text>',
+            '    </TableColumnHeader>',
+            '    <TableColumnTemplate borderTopStyle="double" borderLeftStyle="double">',
+            '      <Text>body2</Text>',
+            '    </TableColumnTemplate>',
+            '    <TableColumnFooter borderBottomColor="blue" borderLeftColor="blue">',
+            '      <Text>footer2</Text>',
+            '    </TableColumnFooter>',
+            '  </TableColumn>',
+            '</Table>'
+        ].join('\n');
+        const output = propagateSiblingBorders(input);
+        expect(normalizeXml(output)).toBe(normalizeXml(expected));
+    });
+
+    it('TableColumnXxx の縦方向の継承は警告する', () => {
+        const input = [
+            '<Table>',
+            '  <TableColumn>',
+            '    <TableColumnHeader borderBottomThickness="extrathick">',
+            '      <Text>header1</Text>',
+            '    </TableColumnHeader>',
+            '    <TableColumnTemplate borderLeftThickness="extrathick" borderBotomColor="green">',
+            '      <Text>body1</Text>',
+            '    </TableColumnTemplate>',
+            '    <TableColumnFooter borderRightColor="green">',
+            '      <Text>footer1</Text>',
+            '    </TableColumnFooter>',
+            '  </TableColumn>',
+            '</Table>'
+        ].join('\n');
+        const expected = [
+            '<Table>',
+            '  <TableColumn>',
+            '    <TableColumnHeader borderBottomThickness="extrathick" data-complex-border="true">',
+            '      <Text>header1</Text>',
+            '    </TableColumnHeader>',
+            '    <TableColumnTemplate borderLeftThickness="extrathick" borderBotomColor="green" data-complex-border="true">',
+            '      <Text>body1</Text>',
+            '    </TableColumnTemplate>',
+            '    <TableColumnFooter borderRightColor="green" data-complex-border="true">',
+            '      <Text>footer1</Text>',
+            '    </TableColumnFooter>',
+            '  </TableColumn>',
+            '</Table>'
+        ].join('\n');
+        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
+        const output = propagateSiblingBorders(input);
+        expect(normalizeXml(output)).toBe(normalizeXml(expected));
+        expect(warnSpy).toHaveBeenCalled();
+        warnSpy.mockRestore();
     });
 });
