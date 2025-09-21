@@ -51,6 +51,10 @@ import { validateXmlInput, validateYrtInput } from "./input_file_validator.mjs";
 // XML整形出力を制御
 const DO_FORMAT_XML = true;
 
+/**
+ * @param {import('./yrt_format.js').YrtOldDocument} yrtOldDocument
+ * @returns {import('./yrt_format.js').YrtDocument}
+ */
 function migrate(yrtOldDocument) {
     let doc = multipleXmls(yrtOldDocument);
     doc = orientationRename(doc);

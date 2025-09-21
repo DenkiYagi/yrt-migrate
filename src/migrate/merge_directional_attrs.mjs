@@ -386,15 +386,6 @@ function propagateOuterBorderToEdges(layoutXml) {
                 const colIdx = tableColumns.findIndex(col => col === tableColumn);
                 const isColFirst = colIdx === 0;
                 const isColLast = colIdx === tableColumns.length - 1;
-                const hasHeader = siblings.some(n => n.tagName === "TableColumnHeader");
-                const hasFooter = siblings.some(n => n.tagName === "TableColumnFooter");
-                if (
-                    cell.tagName === "TableColumnTemplate" &&
-                    ((isFirst && !hasHeader) || (isLast && !hasFooter))
-                ) {
-                    const xpath = getXPath(cell);
-                    console.warn(`[WARNING] TableColumnHeader または TableColumnFooter が存在しないため、TableColumnTemplate に outerBorder 系属性が割り振られます。繰り返し描画部分に罫線が重複する可能性があります。(${xpath})`);
-                }
                 // Tableの端判定と属性コピー
                 for (const dir of directions) {
                     for (const type of types) {
@@ -716,7 +707,14 @@ export function propagateSiblingBorders(layoutXml) {
      * @param {number} nRows
      * @param {number} nCols
      */
-    function reflectBoxLineToCells(cellList, borderLines, nRows, nCols) {
+    /**
+     * @param {Array<{cell: Element, row: number, col: number, colspan: number, rowspan: number}>} cellList
+     * @param {Object<string, {top: any[][], bottom: any[][], left: any[][], right: any[][]}>} borderLines
+     * @param {number} nRows
+     * @param {number} nCols
+     * @param {undefined|(() => void)} tableWarnCb
+     */
+    function reflectBoxLineToCells(cellList, borderLines, nRows, nCols, tableWarnCb) {
         /**
          * @typedef {Object} BorderLineMatrix
          * @property {any[][]} top
@@ -769,6 +767,7 @@ export function propagateSiblingBorders(layoutXml) {
                 },
             },
         ];
+        let verticalPropagated = false;
         for (const { cell, row, col, colspan = 1, rowspan = 1 } of cellList) {
             for (const type of types) {
                 if (cell.hasAttribute(type.base)) continue;
@@ -778,19 +777,57 @@ export function propagateSiblingBorders(layoutXml) {
                     const key = type.keys[dir.keyIdx];
                     if (!cell.hasAttribute(key)) {
                         const v = dir.getValue(borderLines[type.base], row, col, colspan, rowspan, nRows, nCols);
-                        v != null ? cell.setAttribute(key, v) : cell.removeAttribute(key);
+                        if (v != null) {
+                            cell.setAttribute(key, v);
+                            // 縦方向(top/bottom)の伝播を検知
+                            if ((key === 'borderTopThickness' || key === 'borderBottomThickness' || key === 'borderTopStyle' || key === 'borderBottomStyle' || key === 'borderTopColor' || key === 'borderBottomColor')) {
+                                verticalPropagated = true;
+                            }
+                        } else {
+                            cell.removeAttribute(key);
+                        }
                     }
                 }
             }
         }
+        if (verticalPropagated && typeof tableWarnCb === 'function') {
+            tableWarnCb();
+        }
     }
 
     /**
-     * @param {Element | ChildNode | null | undefined} node
+     * @param {Element} cell
+     * @returns {boolean}
+     */
+    function hasOwnVerticalBorderAttr(cell) {
+        const verticalKeys = [
+            'borderTopThickness', 'borderBottomThickness',
+            'borderTopStyle', 'borderBottomStyle',
+            'borderTopColor', 'borderBottomColor',
+        ];
+        return verticalKeys.some(key => {
+            if (!cell.hasAttribute || !cell.hasAttribute(key)) return false;
+            // outerBorder系は除外
+            return !/^outerBorder/.test(key);
+        });
+    }
+    /**
+     * @param {Element} cell
+     * @returns {boolean}
+     */
+    function hasAnyBorderAttr(cell) {
+        const keys = [
+            'borderTopThickness', 'borderRightThickness', 'borderBottomThickness', 'borderLeftThickness',
+            'borderTopStyle', 'borderRightStyle', 'borderBottomStyle', 'borderLeftStyle',
+            'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor',
+        ];
+        return keys.some(key => cell.hasAttribute && cell.hasAttribute(key));
+    }
+    /**
+     * @param {Element} node
      */
     function traverse(node) {
         if (!node || node.nodeType !== 1) return;
-        // 型ガード
         if ('tagName' in node && typeof node.tagName === 'string') {
             if (node.tagName === "Grid") {
                 const cols = (node.getAttribute("cols") || "").trim().split(/\s+/);
@@ -798,19 +835,46 @@ export function propagateSiblingBorders(layoutXml) {
                 const nCols = cols.length, nRows = rows.length;
                 const cellList = buildGridCellList(/** @type {Element} */(node), nRows, nCols);
                 const borderLines = buildBoxLineModel(cellList, nRows, nCols);
-                reflectBoxLineToCells(cellList, borderLines, nRows, nCols);
+                reflectBoxLineToCells(cellList, borderLines, nRows, nCols, undefined);
             }
             if (node.tagName === "Table") {
+                // Table自身または子要素（TableColumnHeader/Template/Footer）にborder系属性が1つでもあれば警告
+                let foundAnyBorder = hasAnyBorderAttr(node);
+                if (!foundAnyBorder) {
+                    for (let i = 0; i < node.childNodes.length; i++) {
+                        const colNode = node.childNodes[i];
+                        if (colNode && colNode.nodeType === 1 && 'tagName' in colNode && colNode.tagName === "TableColumn") {
+                            for (let j = 0; j < colNode.childNodes.length; j++) {
+                                const cell = colNode.childNodes[j];
+                                if (
+                                    cell && cell.nodeType === 1 && 'tagName' in cell &&
+                                    (cell.tagName === "TableColumnHeader" || cell.tagName === "TableColumnTemplate" || cell.tagName === "TableColumnFooter")
+                                ) {
+                                    if (hasAnyBorderAttr(/** @type {Element} */(cell))) {
+                                        foundAnyBorder = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (foundAnyBorder) break;
+                        }
+                    }
+                }
+                if (foundAnyBorder) {
+                    const xpath = getXPath(node);
+                    console.warn(`[WARNING] Tableまたはその子要素（TableColumnHeader/Template/Footer）にborder系属性が含まれています。大幅にレイアウトルールが変わったため崩れる可能性があります。（${xpath}）`);
+                }
+                // 兄弟属性の伝播自体は常に行う
                 const { cellList, nRows, nCols } = buildTableCellList(/** @type {Element} */(node));
                 if (cellList.length > 0) {
                     const borderLines = buildBoxLineModel(cellList, nRows, nCols);
-                    reflectBoxLineToCells(cellList, borderLines, nRows, nCols);
+                    reflectBoxLineToCells(cellList, borderLines, nRows, nCols, undefined);
                 }
             }
         }
         if (node.childNodes) {
             for (let i = 0; i < node.childNodes.length; i++) {
-                traverse(node.childNodes[i]);
+                traverse(/** @type {Element} */(node.childNodes[i]));
             }
         }
     }
