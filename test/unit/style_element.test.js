@@ -164,8 +164,8 @@ describe("style_element", () => {
         expect((migrated.style.match(/<Style>/g) || []).length).toBe(1);
     });
 
-    it("同一親要素内に複数のXxxStyle要素が存在した場合に、すべてが正しく移行される", () => {
-        const inputXml = [
+    it("同一親要素内に複数のXxxStyle要素が存在した場合に、1つの親に対して複数のCellRange要素が正しく移行される", () => {
+        const input = [
             '<?xml version="1.0" encoding="UTF-8"?>',
             '<StackLayout>',
             '  <Grid>',
@@ -176,16 +176,12 @@ describe("style_element", () => {
             '  </Grid>',
             '</StackLayout>'
         ].join('\n');
-        const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
+        const expectedStyle = '<Style><Grid key="styleelement-1"><CellRange borderColor="red" col="1" row="1"/><CellRange borderColor="blue" col="2" row="2"/><CellRange borderColor="green" col="3" row="3"/></Grid></Style>';
+        const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
         const migrated = migrate(yrtDocument);
         expect(migrated.layouts[0].xml).not.toContain("<GridStyle");
-        expect((migrated.style.match(/<Grid/g) || []).length).toBe(3);
-        expect(migrated.style).toContain('<Grid key="styleelement-1"');
-        expect(migrated.style).toContain('<Grid key="styleelement-2"');
-        expect(migrated.style).toContain('<Grid key="styleelement-3"');
-        expect(migrated.style).toContain('<CellRange borderColor="red" col="1" row="1"');
-        expect(migrated.style).toContain('<CellRange borderColor="blue" col="2" row="2"');
-        expect(migrated.style).toContain('<CellRange borderColor="green" col="3" row="3"');
+        expect(migrated.layouts[0].xml).toContain('style="');
+        expect(migrated.style).toBe(expectedStyle);
     });
 
     describe("CellRange col/raw 必須化", () => {

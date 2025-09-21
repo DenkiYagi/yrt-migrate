@@ -16,24 +16,29 @@ const TARGET_TAGS = [
  */
 function removeContentElements(node) {
     if (!node || !node.childNodes) return;
-    // 配列コピーしてからループ（childNodesはライブコレクション）
     const children = Array.from(node.childNodes);
     for (const child of children) {
         if (child.nodeType === 1 && TARGET_TAGS.includes(child.nodeName)) {
-            // 子要素を親ノードのchildの直後（弟）に順に挿入
-            let ref = child.nextSibling;
-            while (child.firstChild) {
-                node.insertBefore(child.firstChild, ref);
+            const parent = node;
+            const contentNodes = Array.from(child.childNodes);
+            // XxxContent削除直後に親ノードの子ノードから空白TextNodeを一括削除
+            for (const n of Array.from(parent.childNodes)) {
+                if (n.nodeType === 3 && (n.nodeValue ?? '').replace(/\s+/g, '') === '') {
+                    parent.removeChild(n);
+                }
             }
-            node.removeChild(child);
-        }
-        if (child.nodeType === 1) {
-            // 再帰的に探索
-            removeContentElements(/** @type {Element} */(child));
+            const ref = child;
+            for (const n of contentNodes) {
+                parent.insertBefore(n, ref);
+            }
+            parent.removeChild(child);
+        } else if (child.nodeType === 1) {
+            if ('attributes' in child) {
+                removeContentElements(/** @type {Element} */(child));
+            }
         }
     }
-    // 子の展開後、親ノード全体に再帰的に適用（入れ子対応）
-    // ただし、再帰の深さを制限したい場合は工夫が必要だが、ここでは単純に再帰
+    // 再帰的に複数回出現する場合も対応
     if (Array.from(node.childNodes).some(
         n => n.nodeType === 1 && TARGET_TAGS.includes(n.nodeName)
     )) {
@@ -49,7 +54,7 @@ function removeContentElements(node) {
 export function migrate(yrtDocument) {
     const newLayouts = yrtDocument.layouts.map(({ name, xml }) => {
         const doc = new DOMParser().parseFromString(xml, "text/xml");
-        removeContentElements(doc);
+        removeContentElements(doc.documentElement);
         const newXml = new XMLSerializer().serializeToString(doc.documentElement);
         return { name, xml: newXml };
     });
@@ -57,7 +62,7 @@ export function migrate(yrtDocument) {
         const styleXml = yrtDocument.style ?? null;
         if (typeof styleXml === "string" && styleXml.trim().length > 0) {
             const styleDoc = new DOMParser().parseFromString(styleXml, "text/xml");
-            removeContentElements(styleDoc);
+            removeContentElements(styleDoc.documentElement);
             return new XMLSerializer().serializeToString(styleDoc.documentElement);
         }
         return styleXml;

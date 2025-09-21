@@ -34,36 +34,42 @@ export function migrate(yrtDocument) {
             const targets = Array.from(doc.getElementsByTagName(tag));
             for (const target of targets) {
                 const styleElems = Array.from(target.getElementsByTagName(styleTag));
-                for (const styleElem of styleElems) {
+                if (styleElems.length > 0) {
                     styleAdded = true;
                     const styleId = `styleelement-${styleIndex++}`;
                     target.setAttribute("style", styleId);
-                    // Style XMLに追加
+
+                    // Style XMLに親要素を1つだけ追加
                     const styleTargetElem = styleDoc.createElement(tag);
                     styleTargetElem.setAttribute("key", styleId);
-                    const cellRange = styleDoc.createElement("CellRange");
-                    for (let j = 0; j < styleElem.attributes.length; j++) {
-                        const attr = styleElem.attributes[j];
-                        cellRange.setAttribute(attr.name, attr.value);
-                        // バインド変数判定: ${...} で始まり終わるもののみ
-                        if (
-                            typeof attr.value === "string" &&
-                            /^\$\{[^}]+\}$/.test(attr.value)
-                        ) {
-                            const xpath = getXPath(styleElem);
-                            console.warn(`[WARNING] ${styleTag} の ${attr.name} 属性値にバインド変数 (${attr.value}) が含まれています（${xpath}）`);
+
+                    // 各styleElemをCellRangeとして親要素に追加
+                    for (const styleElem of styleElems) {
+                        const cellRange = styleDoc.createElement("CellRange");
+                        for (let j = 0; j < styleElem.attributes.length; j++) {
+                            const attr = styleElem.attributes[j];
+                            cellRange.setAttribute(attr.name, attr.value);
+                            // バインド変数判定: ${...} で始まり終わるもののみ
+                            if (
+                                typeof attr.value === "string" &&
+                                /^\$\{[^}]+\}$/.test(attr.value)
+                            ) {
+                                const xpath = getXPath(styleElem);
+                                console.warn(`[WARNING] ${styleTag} の ${attr.name} 属性値にバインド変数 (${attr.value}) が含まれています（${xpath}）`);
+                            }
                         }
+                        if (!cellRange.hasAttribute("col")) {
+                            cellRange.setAttribute("col", "all");
+                        }
+                        // ColumnText以外の場合のみrow="all"を補完
+                        if (tag !== "ColumnText" && !cellRange.hasAttribute("row")) {
+                            cellRange.setAttribute("row", "all");
+                        }
+                        styleTargetElem.appendChild(cellRange);
+                        target.removeChild(styleElem);
                     }
-                    if (!cellRange.hasAttribute("col")) {
-                        cellRange.setAttribute("col", "all");
-                    }
-                    // ColumnText以外の場合のみrow="all"を補完
-                    if (tag !== "ColumnText" && !cellRange.hasAttribute("row")) {
-                        cellRange.setAttribute("row", "all");
-                    }
-                    styleTargetElem.appendChild(cellRange);
+
                     styleRoot.appendChild(styleTargetElem);
-                    target.removeChild(styleElem);
                 }
             }
         }
