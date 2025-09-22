@@ -16,7 +16,7 @@ npm install git+https://github.com/DenkiYagi/yrt-migrate.git --save-dev
 
 ### 実行
 
-下記コマンドで実行します。実行後はマイグレーションの結果でファイルが更新されて、バックアップファイルが作成されます。
+下記コマンドで実行します。実行後はマイグレーションの結果でファイルが更新されて、入力がYRTファイルの場合はバックアップファイルが作成されます。XMLファイルの場合は新たなYRTファイルのみが作成されます。
 
 ```
 npx yrt-migrate input.xml
