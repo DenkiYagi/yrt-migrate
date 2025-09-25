@@ -20,6 +20,24 @@ describe("<Grid> cols属性のauto/range廃止マイグレーション 警告出
         spy.mockRestore();
     });
 
+    it("colsに複数の値が入っていた場合も警告が出る(1)", () => {
+        const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
+        const xml = `<Grid cols="auto auto"></Grid>`;
+        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
+        migrate(yrtDocument);
+        expect(spy).toHaveBeenCalled();
+        spy.mockRestore();
+    });
+
+    it("colsに複数の値が入っていた場合も警告が出る(2)", () => {
+        const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
+        const xml = `<Grid cols="* * auto"></Grid>`;
+        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
+        migrate(yrtDocument);
+        expect(spy).toHaveBeenCalled();
+        spy.mockRestore();
+    });
+
     it("cols='AuTo'（大文字・小文字混在）で警告が出る", () => {
         const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
         const xml = `<Grid cols="AuTo"></Grid>`;
