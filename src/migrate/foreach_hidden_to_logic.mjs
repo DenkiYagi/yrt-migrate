@@ -3,11 +3,19 @@
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 import { getXPath } from "../utils.js";
 
+/**
+ * @param {string} val
+ * @returns {boolean}
+ */
 function isBindingVariable(val) {
     // ${...} 形式かどうか
     return typeof val === 'string' && /\$\{[^}]+\}/.test(val);
 }
 
+/**
+ * @param {any} el
+ * @param {string[]} warnings
+ */
 function migrateElement(el, warnings) {
     if (!el || !el.getAttribute) return;
     let foreach = el.getAttribute('foreach')?.trim();
@@ -53,7 +61,15 @@ function migrateElement(el, warnings) {
             const xpath = getXPath(el);
             warnings.push(`[WARNING] logic属性が既に存在するためhidden属性は変換しませんでした（XPath: ${xpath}）`);
         } else {
-            const logicVal = `if:${hidden}`;
+            // 真偽値を反転してlogic属性に変換
+            let logicVal;
+            if (isBindingVariable(hidden)) {
+                // ${...} の場合は ! を付与
+                logicVal = `if:${hidden.replace(/\$\{([^}]+)\}/, '${!$1}')}`;
+            } else {
+                // それ以外はそのまま
+                logicVal = `if:${hidden}`;
+            }
             if (!isBindingVariable(hidden)) {
                 const xpath = getXPath(el);
                 warnings.push(`[WARNING] hidden属性の値 "${hidden}" はバインド変数ではありません。バインド変数しか指定できないので修正してください。（XPath: ${xpath}）`);
@@ -80,10 +96,12 @@ function migrateElement(el, warnings) {
  */
 export function migrate(yrtDocument) {
     const newDoc = structuredClone(yrtDocument);
+    /** @type {string[]} */
     let allWarnings = [];
     for (let i = 0; i < newDoc.layouts.length; i++) {
         const entry = newDoc.layouts[i];
         const doc = new DOMParser().parseFromString(entry.xml, "text/xml");
+        /** @type {string[]} */
         const warnings = [];
         if (doc && doc.documentElement) {
             migrateElement(doc.documentElement, warnings);
@@ -97,6 +115,7 @@ export function migrate(yrtDocument) {
     // Style XMLにも同様の変換を適用
     if (typeof newDoc.style === "string" && newDoc.style.trim().length > 0) {
         const styleDoc = new DOMParser().parseFromString(newDoc.style, "text/xml");
+        /** @type {string[]} */
         const styleWarnings = [];
         if (styleDoc && styleDoc.documentElement) {
             migrateElement(styleDoc.documentElement, styleWarnings);

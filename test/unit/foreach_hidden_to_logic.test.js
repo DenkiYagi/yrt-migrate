@@ -17,7 +17,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
         spy.mockRestore();
     });
 
-    it("hidden属性のみをlogic属性に変換する", () => {
+    it("hidden属性のみをlogic属性に変換する、ただし真偽反転", () => {
         const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
         const inputXml = [
             '<?xml version="1.0" encoding="UTF-8"?>',
@@ -26,7 +26,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
         const migrated = migrate(yrtDocument);
         const xml = migrated.layouts[0].xml;
-        expect(xml).toContain('logic="if:${isHidden}"');
+        expect(xml).toContain('logic="if:${!isHidden}"');
         expect(xml).not.toContain("hidden=");
         expect(spy).not.toHaveBeenCalled();
         spy.mockRestore();
