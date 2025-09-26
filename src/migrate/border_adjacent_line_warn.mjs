@@ -3,6 +3,9 @@
 import { DOMParser } from "@xmldom/xmldom";
 import { getXPath } from "../utils.js";
 
+/**
+ * @param {string} xml
+ */
 function checkBorderAdjacentLineWarn(xml) {
     const targets = ["LayoutHeader", "LayoutBody", "LayoutFooter"];
     const attrs = ["borderThickness", "borderColor", "borderStyle"];

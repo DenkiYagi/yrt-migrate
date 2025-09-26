@@ -3,6 +3,9 @@
 import { DOMParser } from "@xmldom/xmldom";
 import { getXPath } from "../utils.js";
 
+/**
+ * @param {string} xml
+ */
 function checkTableBindingWarn(xml) {
     const doc = new DOMParser().parseFromString(xml, "text/xml");
     const tables = Array.from(doc.getElementsByTagName("Table"));

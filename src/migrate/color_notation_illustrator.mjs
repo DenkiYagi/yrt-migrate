@@ -11,6 +11,10 @@ const COLOR_ATTRS = [
     "footerBackgroundColor",
 ];
 
+/**
+ * @param {string} val
+ * @returns {string|null}
+ */
 function toK(val) {
     const m = val.match(/^grayscale\(\s*(\d*\.?\d+)\s*\)$/i);
     if (!m) return null;
@@ -19,6 +23,10 @@ function toK(val) {
     return `K${v}`;
 }
 
+/**
+ * @param {string} val
+ * @returns {string|null}
+ */
 function toRGB(val) {
     const m = val.match(/^rgb\(\s*(\d*\.?\d+)\s*,\s*(\d*\.?\d+)\s*,\s*(\d*\.?\d+)\s*\)$/i);
     if (!m) return null;
@@ -28,6 +36,10 @@ function toRGB(val) {
     return `R${r}G${g}B${b}`;
 }
 
+/**
+ * @param {string} val
+ * @returns {string|null}
+ */
 function toCMYK(val) {
     const m = val.match(/^cmyk\(\s*(\d*\.?\d+)\s*,\s*(\d*\.?\d+)\s*,\s*(\d*\.?\d+)\s*,\s*(\d*\.?\d+)\s*\)$/i);
     if (!m) return null;
@@ -38,16 +50,21 @@ function toCMYK(val) {
     return `C${c}M${m_}Y${y}K${k}`;
 }
 
+/**
+ * @param {Element} node
+ */
 function migrateNode(node) {
     if (node.nodeType !== 1) return;
     for (const attr of COLOR_ATTRS) {
         if (node.hasAttribute(attr)) {
-            const val = node.getAttribute(attr).trim();
+            const valRaw = node.getAttribute(attr);
+            if (valRaw == null) continue;
+            const val = valRaw.trim();
             const colorPattern = /(grayscale\([^)]*\)|rgb\([^)]*\)|cmyk\([^)]*\))/gi;
             const matches = val.match(colorPattern);
             if (matches && matches.length > 1) {
                 // 複数マッチ → 個別変換
-                const converted = matches.map(v => toK(v) || toRGB(v) || toCMYK(v) || v);
+                const converted = matches.map((/** @type {string} */v) => toK(v) || toRGB(v) || toCMYK(v) || v);
                 node.setAttribute(attr, converted.join(' '));
             } else {
                 // 単一値 or マッチなし → そのまま変換
@@ -58,7 +75,10 @@ function migrateNode(node) {
     }
     if (node.childNodes) {
         for (let i = 0; i < node.childNodes.length; i++) {
-            migrateNode(node.childNodes[i]);
+            const child = node.childNodes[i];
+            if (child.nodeType === 1) {
+                migrateNode(/** @type {Element} */(child));
+            }
         }
     }
 }

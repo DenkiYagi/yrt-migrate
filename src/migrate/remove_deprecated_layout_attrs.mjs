@@ -25,6 +25,9 @@ export function migrate(yrtDocument) {
     return newDoc;
 }
 
+/**
+ * @param {Element} node
+ */
 function removeAttrsAndWarn(node) {
     if (!node || !node.nodeType || node.nodeType !== 1) return;
     const tag = node.tagName;
@@ -63,6 +66,9 @@ function removeAttrsAndWarn(node) {
         }
     }
     for (let i = 0; i < node.childNodes.length; i++) {
-        removeAttrsAndWarn(node.childNodes[i]);
+        const child = node.childNodes[i];
+        if (child.nodeType === 1) {
+            removeAttrsAndWarn(/** @type {Element} */(child));
+        }
     }
 }

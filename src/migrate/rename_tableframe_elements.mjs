@@ -8,6 +8,7 @@ import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
  * @returns {import('../yrt_format.js').YrtDocument}
  */
 export function migrate(yrtDocument) {
+    /** @type {Record<string, string>} */
     const renameMap = {
         TableFrame: "Frame",
         TableHeader: "FrameHeader",
@@ -15,14 +16,37 @@ export function migrate(yrtDocument) {
         TablePageFooter: "FramePageFooter",
         TableFooter: "FrameFooter",
     };
+    /**
+     * @param {Element} node
+     */
     function rename(node) {
         if (node.nodeType === 1 && renameMap[node.nodeName]) {
-            node.tagName = renameMap[node.nodeName];
-            node.nodeName = renameMap[node.nodeName];
+            const doc = node.ownerDocument;
+            const newName = renameMap[node.nodeName];
+            const newElem = doc.createElement(newName);
+            // 属性コピー
+            for (let j = 0; j < node.attributes.length; j++) {
+                const attr = node.attributes[j];
+                newElem.setAttribute(attr.name, attr.value);
+            }
+            // 子ノードコピー
+            while (node.firstChild) {
+                newElem.appendChild(node.firstChild);
+            }
+            // 親ノードで置換
+            if (node.parentNode) {
+                node.parentNode.replaceChild(newElem, node);
+                node = newElem;
+            } else {
+                // ルート要素の場合は参照を返す（呼び出し元で再取得）
+            }
         }
         if (!node.childNodes) return;
         for (let i = 0; i < node.childNodes.length; i++) {
-            rename(node.childNodes[i]);
+            const child = node.childNodes[i];
+            if (child.nodeType === 1) {
+                rename(/** @type {Element} */(child));
+            }
         }
     }
     const newDoc = structuredClone(yrtDocument);

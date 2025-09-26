@@ -25,6 +25,9 @@ export function migrate(yrtDocument) {
     return { ...yrtDocument, layouts: migratedLayouts, style: migratedStyle };
 }
 
+/**
+ * @param {Document} doc
+ */
 function convertSizeCommaToSpace(doc) {
     const targets = ["LinearLayout", "StackLayout"];
     for (const tag of targets) {

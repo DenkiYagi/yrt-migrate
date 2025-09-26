@@ -3,10 +3,17 @@
 import { DOMParser } from "@xmldom/xmldom";
 import { getXPath } from "../utils.js";
 
+/**
+ * @param {string|undefined|null} val
+ * @returns {boolean}
+ */
 function isBinding(val) {
     return typeof val === "string" && /^\$\{[^}]+\}$/.test(val);
 }
 
+/**
+ * @param {Element} node
+ */
 function checkSpan(node) {
     if (node.nodeType === 1 && node.nodeName === "Span") {
         const color = node.getAttribute("color")?.trim();
@@ -18,7 +25,10 @@ function checkSpan(node) {
     // 子要素も再帰的にチェック
     if (node.childNodes) {
         for (let i = 0; i < node.childNodes.length; i++) {
-            checkSpan(node.childNodes[i]);
+            const child = node.childNodes[i];
+            if (child.nodeType === 1) {
+                checkSpan(/** @type {Element} */(child));
+            }
         }
     }
 }

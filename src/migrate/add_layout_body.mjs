@@ -21,6 +21,10 @@ export function migrate(yrtDocument) {
     return newDoc;
 }
 
+/**
+ * @param {string} xml
+ * @returns {string}
+ */
 export function extractLayoutBody(xml) {
     const layoutMatch = xml.match(/<LinearLayout([^>]*)>([\s\S]*?)<\/LinearLayout>/);
     if (!layoutMatch) return xml;

@@ -1,7 +1,6 @@
 import { it, jest } from '@jest/globals';
 import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
 import { migrate } from '../../src/migrate/merge_directional_attrs.mjs';
-import { propagateSiblingBorders } from '../../src/migrate/merge_directional_attrs.mjs';
 
 /**
  * XML文字列をDOMで正規化して返す

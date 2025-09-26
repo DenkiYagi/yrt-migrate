@@ -2,6 +2,10 @@
 
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
+/**
+ * @param {string} xml
+ * @returns {string}
+ */
 function addGridColsRowsIfMissing(xml) {
     const doc = new DOMParser().parseFromString(xml, "text/xml");
     const grids = doc.getElementsByTagName("Grid");

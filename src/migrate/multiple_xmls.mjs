@@ -16,6 +16,7 @@ export function migrate(oldDoc) {
     let layoutXmlElements = xpath.select("//LayoutXml", doc);
     if (!Array.isArray(layoutXmlElements)) layoutXmlElements = [];
 
+    /** @type {{ name: string | null, xml: string }[]} */
     const newLayouts = [];
     layoutXmlElements.forEach(layoutXmlElement => {
         // LayoutXml直下の LinearLayout または StackLayout を取得

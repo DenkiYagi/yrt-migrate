@@ -3,6 +3,9 @@
 import { DOMParser } from "@xmldom/xmldom";
 import { getXPath } from "../utils.js";
 
+/**
+ * @param {string} xml
+ */
 function checkRectangleBorderRadiusMultiWarn(xml) {
     const doc = new DOMParser().parseFromString(xml, "text/xml");
     const rects = doc.getElementsByTagName("Rectangle");

@@ -9,6 +9,9 @@ import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
  */
 export function migrate(yrtDocument) {
     const newDoc = structuredClone(yrtDocument);
+    /**
+     * @param {Document} doc
+     */
     function renameAttrs(doc) {
         // Table要素のpageBreakCondition→breakCondition
         const tables = doc.getElementsByTagName("Table");

@@ -2,10 +2,16 @@
 
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
+/**
+ * @param {import('../yrt_format.js').YrtDocument} doc
+ */
 export function migrate(doc) {
     return {
         layouts: doc.layouts.map(({ name, xml }) => {
             const dom = new DOMParser().parseFromString(xml, "text/xml");
+            /**
+             * @param {Element} node
+             */
             function removeUnspecifiedAttrs(node) {
                 if (node.nodeType !== 1) return;
                 const attrs = Array.from(node.attributes);
@@ -15,7 +21,9 @@ export function migrate(doc) {
                     }
                 }
                 for (let child = node.firstChild; child; child = child.nextSibling) {
-                    removeUnspecifiedAttrs(child);
+                    if (child.nodeType === 1) {
+                        removeUnspecifiedAttrs(/** @type {Element} */(child));
+                    }
                 }
             }
             removeUnspecifiedAttrs(dom.documentElement);

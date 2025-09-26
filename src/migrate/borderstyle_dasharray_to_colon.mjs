@@ -25,6 +25,9 @@ export function migrate(yrtDocument) {
     return { ...yrtDocument, layouts: migratedLayouts, style: migratedStyle };
 }
 
+/**
+ * @param {Document} doc
+ */
 function convertDasharray(doc) {
     const elements = doc.getElementsByTagName("*");
     for (let i = 0; i < elements.length; i++) {
@@ -33,7 +36,7 @@ function convertDasharray(doc) {
         const val = el.getAttribute("borderStyle");
         if (typeof val === "string") {
             const replaced = val.replace(/dasharray\(([^)]*)\)/gi, (_, inner) => {
-                return inner.split(/\s*,\s*/).map(s => s.trim()).join(":");
+                return inner.split(/\s*,\s*/).map((/** @type {string} */s) => s.trim()).join(":");
             });
             el.setAttribute("borderStyle", replaced);
         }
