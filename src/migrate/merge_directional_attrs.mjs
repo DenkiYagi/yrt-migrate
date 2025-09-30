@@ -1,7 +1,7 @@
 // @ts-check
 
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
-import { getXPath } from "../utils.js";
+import { warnWithLocation } from "../warn_with_location.mjs";
 
 const ATTR_MAP = [
     {
@@ -175,8 +175,9 @@ function mergeDirectionalValues(attr, unified, individual) {
 /**
  * @param {Element} element
  * @param {boolean} isStyleXml
+ * @param {string} originalXml
  */
-function normalizeDirectionalAttrsOnElement(element, isStyleXml) {
+function normalizeDirectionalAttrsOnElement(element, isStyleXml, originalXml) {
     for (const attr of ATTR_MAP) {
         const elements = Array.isArray(attr.elements) ? attr.elements : [attr.elements];
         if (!elements.includes('*') && !elements.includes(element.tagName)) continue;
@@ -198,9 +199,7 @@ function normalizeDirectionalAttrsOnElement(element, isStyleXml) {
                 parent = parent.parentNode;
             }
             const keyInfo = key ? `key="${key}"` : '';
-            const xpath = getXPath(element);
-            // 簡潔な警告メッセージ
-            console.warn(`[WARNING] StyleXMLのborder/outerBorder系属性（${attr.attr}）は自動変換できません。手動で修正してください。対象key: ${keyInfo}${xpath ? `, XPath: ${xpath}` : ''}`);
+            warnWithLocation(originalXml, element, `StyleXMLのborder/outerBorder系属性（${attr.attr}）は自動変換できません。手動で修正してください。対象key: ${keyInfo}`);
             continue;
         }
 
@@ -220,9 +219,10 @@ function normalizeDirectionalAttrsOnElement(element, isStyleXml) {
 /**
  * 方向系属性（border, margin, padding等）を一括指定・個別指定から正規化する
  * @param {string} xmlString - XML文字列
+ * @param {string} originalXml - 元のXML文字列
  * @returns {string} 正規化されたXML文字列
  */
-function normalizeDirectionalAttrs(xmlString) {
+function normalizeDirectionalAttrs(xmlString, originalXml) {
     const doc = new DOMParser().parseFromString(xmlString, "text/xml");
     const isStyleXml = doc.documentElement && doc.documentElement.tagName === "Style";
 
@@ -236,7 +236,7 @@ function normalizeDirectionalAttrs(xmlString) {
                 traverseAndNormalize(/** @type {Element} */(el.childNodes[i]));
             }
         }
-        normalizeDirectionalAttrsOnElement(el, isStyleXml);
+        normalizeDirectionalAttrsOnElement(el, isStyleXml, originalXml);
     }
 
     traverseAndNormalize(doc.documentElement);
@@ -502,9 +502,10 @@ function findLayoutInheritancePairs(root) {
 /**
  * Grid内の兄弟セル間で4方向属性（borderThickness, borderStyle, borderColorなど）を伝播する
  * @param {string} layoutXml - XML文字列
+ * @param {string} originalXml - 元のXML文字列
  * @returns {string} 兄弟セル間で属性が伝播されたXML文字列
  */
-export function propagateSiblingBorders(layoutXml) {
+export function propagateSiblingBorders(layoutXml, originalXml) {
     const doc = new DOMParser().parseFromString(layoutXml, "text/xml");
     const root = doc.documentElement;
     if (!root) return layoutXml;
@@ -861,8 +862,7 @@ export function propagateSiblingBorders(layoutXml) {
                     }
                 }
                 if (foundAnyBorder) {
-                    const xpath = getXPath(node);
-                    console.warn(`[WARNING] Tableまたはその子要素（TableColumnHeader/Template/Footer）にborder系属性が含まれています。大幅にレイアウトルールが変わったため崩れる可能性があります。（${xpath}）`);
+                    warnWithLocation(originalXml, node, `Tableまたはその子要素（TableColumnHeader/Template/Footer）にborder系属性が含まれています。大幅にレイアウトルールが変わったため崩れる可能性があります。`);
                 }
                 // 兄弟属性の伝播自体は常に行う
                 const { cellList, nRows, nCols } = buildTableCellList(/** @type {Element} */(node));
@@ -885,24 +885,25 @@ export function propagateSiblingBorders(layoutXml) {
 /**
  * レイアウトXMLに方向系属性の正規化・継承・伝播処理を適用する
  * @param {import('../yrt_format.js').YrtDocument} yrtDocument
+ * @param {string} originalXml - 元のYRT XML文字列
  * @returns {import('../yrt_format.js').YrtDocument}
  */
-export function migrate(yrtDocument) {
+export function migrate(yrtDocument, originalXml) {
     if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) return yrtDocument;
     const nextLayouts = yrtDocument.layouts.map(entry => {
         if (!entry || typeof entry.xml !== 'string') return entry;
         let xml = entry.xml;
         xml = propagateOuterBorderToEdges(xml);
         xml = inheritParentBorderAttrs(xml);
-        xml = propagateSiblingBorders(xml);
-        xml = normalizeDirectionalAttrs(xml);
+        xml = propagateSiblingBorders(xml, originalXml);
+        xml = normalizeDirectionalAttrs(xml, originalXml);
         return { ...entry, xml };
     });
     // Style XMLにも同様の処理を適用
     let nextStyle = yrtDocument.style;
     if (typeof nextStyle === 'string' && nextStyle.trim().length > 0) {
         let styleXml = nextStyle;
-        styleXml = normalizeDirectionalAttrs(styleXml);
+        styleXml = normalizeDirectionalAttrs(styleXml, originalXml);
         nextStyle = styleXml;
     }
     return { ...yrtDocument, layouts: nextLayouts, style: nextStyle };

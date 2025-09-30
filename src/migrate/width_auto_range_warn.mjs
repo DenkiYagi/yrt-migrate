@@ -1,31 +1,27 @@
 // @ts-check
 
 import { DOMParser } from "@xmldom/xmldom";
-import { getXPath } from "../utils.js";
+import { warnWithLocation } from "../warn_with_location.mjs";
 
 /**
  * width系属性のauto/range廃止マイグレーション: 警告のみ出力
  * @param {import('../yrt_format.js').YrtDocument} yrtDocument
+ * @param {string} originalXml - 元のYRT XML文字列（警告メッセージ用）
  * @returns {void} 警告のみ、値は返さない
  */
-export function migrate(yrtDocument) {
+export function migrate(yrtDocument, originalXml) {
     if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) return;
-    /** @type {string[]} */
-    let warnings = [];
     for (const entry of yrtDocument.layouts) {
         if (!entry || typeof entry.xml !== 'string') continue;
-        checkWidthAutoRange(entry.xml, warnings);
-    }
-    for (const warning of warnings) {
-        console.warn(warning);
+        checkWidthAutoRange(entry.xml, originalXml);
     }
 }
 
 /**
  * @param {string} xml
- * @param {string[]} warnings
+ * @param {string} originalXml
  */
-function checkWidthAutoRange(xml, warnings) {
+function checkWidthAutoRange(xml, originalXml) {
     const doc = new DOMParser().parseFromString(xml, "text/xml");
     /** @param {any} node */
     function checkGridCols(node) {
@@ -34,8 +30,7 @@ function checkWidthAutoRange(xml, warnings) {
             if (typeof val === 'string') {
                 const parts = val.split(/\s+/);
                 if (parts.some(v => v.trim().toLowerCase() === 'auto' || v.includes(":"))) {
-                    const xpath = getXPath(node);
-                    warnings.push(`[WARNING] <Grid> の cols 属性で auto/range 指定はサポートされなくなりました。手動で幅調整を行う必要があります。（${xpath}）`);
+                    warnWithLocation(originalXml, node, `<Grid> の cols 属性で auto/range 指定はサポートされなくなりました。手動で幅調整を行う必要があります。`);
                 }
             }
         }
@@ -51,8 +46,7 @@ function checkWidthAutoRange(xml, warnings) {
             const val = node.getAttribute('width')?.trim();
             if (typeof val === 'string') {
                 if (val.trim().toLowerCase() === 'auto' || val.includes(":")) {
-                    const xpath = getXPath(node);
-                    warnings.push(`[WARNING] <TableColumn> の width 属性で auto/range 指定はサポートされなくなりました。手動で幅調整を行う必要があります。（${xpath}）`);
+                    warnWithLocation(originalXml, node, `<TableColumn> の width 属性で auto/range 指定はサポートされなくなりました。手動で幅調整を行う必要があります。`);
                 }
             }
         }

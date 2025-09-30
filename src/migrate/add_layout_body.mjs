@@ -1,31 +1,33 @@
 // @ts-check
 
 import { DOMParser } from "@xmldom/xmldom";
-import { getXPath } from "../utils.js";
+import { warnWithLocation } from "../warn_with_location.mjs";
 
 /**
  * YrtDocument型: 全レイアウトXMLに対してLayoutBody追加変換を適用
  * @param {import('../yrt_format.js').YrtDocument} yrtDocument
+ * @param {string} originalXml 元のXML文字列
  * @returns {import('../yrt_format.js').YrtDocument}
  */
-export function migrate(yrtDocument) {
+export function migrate(yrtDocument, originalXml) {
     const newDoc = structuredClone(yrtDocument);
     for (let i = 0; i < newDoc.layouts.length; i++) {
         const entry = newDoc.layouts[i];
-        entry.xml = extractLayoutBody(entry.xml);
+        entry.xml = extractLayoutBody(entry.xml, originalXml);
     }
     // Style XMLにも同じ処理を適用
     if (typeof newDoc.style === "string" && newDoc.style.trim().length > 0) {
-        newDoc.style = extractLayoutBody(newDoc.style);
+        newDoc.style = extractLayoutBody(newDoc.style, originalXml);
     }
     return newDoc;
 }
 
 /**
  * @param {string} xml
+ * @param {string} originalXml
  * @returns {string}
  */
-export function extractLayoutBody(xml) {
+export function extractLayoutBody(xml, originalXml) {
     const layoutMatch = xml.match(/<LinearLayout([^>]*)>([\s\S]*?)<\/LinearLayout>/);
     if (!layoutMatch) return xml;
     const attrs = layoutMatch[1];
@@ -66,15 +68,17 @@ export function extractLayoutBody(xml) {
     }
 
     if (others.length > 0 && others.some(e => e.trim())) {
-        let xpath = '/LinearLayout';
         try {
             const doc = new DOMParser().parseFromString(xml, 'application/xml');
             const linearNode = doc.getElementsByTagName('LinearLayout')[0];
             if (linearNode) {
-                xpath = getXPath(linearNode);
+                warnWithLocation(originalXml, linearNode, 'add_layout_body: LayoutXxx系以外の要素がありました。手動で修正してください。');
+            } else {
+                console.error('add_layout_body: LayoutXxx系以外の要素がありましたがLinearLayoutノードが特定できませんでした。');
             }
-        } catch (e) { }
-        console.warn(`add_layout_body: LayoutXxx系以外の要素がありました。手動で修正してください。 xpath=${xpath}`);
+        } catch (e) {
+            console.error('add_layout_body: LayoutXxx系以外の要素がありましたがXMLパースに失敗しました。');
+        }
     }
 
     const layoutBody = `<LayoutBody></LayoutBody>`;

@@ -1,12 +1,13 @@
 // @ts-check
 
 import { DOMParser } from "@xmldom/xmldom";
-import { getXPath } from "../utils.js";
+import { warnWithLocation } from "../warn_with_location.mjs";
 
 /**
  * @param {string} xml
+ * @param {string} originalXml
  */
-function checkRectangleBorderRadiusMultiWarn(xml) {
+function checkRectangleBorderRadiusMultiWarn(xml, originalXml) {
     const doc = new DOMParser().parseFromString(xml, "text/xml");
     const rects = doc.getElementsByTagName("Rectangle");
     for (let i = 0; i < rects.length; i++) {
@@ -16,8 +17,7 @@ function checkRectangleBorderRadiusMultiWarn(xml) {
         const trimmed = borderRadius.trim();
         // スペース区切りで複数値の場合は警告
         if (trimmed.split(/\s+/).length > 1) {
-            const xpath = getXPath(rect);
-            console.warn(`[WARNING] <Rectangle>のborderRadius属性は単一値のみ許可されています（複数値は不正）: ${xpath}`);
+            warnWithLocation(originalXml, rect, `<Rectangle>のborderRadius属性は単一値のみ許可されています`);
         }
     }
 }
@@ -25,16 +25,17 @@ function checkRectangleBorderRadiusMultiWarn(xml) {
 /**
  * <Rectangle> の borderRadius 属性で複数方向指定や空文字があれば警告を出すマイグレーション
  * @param {import("../yrt_format.js").YrtDocument} yrtDocument - 変換対象のYrtDocument
+ * @param {string} originalXml - 元のYRT XML文字列（警告メッセージ用）
  * @returns {void} 警告のみ、値は返さない
  */
-export function migrate(yrtDocument) {
+export function migrate(yrtDocument, originalXml) {
     if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) return;
     yrtDocument.layouts.forEach(layoutEntry => {
         if (!layoutEntry || typeof layoutEntry.xml !== "string") return;
-        checkRectangleBorderRadiusMultiWarn(layoutEntry.xml);
+        checkRectangleBorderRadiusMultiWarn(layoutEntry.xml, originalXml);
     });
     // Style XMLにも同じ関数で警告処理を適用
     if (typeof yrtDocument.style === "string" && yrtDocument.style.trim().length > 0) {
-        checkRectangleBorderRadiusMultiWarn(yrtDocument.style);
+        checkRectangleBorderRadiusMultiWarn(yrtDocument.style, originalXml);
     }
 }

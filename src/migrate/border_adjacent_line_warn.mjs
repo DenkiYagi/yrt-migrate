@@ -1,12 +1,13 @@
 // @ts-check
 
 import { DOMParser } from "@xmldom/xmldom";
-import { getXPath } from "../utils.js";
+import { warnWithLocation } from "../warn_with_location.mjs";
 
 /**
  * @param {string} xml
+ * @param {string} originalXml
  */
-function checkBorderAdjacentLineWarn(xml) {
+function checkBorderAdjacentLineWarn(xml, originalXml) {
     const targets = ["LayoutHeader", "LayoutBody", "LayoutFooter"];
     const attrs = ["borderThickness", "borderColor", "borderStyle"];
     let doc;
@@ -20,10 +21,7 @@ function checkBorderAdjacentLineWarn(xml) {
         for (const node of nodes) {
             for (const attr of attrs) {
                 if (node.hasAttribute(attr)) {
-                    const xpath = getXPath(node);
-                    console.warn(
-                        `[WARNING] ${tag} 要素(${xpath})に${attr}属性が含まれています。罫線のレイアウトが変わる可能性があります。`
-                    );
+                    warnWithLocation(originalXml, node, `${tag} 要素に${attr}属性が含まれています。罫線のレイアウトが変わる可能性があります。`);
                 }
             }
         }
@@ -33,16 +31,17 @@ function checkBorderAdjacentLineWarn(xml) {
 /**
  * レイアウトの隣接部の罫線属性を検出し、警告を出すマイグレーション
  * @param {import("../yrt_format.js").YrtDocument} yrtDocument - 変換対象のYrtDocument
+ * @param {string} originalXml - 元のYRT XML文字列（警告メッセージ用）
  * @returns {void} 警告のみ、値は返さない
  */
-export function migrate(yrtDocument) {
+export function migrate(yrtDocument, originalXml) {
     if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) return;
     yrtDocument.layouts.forEach(layoutEntry => {
         if (!layoutEntry || typeof layoutEntry.xml !== "string") return;
-        checkBorderAdjacentLineWarn(layoutEntry.xml);
+        checkBorderAdjacentLineWarn(layoutEntry.xml, originalXml);
     });
     // Style XMLにも同じ関数で警告処理を適用
     if (typeof yrtDocument.style === "string" && yrtDocument.style.trim().length > 0) {
-        checkBorderAdjacentLineWarn(yrtDocument.style);
+        checkBorderAdjacentLineWarn(yrtDocument.style, originalXml);
     }
 }

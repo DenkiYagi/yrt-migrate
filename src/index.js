@@ -56,27 +56,28 @@ const DO_FORMAT_XML = true;
  * @returns {import('./yrt_format.js').YrtDocument}
  */
 function migrate(yrtOldDocument) {
+    const originalXml = yrtOldDocument.xml;
     let doc = multipleXmls(yrtOldDocument);
     doc = orientationRename(doc);
     doc = removeUnspecifiedAttr(doc);
-    doc = styleElementMigrate(doc);
+    doc = styleElementMigrate(doc, originalXml);
     doc = removeContentElements(doc);
-    doc = foreachHiddenToLogicMigrate(doc);
-    doc = removeDeprecatedLayoutAttrs(doc);
-    doc = addLayoutBody(doc);
+    doc = foreachHiddenToLogicMigrate(doc, originalXml);
+    doc = removeDeprecatedLayoutAttrs(doc, originalXml);
+    doc = addLayoutBody(doc, originalXml);
     doc = renameTableFrameElements(doc);
-    doc = imageWidthRequired(doc);
+    doc = imageWidthRequired(doc, originalXml);
     doc = renameAttrsMigrate(doc);
-    doc = mergeDirectionalAttrs(doc);
-    widthAutoRangeWarn(doc); // 警告のみ
+    doc = mergeDirectionalAttrs(doc, originalXml);
+    widthAutoRangeWarn(doc, originalXml); // 警告のみ
     doc = colorNotationIllustrator(doc);
-    bindingRequiredWarn(doc); // 警告のみ
-    spanColorBindingWarn(doc); // 警告のみ
+    bindingRequiredWarn(doc, originalXml); // 警告のみ
+    spanColorBindingWarn(doc, originalXml); // 警告のみ
     doc = gridColsRowsRequired(doc);
-    rectangleBorderRadiusMultiWarn(doc); // 警告のみ
+    rectangleBorderRadiusMultiWarn(doc, originalXml); // 警告のみ
     doc = sizeCommaToSpace(doc);
     doc = borderstyleDasharrayToColon(doc);
-    borderAdjacentLineWarn(doc); // 警告のみ
+    borderAdjacentLineWarn(doc, originalXml); // 警告のみ
 
     // 最後にスキーマ指定用の属性追加
     doc = applySchema(doc);

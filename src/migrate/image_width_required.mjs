@@ -2,13 +2,15 @@
 
 import { DOMParser } from "@xmldom/xmldom";
 import { getXPath } from "../utils.js";
+import { warnWithLocation } from "../warn_with_location.mjs";
 
 /**
  * <Image>要素のwidth属性必須化警告
  * @param {import('../yrt_format.js').YrtDocument} yrtDocument
+ * @param {string} originalXml
  * @returns {import('../yrt_format.js').YrtDocument}
  */
-export function migrate(yrtDocument) {
+export function migrate(yrtDocument, originalXml) {
     for (let i = 0; i < yrtDocument.layouts.length; i++) {
         const entry = yrtDocument.layouts[i];
         if (!entry.xml) continue;
@@ -17,8 +19,7 @@ export function migrate(yrtDocument) {
         for (let j = 0; j < images.length; j++) {
             const image = images[j];
             if (!image.hasAttribute("width")) {
-                const xpath = getXPath(image);
-                console.warn(`[WARNING] Image要素にwidth属性がありません（XPath: ${xpath}）`);
+                warnWithLocation(entry.xml, image, "Image要素にwidth属性がありません（XPath: " + getXPath(image) + "）");
             }
         }
     }
@@ -29,8 +30,7 @@ export function migrate(yrtDocument) {
         for (let j = 0; j < images.length; j++) {
             const image = images[j];
             if (!image.hasAttribute("width")) {
-                const xpath = getXPath(image);
-                console.warn(`[WARNING] Image要素にwidth属性がありません（Style XML, XPath: ${xpath}）`);
+                warnWithLocation(yrtDocument.style, image, "Image要素にwidth属性がありません（Style XML, XPath: " + getXPath(image) + "）");
             }
         }
     }
