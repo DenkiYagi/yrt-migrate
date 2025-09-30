@@ -93,9 +93,9 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('上下のみ指定した場合は4値で補完しつつ、足りない部分をデフォルト値で補完する', () => {
+        it('上下のみ指定した場合は4値で補完しつつ、足りない部分を _ で補完する', () => {
             const input = '<StackLayout paddingTop="8" paddingBottom="8"/>';
-            const expected = '<StackLayout padding="8 0 8 0"/>';
+            const expected = '<StackLayout padding="8 _ 8 _"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
             const migrated = migrate(yrtDocument);
             const output = normalizeXml(migrated.layouts[0].xml);
@@ -120,55 +120,52 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('padding は初期値 0 で補完される', () => {
+        it('padding で指定がない方向は _ で補完される', () => {
             const input = '<StackLayout paddingTop="8"/>';
-            const expected = '<StackLayout padding="8 0 0 0"/>';
+            const expected = '<StackLayout padding="8 _ _ _"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
             const migrated = migrate(yrtDocument);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('Grid, ColumnText などの borderThickness は初期値 0 で補完される', () => {
+        it('Grid, ColumnText などの borderThickness で指定がない方向は _ で補完される', () => {
             const input = '<Grid borderLeftThickness="2"/>';
-            const expected = '<Grid borderThickness="0 0 0 2"/>';
+            const expected = '<Grid borderThickness="_ _ _ 2"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
             const migrated = migrate(yrtDocument);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('Table の borderThickness は初期値 regular で補完される（Tableは警告）', () => {
+        it('Table の borderThickness で指定がない方向は _ で補完される', () => {
             const input = '<Table borderLeftThickness="2"/>';
-            const expected = '<Table borderThickness="regular regular regular 2"/>';
+            const expected = '<Table borderThickness="_ _ _ 2"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
             const migrated = migrate(yrtDocument);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
-            expect(warnSpy).toHaveBeenCalled();
-            warnSpy.mockRestore();
         });
 
-        it('borderStyle は初期値 solid で補完される', () => {
+        it('borderStyle で指定がない方向は _ で補完される', () => {
             const input = '<Grid borderTopStyle="none" borderLeftStyle="dotted"/>';
-            const expected = '<Grid borderStyle="none solid solid dotted"/>';
+            const expected = '<Grid borderStyle="none _ _ dotted"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
             const migrated = migrate(yrtDocument);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('borderColor は初期値 black で補完される', () => {
+        it('borderColor で指定がない方向は _ で補完される', () => {
             const input = '<Grid borderTopColor="#111" borderLeftColor="#444"/>';
-            const expected = '<Grid borderColor="#111 black black #444"/>';
+            const expected = '<Grid borderColor="#111 _ _ #444"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
             const migrated = migrate(yrtDocument);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('TableColumnXxx の borderThickness は初期値 regular で補完される', () => {
+        it('TableColumnXxx の borderThickness で指定がない方向は _ で補完される', () => {
             const input = [
                 '<LinearLayout>',
                 '  <LayoutBody>',
@@ -190,7 +187,7 @@ describe('mergeDirectionalAttributes', () => {
                 '  <LayoutBody>',
                 '    <Table items="${items}">',
                 '      <TableColumn width="*">',
-                '        <TableColumnHeader borderThickness="regular extrathick regular regular">',
+                '        <TableColumnHeader borderThickness="_ extrathick _ _">',
                 '          <Text>Column 1 Header</Text>',
                 '        </TableColumnHeader>',
                 '        <TableColumnTemplate>',
@@ -210,7 +207,7 @@ describe('mergeDirectionalAttributes', () => {
     });
 
     describe('レイアウト系 XML の親子・兄弟関係のある要素の解決', () => {
-        it('Grid, GridCell の継承を解消できる(1)', () => {
+        it('Grid, GridCell も、それぞれ独立して _ で補完される(1)', () => {
             const input = [
                 '<Grid borderThickness="1">',
                 '  <GridCell borderTopThickness="2">',
@@ -219,8 +216,8 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const expected = [
-                '<Grid>',
-                '  <GridCell borderThickness="2 1 1 1">',
+                '<Grid borderThickness="1">',
+                '  <GridCell borderThickness="2 _ _ _">',
                 '    <Text>text</Text>',
                 '  </GridCell>',
                 '</Grid>'
@@ -231,7 +228,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('Grid, GridCell の継承を解消できる(2)', () => {
+        it('Grid, GridCell も、それぞれ独立して _ で補完される(2)', () => {
             const input = [
                 '<Grid borderStyle="solid">',
                 '  <GridCell borderBottomStyle="regular">',
@@ -240,8 +237,8 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const expected = [
-                '<Grid>',
-                '  <GridCell borderStyle="solid solid regular solid">',
+                '<Grid borderStyle="solid">',
+                '  <GridCell borderStyle="_ _ regular _">',
                 '    <Text>text</Text>',
                 '  </GridCell>',
                 '</Grid>'
@@ -252,7 +249,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('LayoutBody配下のGrid, GridCell の継承を解消できる(2)', () => {
+        it('Grid, GridCell も、それぞれ独立して _ で補完される(3)', () => {
             const input = [
                 '<LinearLayout>',
                 '  <LayoutBody>',
@@ -267,8 +264,8 @@ describe('mergeDirectionalAttributes', () => {
             const expected = [
                 '<LinearLayout>',
                 '  <LayoutBody>',
-                '    <Grid>',
-                '      <GridCell borderStyle="solid solid regular solid">',
+                '    <Grid borderStyle="solid">',
+                '      <GridCell borderStyle="_ _ regular _">',
                 '        <Text>text</Text>',
                 '      </GridCell>',
                 '    </Grid>',
@@ -281,7 +278,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('TableColumnTemplate の個別指定値と Table の一括指定値が統合される（Tableは警告）', () => {
+        it('TableColumnTemplate, Table も、それぞれ独立して _ で補完される', () => {
             const input = [
                 '<Table borderStyle="double">',
                 '  <TableColumn>',
@@ -292,24 +289,21 @@ describe('mergeDirectionalAttributes', () => {
                 '</Table>'
             ].join('\n');
             const expected = [
-                '<Table>',
+                '<Table borderStyle="double">',
                 '  <TableColumn>',
-                '    <TableColumnTemplate borderStyle="double solid double double">',
+                '    <TableColumnTemplate borderStyle="_ solid _ _">',
                 '      <Text>text</Text>',
                 '    </TableColumnTemplate>',
                 '  </TableColumn>',
                 '</Table>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
             const migrated = migrate(yrtDocument);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
-            expect(warnSpy).not.toHaveBeenCalled();
-            warnSpy.mockRestore();
         });
 
-        it('col="0",row="0" のセルの右端の値が初期値よりも優先される', () => {
+        it('隣接セルは影響せずに _ で補完される(1)', () => {
             const input = [
                 '  <LinearLayout>',
                 '    <LayoutBody>',
@@ -334,7 +328,7 @@ describe('mergeDirectionalAttributes', () => {
                 '        <GridCell col="0" row="0" borderThickness="1">',
                 '          <Text>text</Text>',
                 '        </GridCell>',
-                '        <GridCell col="1" row="0" borderThickness="2 0 0 1">',
+                '        <GridCell col="1" row="0" borderThickness="2 _ _ _">',
                 '          <Text>text</Text>',
                 '        </GridCell>',
                 '      </Grid>',
@@ -348,7 +342,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('左隣セルのborderRightThicknessが右セルに伝播する', () => {
+        it('隣接セルは影響せずに _ で補完される(2)', () => {
             const input = [
                 '<Grid cols="10 10" rows="10">',
                 '  <GridCell col="0" row="0" borderRightThickness="5"/>',
@@ -357,8 +351,8 @@ describe('mergeDirectionalAttributes', () => {
             ].join('\n');
             const expected = [
                 '<Grid cols="10 10" rows="10">',
-                '  <GridCell col="0" row="0" borderThickness="0 5 0 0"/>',
-                '  <GridCell col="1" row="0" borderThickness="5 0 0 5"/>',
+                '  <GridCell col="0" row="0" borderThickness="_ 5 _ _"/>',
+                '  <GridCell col="1" row="0" borderThickness="5 _ _ _"/>',
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
@@ -367,7 +361,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('上隣セルのborderBottomThicknessが下セルのborderTopThicknessに伝播する', () => {
+        it('隣接セルは影響せずに _ で補完される(3)', () => {
             const input = [
                 '<Grid cols="10" rows="10 10">',
                 '  <GridCell col="0" row="0" borderBottomThickness="3"/>',
@@ -376,8 +370,8 @@ describe('mergeDirectionalAttributes', () => {
             ].join('\n');
             const expected = [
                 '<Grid cols="10" rows="10 10">',
-                '  <GridCell col="0" row="0" borderThickness="0 0 3 0"/>',
-                '  <GridCell col="0" row="1" borderThickness="3 0 0 3"/>',
+                '  <GridCell col="0" row="0" borderThickness="_ _ 3 _"/>',
+                '  <GridCell col="0" row="1" borderThickness="_ _ _ 3"/>',
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
@@ -386,7 +380,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('borderStyle, borderColor も伝播する', () => {
+        it('隣接セルは影響せずに _ で補完される(4)', () => {
             const input = [
                 '<Grid cols="10 10" rows="10">',
                 '  <GridCell col="0" row="0" borderRightStyle="dashed" borderRightColor="red"/>',
@@ -395,8 +389,8 @@ describe('mergeDirectionalAttributes', () => {
             ].join('\n');
             const expected = [
                 '<Grid cols="10 10" rows="10">',
-                '  <GridCell col="0" row="0" borderStyle="solid dashed solid solid" borderColor="black red black black"/>',
-                '  <GridCell col="1" row="0" borderStyle="solid dashed solid dashed" borderColor="black red black red"/>',
+                '  <GridCell col="0" row="0" borderStyle="_ dashed _ _" borderColor="_ red _ _"/>',
+                '  <GridCell col="1" row="0" borderStyle="_ dashed _ _" borderColor="_ red _ _"/>',
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
@@ -405,7 +399,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('初期値で埋める必要がなければ変わらない（指定なし）', () => {
+        it('隣接セルは影響せずに _ で補完される(5)', () => {
             const input = [
                 '<Grid cols="10 10" rows="10">',
                 '  <GridCell col="0" row="0" borderRightThickness="5"/>',
@@ -414,7 +408,7 @@ describe('mergeDirectionalAttributes', () => {
             ].join('\n');
             const expected = [
                 '<Grid cols="10 10" rows="10">',
-                '  <GridCell col="0" row="0" borderThickness="0 5 0 0"/>',
+                '  <GridCell col="0" row="0" borderThickness="_ 5 _ _"/>',
                 '  <GridCell col="1" row="0"/>',
                 '</Grid>'
             ].join('\n');
@@ -424,7 +418,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('初期値で埋める必要がなければ変わらない（指定あり）', () => {
+        it('隣接セルは影響せずに _ で補完される(6)', () => {
             const input = [
                 '<Grid cols="10 10" rows="10">',
                 '  <GridCell col="0" row="0" borderRightThickness="5"/>',
@@ -433,7 +427,7 @@ describe('mergeDirectionalAttributes', () => {
             ].join('\n');
             const expected = [
                 '<Grid cols="10 10" rows="10">',
-                '  <GridCell col="0" row="0" borderThickness="0 5 0 0"/>',
+                '  <GridCell col="0" row="0" borderThickness="_ 5 _ _"/>',
                 '  <GridCell col="1" row="0" borderThickness="1"/>',
                 '</Grid>'
             ].join('\n');
@@ -443,7 +437,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('隣接しない場合は伝搬しない', () => {
+        it('隣接セルは影響せずに _ で補完される(7)', () => {
             const input = [
                 '<Grid cols="10 10" rows="10 10">',
                 '  <GridCell col="0" row="0" borderRightThickness="5"/>',
@@ -452,8 +446,8 @@ describe('mergeDirectionalAttributes', () => {
             ].join('\n');
             const expected = [
                 '<Grid cols="10 10" rows="10 10">',
-                '  <GridCell col="0" row="0" borderThickness="0 5 0 0"/>',
-                '  <GridCell col="1" row="1" borderThickness="5 0 0 0"/>',
+                '  <GridCell col="0" row="0" borderThickness="_ 5 _ _"/>',
+                '  <GridCell col="1" row="1" borderThickness="5 _ _ _"/>',
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
@@ -462,7 +456,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('書いた順に優先される', () => {
+        it('隣接セルは影響せずに _ で補完される(8)', () => {
             const input = [
                 '<Grid cols="10 10" rows="10">',
                 '  <GridCell col="1" row="0" borderLeftThickness="5"/>',
@@ -471,8 +465,8 @@ describe('mergeDirectionalAttributes', () => {
             ].join('\n');
             const expected = [
                 '<Grid cols="10 10" rows="10">',
-                '  <GridCell col="1" row="0" borderThickness="0 0 0 5"/>',
-                '  <GridCell col="0" row="0" borderThickness="5 5 0 0"/>',
+                '  <GridCell col="1" row="0" borderThickness="_ _ _ 5"/>',
+                '  <GridCell col="0" row="0" borderThickness="5 _ _ _"/>',
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
@@ -481,7 +475,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('書いた順に優先される（上下方向）', () => {
+        it('隣接セルは影響せずに _ で補完される(9)', () => {
             const input = [
                 '<Grid cols="10" rows="10 10">',
                 '  <GridCell col="0" row="1" borderTopStyle="double"/>',
@@ -490,8 +484,8 @@ describe('mergeDirectionalAttributes', () => {
             ].join('\n');
             const expected = [
                 '<Grid cols="10" rows="10 10">',
-                '  <GridCell col="0" row="1" borderStyle="double solid solid solid"/>',
-                '  <GridCell col="0" row="0" borderStyle="solid solid double double"/>',
+                '  <GridCell col="0" row="1" borderStyle="double _ _ _"/>',
+                '  <GridCell col="0" row="0" borderStyle="_ _ _ double"/>',
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
@@ -500,17 +494,17 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('書いた順に優先される（明示的な競合: 先に書いた値が優先）', () => {
+        it('隣接セルは影響せずに _ で補完される(10)', () => {
             const input = [
-                '<Grid cols="10 10" rows="10">',
+                '<Grid cols="10" rows="10">',
                 '  <GridCell col="1" row="0" borderLeftThickness="5"/>',
                 '  <GridCell col="0" row="0" borderRightThickness="9" borderTopThickness="5"/>',
                 '</Grid>'
             ].join('\n');
             const expected = [
-                '<Grid cols="10 10" rows="10">',
-                '  <GridCell col="1" row="0" borderThickness="0 0 0 5"/>',
-                '  <GridCell col="0" row="0" borderThickness="5 9 0 0"/>',
+                '<Grid cols="10" rows="10">',
+                '  <GridCell col="1" row="0" borderThickness="_ _ _ 5"/>',
+                '  <GridCell col="0" row="0" borderThickness="5 9 _ _"/>',
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
@@ -519,7 +513,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('書いた順に優先される（複数セル混在）', () => {
+        it('隣接セルは影響せずに _ で補完される(10)', () => {
             const input = [
                 '<Grid cols="10 10 10" rows="10">',
                 '  <GridCell col="2" row="0" borderLeftThickness="7"/>',
@@ -529,9 +523,9 @@ describe('mergeDirectionalAttributes', () => {
             ].join('\n');
             const expected = [
                 '<Grid cols="10 10 10" rows="10">',
-                '  <GridCell col="2" row="0" borderThickness="0 0 0 7"/>',
-                '  <GridCell col="0" row="0" borderThickness="3 5 0 0"/>',
-                '  <GridCell col="1" row="0" borderThickness="0 7 0 5"/>',
+                '  <GridCell col="2" row="0" borderThickness="_ _ _ 7"/>',
+                '  <GridCell col="0" row="0" borderThickness="3 _ _ _"/>',
+                '  <GridCell col="1" row="0" borderThickness="_ _ _ 5"/>',
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
@@ -540,7 +534,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('書いた順に優先される（colspan, rowspan を含む）', () => {
+        it('隣接セルは影響せずに _ で補完される(11)', () => {
             const input = [
                 '<Grid cols="10 10 10" rows="10">',
                 '  <GridCell col="2" row="0" borderLeftThickness="7"/>',
@@ -549,8 +543,8 @@ describe('mergeDirectionalAttributes', () => {
             ].join('\n');
             const expected = [
                 '<Grid cols="10 10 10" rows="10">',
-                '  <GridCell col="2" row="0" borderThickness="0 0 0 7"/>',
-                '  <GridCell col="0" row="0" colspan="2" borderThickness="0 7 0 5"/>',
+                '  <GridCell col="2" row="0" borderThickness="_ _ _ 7"/>',
+                '  <GridCell col="0" row="0" colspan="2" borderThickness="_ _ _ 5"/>',
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
@@ -559,7 +553,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('Table 内で兄弟要素の横方向の継承関係を解消できる（Tableは警告）', () => {
+        it('隣接セルは影響せずに _ で補完される(12)', () => {
             const input = [
                 '<Table>',
                 '  <TableColumn>',
@@ -589,39 +583,36 @@ describe('mergeDirectionalAttributes', () => {
             const expected = [
                 '<Table>',
                 '  <TableColumn>',
-                '    <TableColumnHeader borderThickness="regular extrathick regular regular">',
+                '    <TableColumnHeader borderThickness="_ extrathick _ _">',
                 '      <Text>header1</Text>',
                 '    </TableColumnHeader>',
-                '    <TableColumnTemplate borderStyle="solid double solid solid">',
+                '    <TableColumnTemplate borderStyle="_ double _ _">',
                 '      <Text>body1</Text>',
                 '    </TableColumnTemplate>',
-                '    <TableColumnFooter borderColor="black blue black black">',
+                '    <TableColumnFooter borderColor="_ blue _ _">',
                 '      <Text>footer1</Text>',
                 '    </TableColumnFooter>',
                 '  </TableColumn>',
                 '  <TableColumn>',
-                '    <TableColumnHeader borderThickness="regular thin regular extrathick">',
+                '    <TableColumnHeader borderThickness="_ thin _ _">',
                 '      <Text>header2</Text>',
                 '    </TableColumnHeader>',
-                '    <TableColumnTemplate borderStyle="solid double solid double">',
+                '    <TableColumnTemplate borderStyle="_ double _ _">',
                 '      <Text>body2</Text>',
                 '    </TableColumnTemplate>',
-                '    <TableColumnFooter borderColor="black green black blue">',
+                '    <TableColumnFooter borderColor="_ green _ _">',
                 '      <Text>footer2</Text>',
                 '    </TableColumnFooter>',
                 '  </TableColumn>',
                 '</Table>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
             const migrated = migrate(yrtDocument);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
-            expect(warnSpy).toHaveBeenCalled();
-            warnSpy.mockRestore();
         });
 
-        it('Table 内で兄弟要素の縦方向の継承関係を解消できる（Tableは警告）', () => {
+        it('隣接セルは影響せずに _ で補完される(12)', () => {
             const input = [
                 '<Table>',
                 '  <TableColumn>',
@@ -640,30 +631,27 @@ describe('mergeDirectionalAttributes', () => {
             const expected = [
                 '<Table>',
                 '  <TableColumn>',
-                '    <TableColumnHeader borderThickness="regular regular extrathick regular">',
+                '    <TableColumnHeader borderThickness="_ _ extrathick _">',
                 '      <Text>header1</Text>',
                 '    </TableColumnHeader>',
-                '    <TableColumnTemplate borderThickness="extrathick regular regular extrathick" borderColor="black black green black">',
+                '    <TableColumnTemplate borderThickness="_ _ _ extrathick" borderColor="_ _ green _">',
                 '      <Text>body1</Text>',
                 '    </TableColumnTemplate>',
-                '    <TableColumnFooter borderColor="green green black black">',
+                '    <TableColumnFooter borderColor="_ green _ _">',
                 '      <Text>footer1</Text>',
                 '    </TableColumnFooter>',
                 '  </TableColumn>',
                 '</Table>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
             const migrated = migrate(yrtDocument);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
-            expect(warnSpy).toHaveBeenCalled();
-            warnSpy.mockRestore();
         });
     });
 
     describe('レイアウト系 XML の親子関係でさらに outer の属性も絡んでくる複雑なケースの解決', () => {
-        it('Grid に outerBorderTopThickness が指定されているケース', () => {
+        it('Grid に outerBorderTopThickness が指定されていても、それぞれ _ で補完される', () => {
             const input = [
                 '<Grid cols="100 100" rows="50 50" borderThickness="1" outerBorderTopThickness="2">',
                 '  <GridCell col="0" row="0">',
@@ -672,8 +660,8 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const expected = [
-                '<Grid cols="100 100" rows="50 50">',
-                '  <GridCell col="0" row="0" borderThickness="2 1 1 1">',
+                '<Grid cols="100 100" rows="50 50" borderThickness="1" outerBorderThickness="2 _ _ _">',
+                '  <GridCell col="0" row="0">',
                 '    <Text>text</Text>',
                 '  </GridCell>',
                 '</Grid>'
@@ -684,7 +672,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('Grid に outerBorderBottomColor, outerBorderLeftStyle が指定されているケース', () => {
+        it('Grid に outerBorderBottomColor, outerBorderLeftStyle が指定されていても、それぞれ _ で補完される', () => {
             const input = [
                 '<Grid cols="100 100" rows="50 50" borderStyle="solid" outerBorderBottomColor="#abc" outerBorderLeftStyle="solid">',
                 '  <GridCell col="0" row="1">',
@@ -699,14 +687,14 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const expected = [
-                '<Grid cols="100 100" rows="50 50">',
-                '  <GridCell col="0" row="1" borderStyle="solid solid solid solid" borderColor="black black #abc black">',
+                '<Grid cols="100 100" rows="50 50" borderStyle="solid" outerBorderColor="_ _ #abc _" outerBorderStyle="_ _ _ solid">',
+                '  <GridCell col="0" row="1">',
                 '    <Text>bottom left</Text>',
                 '  </GridCell>',
-                '  <GridCell col="1" row="1" borderColor="black black #abc black">',
+                '  <GridCell col="1" row="1">',
                 '    <Text>bottom right</Text>',
                 '  </GridCell>',
-                '  <GridCell col="0" row="0" borderStyle="solid solid solid solid">',
+                '  <GridCell col="0" row="0">',
                 '    <Text>top left</Text>',
                 '  </GridCell>',
                 '</Grid>'
@@ -717,7 +705,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('Table の outerBorder(Thickness|Style|Color) が TableColumn(Header|Template|Footer) に割り振られ、値がないところは regular, black, solid となる（Tableは警告）', () => {
+        it('Table の outerBorder(Thickness|Style|Color) が指定されていても、それぞれ _ で補完される(1)', () => {
             const input = [
                 '<Table outerBorderTopThickness="9" outerBorderBottomColor="#abc" outerBorderLeftStyle="double" outerBorderRightStyle="dotted">',
                 '  <TableColumn>',
@@ -745,41 +733,38 @@ describe('mergeDirectionalAttributes', () => {
                 '</Table>'
             ].join('\n');
             const expected = [
-                '<Table>',
+                '<Table outerBorderThickness="9 _ _ _" outerBorderColor="_ _ #abc _" outerBorderStyle="_ dotted _ double">',
                 '  <TableColumn>',
-                '    <TableColumnHeader borderThickness="9 regular regular regular" borderStyle="solid solid solid double">',
+                '    <TableColumnHeader>',
                 '      <Text>header1</Text>',
                 '    </TableColumnHeader>',
-                '    <TableColumnTemplate borderStyle="solid solid solid double">',
+                '    <TableColumnTemplate>',
                 '      <Text>body1</Text>',
                 '    </TableColumnTemplate>',
-                '    <TableColumnFooter borderStyle="solid solid solid double" borderColor="black black #abc black">',
+                '    <TableColumnFooter>',
                 '      <Text>footer1</Text>',
                 '    </TableColumnFooter>',
                 '  </TableColumn>',
                 '  <TableColumn>',
-                '    <TableColumnHeader borderThickness="9 regular regular regular" borderStyle="solid dotted solid solid">',
+                '    <TableColumnHeader>',
                 '      <Text>header2</Text>',
                 '    </TableColumnHeader>',
-                '    <TableColumnTemplate borderStyle="solid dotted solid solid">',
+                '    <TableColumnTemplate>',
                 '      <Text>body2</Text>',
                 '    </TableColumnTemplate>',
-                '    <TableColumnFooter borderStyle="solid dotted solid solid" borderColor="black black #abc black">',
+                '    <TableColumnFooter>',
                 '      <Text>footer2</Text>',
                 '    </TableColumnFooter>',
                 '  </TableColumn>',
                 '</Table>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
             const migrated = migrate(yrtDocument);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
-            expect(warnSpy).toHaveBeenCalled();
-            warnSpy.mockRestore();
         });
 
-        it('Table の outerBorder(Thickness|Style|Color) が TableColumnTemplate に割り振られ、値がないところは regular, solid, black となる（Tableは警告）', () => {
+        it('Table の outerBorder(Thickness|Style|Color) が指定されていても、それぞれ _ で補完される(2)', () => {
             const input = [
                 '<Table outerBorderTopThickness="9" outerBorderBottomColor="#abc" outerBorderLeftStyle="double" outerBorderRightStyle="dotted">',
                 '  <TableColumn>',
@@ -795,29 +780,26 @@ describe('mergeDirectionalAttributes', () => {
                 '</Table>'
             ].join('\n');
             const expected = [
-                '<Table>',
+                '<Table outerBorderThickness="9 _ _ _" outerBorderColor="_ _ #abc _" outerBorderStyle="_ dotted _ double">',
                 '  <TableColumn>',
-                '    <TableColumnTemplate borderThickness="9 regular regular regular" borderStyle="solid solid solid double" borderColor="black black #abc black">',
+                '    <TableColumnTemplate>',
                 '      <Text>body1</Text>',
                 '    </TableColumnTemplate>',
                 '  </TableColumn>',
                 '  <TableColumn>',
-                '    <TableColumnTemplate borderThickness="9 regular regular regular" borderStyle="solid dotted solid solid" borderColor="black black #abc black">',
+                '    <TableColumnTemplate>',
                 '      <Text>body2</Text>',
                 '    </TableColumnTemplate>',
                 '  </TableColumn>',
                 '</Table>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
             const migrated = migrate(yrtDocument);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
-            expect(warnSpy).toHaveBeenCalled();
-            warnSpy.mockRestore();
         });
 
-        it('関係ないセルには何も付与されない', () => {
+        it('関係ないセルしかなかったとしても、独立して _ で補完される', () => {
             const input = [
                 '<Grid cols="100 100 100" rows="50 50 50" outerBorderTopThickness="9">',
                 '  <GridCell col="1" row="1">',
@@ -826,7 +808,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const expected = [
-                '<Grid cols="100 100 100" rows="50 50 50">',
+                '<Grid cols="100 100 100" rows="50 50 50" outerBorderThickness="9 _ _ _">',
                 '  <GridCell col="1" row="1">',
                 '    <Text>not top edge</Text>',
                 '  </GridCell>',
@@ -862,7 +844,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(expected);
         });
 
-        it('GridCell に colspan, rowspan があっても正しく端の判定をして変換できる', () => {
+        it('GridCell に colspan, rowspan があっても、独立して _ で補完される', () => {
             const input = [
                 '<Grid cols="50 50 50" rows="30 30 30" outerBorderRightThickness="2" outerBorderBottomThickness="2">',
                 '  <GridCell col="0" row="0" colspan="3" borderThickness="1">',
@@ -877,14 +859,14 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const expected = [
-                '<Grid cols="50 50 50" rows="30 30 30">',
-                '  <GridCell col="0" row="0" colspan="3" borderThickness="1 2 1 1">',
+                '<Grid cols="50 50 50" rows="30 30 30" outerBorderThickness="_ 2 2 _">',
+                '  <GridCell col="0" row="0" colspan="3" borderThickness="1">',
                 '    <Text>left top</Text>',
                 '  </GridCell>',
-                '  <GridCell col="0" row="1" rowspan="2" borderThickness="1 1 2 1">',
+                '  <GridCell col="0" row="1" rowspan="2" borderThickness="1">',
                 '    <Text>left bottom</Text>',
                 '  </GridCell>',
-                '  <GridCell col="1" row="1" colspan="2" rowspan="2" borderThickness="1 2 2 1">',
+                '  <GridCell col="1" row="1" colspan="2" rowspan="2" borderThickness="1">',
                 '    <Text>right bottom</Text>',
                 '  </GridCell>',
                 '</Grid>'
@@ -896,8 +878,8 @@ describe('mergeDirectionalAttributes', () => {
         });
     });
 
-    describe('StyleXML 内の属性の解決および警告', () => {
-        it('border 系以外の属性は普通に変換される（margin, padding, borderRadius）', () => {
+    describe('StyleXML 内の属性の解決', () => {
+        it('StyleXML 内の border 系以外の属性は普通に変換される（margin, padding, borderRadius）', () => {
             const layoutInput = [
                 '<LinearLayout>',
                 '  <LayoutBody>',
@@ -915,7 +897,6 @@ describe('mergeDirectionalAttributes', () => {
                 '  </Grid>',
                 '</Style>'
             ].join('\n');
-
             const expected = [
                 '<Style>',
                 '  <Grid key="key1">',
@@ -931,7 +912,7 @@ describe('mergeDirectionalAttributes', () => {
             expect(output).toBe(normalizeXml(expected));
         });
 
-        it('border 系属性は一切変更せずに警告を出す', () => {
+        it('StyleXML 内の border 系属性も、それぞれ独立して _ で補完される', () => {
             const layoutInput = [
                 '<LinearLayout>',
                 '  <LayoutBody>',
@@ -949,18 +930,125 @@ describe('mergeDirectionalAttributes', () => {
                 '  </Grid>',
                 '</Style>'
             ].join('\n');
-
-            const expected = input;
+            const expected = [
+                '<Style>',
+                '  <Grid key="key1">',
+                '    <CellRange col="0" row="0" borderThickness="2 _ _ _" />',
+                '    <CellRange col="1" row="1" borderStyle="_ double _ _" />',
+                '    <CellRange col="0" row="2" borderColor="_ _ red _" />',
+                '  </Grid>',
+                '</Style>'
+            ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: layoutInput }], style: input, assets: null };
-            const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
             const migrated = migrate(yrtDocument);
             const output = normalizeXml(migrated.style);
             expect(output).toBe(normalizeXml(expected));
-            expect(warnSpy).toHaveBeenCalled();
-            // 警告メッセージに key が含まれているか検証
-            const hasKeyInWarning = warnSpy.mock.calls.some(call => call[0].includes('key="key1"'));
-            expect(hasKeyInWarning).toBe(true);
-            warnSpy.mockRestore();
+        });
+    });
+
+    describe('隣接セルが関係してくる場合の警告', () => {
+        it('Grid: 隣接セルがある場合に警告を出す', () => {
+            const xml = [
+                '<StackBlock>',
+                '  <Grid cols="10 10" rows="10">',
+                '    <GridCell col="0" row="0" borderRightThickness="3"/>',
+                '    <GridCell col="1" row="0" borderLeftThickness="2"/>',
+                '  </Grid>',
+                '</StackBlock>'
+            ].join('\n');
+            const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
+            const warnMock = jest.spyOn(console, "warn").mockImplementation(() => { });
+            migrate(yrtDocument, xml);
+            const call = warnMock.mock.calls[0][0];
+            expect(warnMock).toHaveBeenCalled();
+            expect(call).toContain("@2:3");
+            warnMock.mockRestore();
+        });
+
+        it('Grid: colspan/rowspanで隣接セルがborder系で衝突する場合に警告を出す', () => {
+            const xml = [
+                '<Grid cols="10 10 10" rows="10 10">',
+                '  <GridCell col="0" row="0" colspan="2" borderRightThickness="3"/>',
+                '  <GridCell col="2" row="0" borderLeftThickness="3"/>',
+                '</Grid>'
+            ].join('\n');
+            const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
+            const warnMock = jest.spyOn(console, "warn").mockImplementation(() => { });
+            migrate(yrtDocument, xml);
+            expect(warnMock).toHaveBeenCalled();
+            warnMock.mockRestore();
+        });
+
+        it('Grid: 隣接セルがない場合は警告しない', () => {
+            const xml = [
+                '<Grid cols="10 10" rows="10">',
+                '  <GridCell col="0" row="0" borderRightStyle="dashed"/>',
+                '  <GridCell col="1" row="0" borderTopStyle="double"/>',
+                '</Grid>'
+            ].join('\n');
+            const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
+            const warnMock = jest.spyOn(console, "warn").mockImplementation(() => { });
+            migrate(yrtDocument, xml);
+            expect(warnMock).not.toHaveBeenCalled();
+            warnMock.mockRestore();
+        });
+
+        it('Grid: colspan/rowspanで隣接セルがborder系で衝突しない場合は警告しない', () => {
+            const xml = [
+                '<Grid cols="10 10 10" rows="10 10">',
+                '  <GridCell col="0" row="0" colspan="2" borderRightThickness="3"/>',
+                '  <GridCell col="2" row="1" borderLeftThickness="3"/>',
+                '</Grid>'
+            ].join('\n');
+            const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
+            const warnMock = jest.spyOn(console, "warn").mockImplementation(() => { });
+            migrate(yrtDocument, xml);
+            expect(warnMock).not.toHaveBeenCalled();
+            warnMock.mockRestore();
+        });
+
+        it('Table: 隣接セルがある場合に警告を出す', () => {
+            const xml = [
+                '<Table>',
+                '  <TableColumn>',
+                '    <TableColumnHeader/>',
+                '    <TableColumnTemplate borderRightColor="blue"/>',
+                '    <TableColumnFooter/>',
+                '  </TableColumn>',
+                '  <TableColumn>',
+                '    <TableColumnHeader/>',
+                '    <TableColumnTemplate borderLeftColor="red"/>',
+                '    <TableColumnFooter/>',
+                '  </TableColumn>',
+                '</Table>'
+            ].join('');
+            const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
+            const warnMock = jest.spyOn(console, "warn").mockImplementation(() => { });
+            migrate(yrtDocument, xml);
+            expect(warnMock).toHaveBeenCalled();
+            warnMock.mockRestore();
+        });
+
+        it('Table: 隣接セルがない場合は警告しない', () => {
+            const xml = [
+                '<Table>',
+                '  <TableColumn>',
+                '    <TableColumnHeader/>',
+                '    <TableColumnTemplate borderTopColor="blue"/>',
+                '    <TableColumnFooter/>',
+                '  </TableColumn>',
+                '  <TableColumn>',
+                '    <TableColumnHeader/>',
+                '    <TableColumnTemplate borderBottomColor="red"/>',
+                '    <TableColumnFooter/>',
+                '  </TableColumn>',
+                '</Table>'
+            ].join('');
+            const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
+            const warnMock = jest.spyOn(console, "warn").mockImplementation(() => { });
+            migrate(yrtDocument, xml);
+            expect(warnMock).not.toHaveBeenCalled();
+            warnMock.mockRestore();
         });
     });
 });
