@@ -86,7 +86,7 @@ function migrateElement(el, originalXml) {
 /**
  * YrtDocument型: 全レイアウトXMLに対してforeach/hidden→logic変換を適用
  * @param {import('../yrt_format.js').YrtDocument} yrtDocument
- * @param {string} [originalXml] - 変換前のXML文字列（警告出力用）
+ * @param {string} originalXml - 変換前のXML文字列（警告出力用）
  * @returns {import('../yrt_format.js').YrtDocument} 変換後のYrtDocument
  */
 export function migrate(yrtDocument, originalXml) {
@@ -95,7 +95,7 @@ export function migrate(yrtDocument, originalXml) {
         const entry = newDoc.layouts[i];
         const doc = new DOMParser().parseFromString(entry.xml, "text/xml");
         if (doc && doc.documentElement) {
-            migrateElement(doc.documentElement, originalXml || entry.xml);
+            migrateElement(doc.documentElement, originalXml);
         }
         entry.xml = new XMLSerializer().serializeToString(doc.documentElement);
     }
@@ -104,7 +104,7 @@ export function migrate(yrtDocument, originalXml) {
     if (typeof newDoc.style === "string" && newDoc.style.trim().length > 0) {
         const styleDoc = new DOMParser().parseFromString(newDoc.style, "text/xml");
         if (styleDoc && styleDoc.documentElement) {
-            migrateElement(styleDoc.documentElement, originalXml || newDoc.style);
+            migrateElement(styleDoc.documentElement, originalXml);
         }
         newDoc.style = new XMLSerializer().serializeToString(styleDoc.documentElement);
     }

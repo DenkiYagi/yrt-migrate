@@ -6,7 +6,7 @@ import { warnWithLocation } from "../warn_with_location.mjs";
 /**
  * YrtDocument型: 全レイアウトXMLに対して属性削除・警告を適用
  * @param {import('../yrt_format.js').YrtDocument} yrtDocument
- * @param {string} [originalXml] 元のXML文字列
+ * @param {string} originalXml 元のXML文字列
  * @returns {import('../yrt_format.js').YrtDocument}
  */
 export function migrate(yrtDocument, originalXml) {
@@ -14,13 +14,13 @@ export function migrate(yrtDocument, originalXml) {
     for (let i = 0; i < newDoc.layouts.length; i++) {
         const entry = newDoc.layouts[i];
         const doc = new DOMParser().parseFromString(entry.xml, "text/xml");
-        removeAttrsAndWarn(doc.documentElement, originalXml || entry.xml);
+        removeAttrsAndWarn(doc.documentElement, originalXml);
         entry.xml = new XMLSerializer().serializeToString(doc.documentElement);
     }
     // Style XMLにも属性削除・警告処理を適用
     if (typeof newDoc.style === "string" && newDoc.style.trim().length > 0) {
         const styleDoc = new DOMParser().parseFromString(newDoc.style, "text/xml");
-        removeAttrsAndWarn(styleDoc.documentElement, originalXml || newDoc.style);
+        removeAttrsAndWarn(styleDoc.documentElement, originalXml);
         newDoc.style = new XMLSerializer().serializeToString(styleDoc.documentElement);
     }
     return newDoc;

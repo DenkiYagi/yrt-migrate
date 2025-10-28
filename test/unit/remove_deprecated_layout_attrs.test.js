@@ -8,7 +8,7 @@ describe("レイアウト変更の可能性のある属性の廃止", () => {
             '<LinearLayout borderThickness="1" borderColor="#000" borderStyle="solid"/>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
-        const migrated = migrate(yrtDocument);
+        const migrated = migrate(yrtDocument, inputXml);
         const xml = migrated.layouts[0].xml;
         expect(xml).not.toContain("borderThickness");
         expect(xml).not.toContain("borderColor");
@@ -23,7 +23,7 @@ describe("レイアウト変更の可能性のある属性の廃止", () => {
             '<StackLayout borderThickness="2" borderColor="#111" borderStyle="dashed" padding="4"/>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
-        const migrated = migrate(yrtDocument);
+        const migrated = migrate(yrtDocument, inputXml);
         const xml = migrated.layouts[0].xml;
         expect(xml).not.toContain("borderThickness");
         expect(xml).not.toContain("borderColor");
@@ -39,7 +39,7 @@ describe("レイアウト変更の可能性のある属性の廃止", () => {
             '<StackBlock padding="8"/>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
-        const migrated = migrate(yrtDocument);
+        const migrated = migrate(yrtDocument, inputXml);
         const xml = migrated.layouts[0].xml;
         expect(xml).not.toContain("padding");
         expect(spy).toHaveBeenCalled();
@@ -55,7 +55,7 @@ describe("レイアウト変更の可能性のある属性の廃止", () => {
             '</LinearLayout>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
-        const migrated = migrate(yrtDocument);
+        const migrated = migrate(yrtDocument, inputXml);
         const xml = migrated.layouts[0].xml;
         expect(xml).toContain('foo="bar"');
         expect(xml).toContain('hoge="fuga"');

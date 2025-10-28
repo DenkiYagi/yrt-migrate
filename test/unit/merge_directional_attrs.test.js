@@ -17,7 +17,7 @@ describe('mergeDirectionalAttributes', () => {
             const input = '<StackLayout marginTop="1" marginRight="2" marginBottom="3" marginLeft="4"/>';
             const expected = '<StackLayout margin="1 2 3 4"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -26,7 +26,7 @@ describe('mergeDirectionalAttributes', () => {
             const input = '<StackLayout marginTop=" 1 " marginRight=" 2 " marginBottom=" 3 " marginLeft=" 4 "/>';
             const expected = '<StackLayout margin="1 2 3 4"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -35,7 +35,7 @@ describe('mergeDirectionalAttributes', () => {
             const input = '<LinearLayout borderTopColor="#111" borderRightColor="#222" borderBottomColor="#333" borderLeftColor="#444"/>';
             const expected = '<LinearLayout borderColor="#111 #222 #333 #444"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -44,7 +44,7 @@ describe('mergeDirectionalAttributes', () => {
             const input = '<LinearBlock borderColor="rgb(1, 0, 1)"/>';
             const expected = '<LinearBlock borderColor="rgb(1, 0, 1)"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -53,7 +53,7 @@ describe('mergeDirectionalAttributes', () => {
             const input = '<LinearBlock borderColor="rgb(1, 0, 1)   rgb(0, 1, 0)  rgb(0, 0, 1) rgb(1, 1, 1)"/>';
             const expected = '<LinearBlock borderColor="rgb(1, 0, 1) rgb(0, 1, 0) rgb(0, 0, 1) rgb(1, 1, 1)"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -76,7 +76,7 @@ describe('mergeDirectionalAttributes', () => {
             const input = '<Grid borderTopStyle="solid" borderRightStyle="dashed" borderBottomStyle="dotted" borderLeftStyle="double"/>';
             const expected = '<Grid borderStyle="solid dashed dotted double"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -85,7 +85,7 @@ describe('mergeDirectionalAttributes', () => {
             const input = '<Table outerBorderTopThickness="1" outerBorderRightThickness="2" outerBorderBottomThickness="3" outerBorderLeftThickness="4"/>';
             const expected = '<Table outerBorderThickness="1 2 3 4"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -94,7 +94,7 @@ describe('mergeDirectionalAttributes', () => {
             const input = '<Table outerBorderTopColor="#111" outerBorderRightColor="#222" outerBorderBottomColor="#333" outerBorderLeftColor="#444"/>';
             const expected = '<Table outerBorderColor="#111 #222 #333 #444"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -103,7 +103,7 @@ describe('mergeDirectionalAttributes', () => {
             const input = '<Table outerBorderTopStyle="solid" outerBorderRightStyle="dashed" outerBorderBottomStyle="dotted" outerBorderLeftStyle="double"/>';
             const expected = '<Table outerBorderStyle="solid dashed dotted double"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -112,7 +112,7 @@ describe('mergeDirectionalAttributes', () => {
             const input = '<Rectangle borderTopLeftRadius="4" borderTopRightRadius="6" borderBottomRightRadius="8" borderBottomLeftRadius="10"/>';
             const expected = '<Rectangle borderRadius="4 6 8 10"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -121,7 +121,7 @@ describe('mergeDirectionalAttributes', () => {
             const input = '<LinearLayout borderTopThickness="1" borderRightThickness="2" borderBottomThickness="3" borderLeftThickness="4"/>';
             const expected = '<LinearLayout borderThickness="1 2 3 4"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -130,7 +130,7 @@ describe('mergeDirectionalAttributes', () => {
             const input = '<StackLayout paddingTop="8" paddingBottom="8"/>';
             const expected = '<StackLayout padding="8 _ 8 _"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -139,7 +139,7 @@ describe('mergeDirectionalAttributes', () => {
             const input = '<Grid borderThickness="5" borderLeftThickness="2"/>';
             const expected = '<Grid borderThickness="5 5 5 2"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -148,7 +148,7 @@ describe('mergeDirectionalAttributes', () => {
             const input = '<Table margin="2 4 2 4"/>';
             const expected = '<Table margin="2 4 2 4"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -157,7 +157,7 @@ describe('mergeDirectionalAttributes', () => {
             const input = '<StackLayout paddingTop="8"/>';
             const expected = '<StackLayout padding="8 _ _ _"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -166,7 +166,7 @@ describe('mergeDirectionalAttributes', () => {
             const input = '<Grid borderLeftThickness="2"/>';
             const expected = '<Grid borderThickness="_ _ _ 2"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -175,7 +175,7 @@ describe('mergeDirectionalAttributes', () => {
             const input = '<Table borderLeftThickness="2"/>';
             const expected = '<Table borderThickness="_ _ _ 2"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -184,7 +184,7 @@ describe('mergeDirectionalAttributes', () => {
             const input = '<Grid borderTopStyle="none" borderLeftStyle="dotted"/>';
             const expected = '<Grid borderStyle="none _ _ dotted"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -193,7 +193,7 @@ describe('mergeDirectionalAttributes', () => {
             const input = '<Grid borderTopColor="#111" borderLeftColor="#444"/>';
             const expected = '<Grid borderColor="#111 _ _ #444"/>';
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -232,7 +232,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</LinearLayout>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -256,7 +256,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -277,7 +277,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -306,7 +306,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</LinearLayout>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -331,7 +331,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Table>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -370,7 +370,7 @@ describe('mergeDirectionalAttributes', () => {
                 '  </LinearLayout>',
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -389,7 +389,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -408,7 +408,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -427,7 +427,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -446,7 +446,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -465,7 +465,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -484,7 +484,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -503,7 +503,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -522,7 +522,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -541,7 +541,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -562,7 +562,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -581,7 +581,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -640,7 +640,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Table>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -677,7 +677,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Table>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -700,7 +700,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -733,7 +733,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -792,7 +792,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Table>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -827,7 +827,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Table>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -848,7 +848,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -872,7 +872,7 @@ describe('mergeDirectionalAttributes', () => {
             const input = xml;
             const expected = xml;
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = migrated.layouts[0].xml;
             expect(output).toBe(expected);
         });
@@ -905,7 +905,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Grid>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -940,7 +940,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Style>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: layoutInput }], style: input, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.style);
             expect(output).toBe(normalizeXml(expected));
         });
@@ -973,7 +973,7 @@ describe('mergeDirectionalAttributes', () => {
                 '</Style>'
             ].join('\n');
             const yrtDocument = { layouts: [{ name: null, xml: layoutInput }], style: input, assets: null };
-            const migrated = migrate(yrtDocument);
+            const migrated = migrate(yrtDocument, input);
             const output = normalizeXml(migrated.style);
             expect(output).toBe(normalizeXml(expected));
         });

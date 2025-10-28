@@ -9,7 +9,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
             '<Grid foreach="${items}"/>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
-        const migrated = migrate(yrtDocument);
+        const migrated = migrate(yrtDocument, inputXml);
         const xml = migrated.layouts[0].xml;
         expect(xml).toContain('logic="foreach:${items}"');
         expect(xml).not.toContain("foreach=");
@@ -24,7 +24,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
             '<Text hidden="${isHidden}"/>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
-        const migrated = migrate(yrtDocument);
+        const migrated = migrate(yrtDocument, inputXml);
         const xml = migrated.layouts[0].xml;
         expect(xml).toContain('logic="if:${!isHidden}"');
         expect(xml).not.toContain("hidden=");
@@ -38,7 +38,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
             '<Grid foreach="  ${items}  " hidden="  ${isHidden}  "/>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
-        const migrated = migrate(yrtDocument);
+        const migrated = migrate(yrtDocument, inputXml);
         const xml = migrated.layouts[0].xml;
         expect(xml).toContain('logic="foreach:${items}"');
         expect(xml).not.toContain("foreach=");
@@ -52,7 +52,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
             '<Grid foreach="   " hidden="   "/>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
-        const migrated = migrate(yrtDocument);
+        const migrated = migrate(yrtDocument, inputXml);
         const xml = migrated.layouts[0].xml;
         expect(xml).not.toContain("logic=");
         expect(xml).not.toContain("foreach=");
@@ -68,7 +68,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
             '<Grid foreach="${items}" hidden="isHidden"/>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
-        const migrated = migrate(yrtDocument);
+        const migrated = migrate(yrtDocument, inputXml);
         const xml = migrated.layouts[0].xml;
         expect(xml).toContain('logic="foreach:${items}"');
         expect(xml).not.toContain("foreach=");
@@ -84,7 +84,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
             '<Grid foreach="${items}" logic="foo"/>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
-        const migrated = migrate(yrtDocument);
+        const migrated = migrate(yrtDocument, inputXml);
         const xml = migrated.layouts[0].xml;
         expect(xml).toContain('foreach="${items}"');
         expect(xml).toContain('logic="foo"');
@@ -99,7 +99,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
             '<Grid foreach="[]"/>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
-        const migrated = migrate(yrtDocument);
+        const migrated = migrate(yrtDocument, inputXml);
         const xml = migrated.layouts[0].xml;
         expect(xml).toContain('logic="foreach:[]"');
         expect(xml).not.toContain("foreach=");
@@ -114,7 +114,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
             '<Text hidden="true"/>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
-        const migrated = migrate(yrtDocument);
+        const migrated = migrate(yrtDocument, inputXml);
         const xml = migrated.layouts[0].xml;
         expect(xml).toContain('logic="if:true"');
         expect(xml).not.toContain("hidden=");

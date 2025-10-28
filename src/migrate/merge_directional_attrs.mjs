@@ -124,7 +124,7 @@ const ATTR_MAP = [
 /**
  * Grid/Table要素が「隣接セルの罫線挙動警告」対象なら警告を出す
  * @param {string} xmlString - XML文字列
- * @param {string} [originalXml] - 元XML
+ * @param {string} originalXml - 元XML
  */
 export function warnForAdjacentBorders(xmlString, originalXml) {
     const doc = new DOMParser().parseFromString(xmlString, "text/xml");
@@ -220,7 +220,7 @@ export function warnForAdjacentBorders(xmlString, originalXml) {
                 }
             }
             if (warn) {
-                warnWithLocation(originalXml ?? '', node, "隣接セルの罫線挙動が変わる可能性があります。必要に応じて手動で直してください。");
+                warnWithLocation(originalXml, node, "隣接セルの罫線挙動が変わる可能性があります。必要に応じて手動で直してください。");
             }
         } else if (node.tagName === "Table") {
             const columns = [];
@@ -288,7 +288,7 @@ export function warnForAdjacentBorders(xmlString, originalXml) {
                 }
             }
             if (warn) {
-                warnWithLocation(originalXml ?? '', node, "隣接セルの罫線挙動が変わる可能性があります。必要に応じて手動で直してください。");
+                warnWithLocation(originalXml, node, "隣接セルの罫線挙動が変わる可能性があります。必要に応じて手動で直してください。");
             }
         }
     }
