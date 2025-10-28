@@ -14,7 +14,7 @@ describe("style_element", () => {
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
         const migrated = migrate(yrtDocument, '');
-        expect(migrated.layouts[0].xml).toContain('style="styleelement-1"');
+        expect(migrated.layouts[0].xml).toContain('rangeStyle="styleelement-1"');
         expect(migrated.layouts[0].xml).not.toContain("<GridStyle");
         const gridMatch = migrated.layouts[0].xml.match(/<Grid([^>]*)>/);
         expect(gridMatch).not.toBeNull();
@@ -56,7 +56,7 @@ describe("style_element", () => {
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
         const migrated = migrate(yrtDocument, '');
-        expect(migrated.layouts[0].xml).toContain('style="styleelement-1"');
+        expect(migrated.layouts[0].xml).toContain('rangeStyle="styleelement-1"');
         expect(migrated.layouts[0].xml).not.toContain("<TableStyle");
         const tableMatch = migrated.layouts[0].xml.match(/<Table([^>]*)>/);
         expect(tableMatch).not.toBeNull();
@@ -97,7 +97,7 @@ describe("style_element", () => {
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
         const migrated = migrate(yrtDocument, '');
-        expect(migrated.layouts[0].xml).toContain('style="styleelement-1"');
+        expect(migrated.layouts[0].xml).toContain('rangeStyle="styleelement-1"');
         expect(migrated.layouts[0].xml).not.toContain("<ColumnTextStyle");
         const colMatch = migrated.layouts[0].xml.match(/<ColumnText([^>]*)>/);
         expect(colMatch).not.toBeNull();
@@ -153,13 +153,13 @@ describe("style_element", () => {
             ], style: null, assets: null
         };
         const migrated = migrate(yrtDocument, '');
-        expect(migrated.layouts[0].xml).toContain('style="styleelement-1"');
+        expect(migrated.layouts[0].xml).toContain('rangeStyle="styleelement-1"');
         expect(migrated.layouts[0].xml).not.toContain("<GridStyle");
-        expect(migrated.layouts[1].xml).toContain('style="styleelement-2"');
+        expect(migrated.layouts[1].xml).toContain('rangeStyle="styleelement-2"');
         expect(migrated.layouts[1].xml).not.toContain("<TableStyle");
-        expect(migrated.style).toContain('<Grid key="styleelement-1"');
+        expect(migrated.style).toContain('<CellRangeList key="styleelement-1"');
         expect(migrated.style).toContain('<CellRange borderColor="red"');
-        expect(migrated.style).toContain('<Table key="styleelement-2"');
+        expect(migrated.style).toContain('<CellRangeList key="styleelement-2"');
         expect(migrated.style).toContain('<CellRange borderColor="blue"');
         expect((migrated.style.match(/<Style>/g) || []).length).toBe(1);
     });
@@ -176,11 +176,11 @@ describe("style_element", () => {
             '  </Grid>',
             '</StackLayout>'
         ].join('\n');
-        const expectedStyle = '<Style><Grid key="styleelement-1"><CellRange borderColor="red" col="1" row="1"/><CellRange borderColor="blue" col="2" row="2"/><CellRange borderColor="green" col="3" row="3"/></Grid></Style>';
+        const expectedStyle = '<Style><CellRangeList key="styleelement-1"><CellRange borderColor="red" col="1" row="1"/><CellRange borderColor="blue" col="2" row="2"/><CellRange borderColor="green" col="3" row="3"/></CellRangeList></Style>';
         const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
         const migrated = migrate(yrtDocument, '');
         expect(migrated.layouts[0].xml).not.toContain("<GridStyle");
-        expect(migrated.layouts[0].xml).toContain('style="');
+        expect(migrated.layouts[0].xml).toContain('rangeStyle="');
         expect(migrated.style).toBe(expectedStyle);
     });
 
@@ -279,7 +279,7 @@ describe("style_element", () => {
         const spy = jest.spyOn(console, 'warn').mockImplementation(() => { });
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
         const migrated = migrate(yrtDocument, '');
-        const cellRangeMatch = migrated.style.match(/<CellRange[^>]*>/);
+        const cellRangeMatch = migrated.style.match(/<CellRange\b[^>]*>/);
         expect(cellRangeMatch).not.toBeNull();
         const cellRangeTag = cellRangeMatch[0];
         expect(cellRangeTag).toContain('borderColor="${foo}"');

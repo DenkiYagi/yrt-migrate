@@ -38,11 +38,11 @@ export function migrate(yrtDocument, originalXml) {
                 if (styleElems.length > 0) {
                     styleAdded = true;
                     const styleId = `styleelement-${styleIndex++}`;
-                    target.setAttribute("style", styleId);
+                    target.setAttribute("rangeStyle", styleId);
 
-                    // Style XMLに親要素を1つだけ追加
-                    const styleTargetElem = styleDoc.createElement(tag);
-                    styleTargetElem.setAttribute("key", styleId);
+                    // Style XMLにCellRangeList要素を追加
+                    const rangeListElem = styleDoc.createElement("CellRangeList");
+                    rangeListElem.setAttribute("key", styleId);
 
                     // 各styleElemをCellRangeとして親要素に追加
                     for (const styleElem of styleElems) {
@@ -69,11 +69,11 @@ export function migrate(yrtDocument, originalXml) {
                         if (tag !== "ColumnText" && !cellRange.hasAttribute("row")) {
                             cellRange.setAttribute("row", "all");
                         }
-                        styleTargetElem.appendChild(cellRange);
+                        rangeListElem.appendChild(cellRange);
                         target.removeChild(styleElem);
                     }
 
-                    styleRoot.appendChild(styleTargetElem);
+                    styleRoot.appendChild(rangeListElem);
                 }
             }
         }
