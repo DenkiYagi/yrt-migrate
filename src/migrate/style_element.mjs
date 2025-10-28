@@ -70,6 +70,7 @@ export function migrate(yrtDocument, originalXml) {
                             cellRange.setAttribute("row", "all");
                         }
                         rangeListElem.appendChild(cellRange);
+                        removeWhitespaceBefore(styleElem);
                         target.removeChild(styleElem);
                     }
 
@@ -85,4 +86,31 @@ export function migrate(yrtDocument, originalXml) {
         style: styleAdded ? new XMLSerializer().serializeToString(styleRoot) : null,
         assets: yrtDocument.assets ?? null
     };
+}
+
+/**
+ * 判定対象のノードが空白文字のみで構成されているテキストノードかどうかを返す
+ * @param {Node | null | undefined} node
+ * @returns {boolean}
+ */
+function isWhitespaceOnlyText(node) {
+    if (!node || node.nodeType !== 3) {
+        return false;
+    }
+    const textValue = node.nodeValue ?? "";
+    return /^\s*$/.test(textValue);
+}
+
+/**
+ * 指定ノードの直前に存在する空白のみのテキストノードを削除する
+ * @param {Node} node
+ * @returns {void}
+ */
+function removeWhitespaceBefore(node) {
+    let prev = node.previousSibling;
+    while (prev && isWhitespaceOnlyText(prev)) {
+        const toRemove = prev;
+        prev = prev.previousSibling;
+        toRemove.parentNode?.removeChild(toRemove);
+    }
 }

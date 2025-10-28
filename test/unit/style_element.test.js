@@ -123,6 +123,55 @@ describe("style_element", () => {
         expect(migrated.style).toContain('<CellRange borderColor="green" col="2"');
     });
 
+    it("GridStyle削除後に余分な空行が残らない (先頭要素)", () => {
+        const inputXml = [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<StackLayout>',
+            '  <Grid>',
+            '    <GridStyle borderThickness="1" />',
+            '    <GridCell>',
+            '      <Text>cell content</Text>',
+            '    </GridCell>',
+            '  </Grid>',
+            '</StackLayout>'
+        ].join('\n');
+        const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
+        const migrated = migrate(yrtDocument, '');
+        const layoutLines = migrated.layouts[0].xml.split('\n');
+        const gridLineIndex = layoutLines.findIndex(line => line.includes('<Grid '));
+        const gridCellLineIndex = layoutLines.findIndex(line => line.includes('<GridCell'));
+        expect(gridLineIndex).toBeGreaterThan(-1);
+        expect(gridCellLineIndex).toBeGreaterThan(gridLineIndex);
+        const betweenLines = layoutLines.slice(gridLineIndex + 1, gridCellLineIndex);
+        expect(betweenLines.some(line => line.trim() === '')).toBe(false);
+    });
+
+    it("GridStyle削除後に余分な空行が残らない (中間要素)", () => {
+        const inputXml = [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<StackLayout>',
+            '  <Grid>',
+            '    <GridCell name="before">',
+            '      <Text>before</Text>',
+            '    </GridCell>',
+            '    <GridStyle borderThickness="1" />',
+            '    <GridCell name="after">',
+            '      <Text>after</Text>',
+            '    </GridCell>',
+            '  </Grid>',
+            '</StackLayout>'
+        ].join('\n');
+        const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
+        const migrated = migrate(yrtDocument, '');
+        const layoutLines = migrated.layouts[0].xml.split('\n');
+        const firstCellIndex = layoutLines.findIndex(line => line.includes('GridCell name="before"'));
+        const secondCellIndex = layoutLines.findIndex(line => line.includes('GridCell name="after"'));
+        expect(firstCellIndex).toBeGreaterThan(-1);
+        expect(secondCellIndex).toBeGreaterThan(firstCellIndex);
+        const betweenLines = layoutLines.slice(firstCellIndex + 1, secondCellIndex);
+        expect(betweenLines.some(line => line.trim() === '')).toBe(false);
+    });
+
     it("複数のXxxStyle要素が複数レイアウトXMLに存在した場合に、1つのスタイルXMLに正しく集約される", () => {
         const inputXmls = [
             [
