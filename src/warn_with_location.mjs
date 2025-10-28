@@ -10,9 +10,6 @@ import { getXPath } from "./utils.js";
  * @param {string} message - 警告メッセージ
  */
 export function warnWithLocation(xml, node, message) {
-    // node.outerHTMLが使えればそれを利用
-    let tagSnippet = node.outerHTML ? node.outerHTML.slice(0, 200) : '';
-    // XPath取得
     let xpath = getXPath(node);
 
     // 行番号・列番号推定: XML文字列内で該当ノードの開始タグを検索
@@ -21,17 +18,11 @@ export function warnWithLocation(xml, node, message) {
         // タグ名で検索
         const tagPattern = new RegExp(`<${node.tagName}[^>]*`, 'g');
         let match;
-        let found = false;
         let matchIndexes = [];
         while ((match = tagPattern.exec(xml)) !== null) {
             matchIndexes.push(match.index);
-            // outerHTMLの先頭数十文字と一致するかで判定
-            if (tagSnippet && xml.substr(match.index, tagSnippet.length) === tagSnippet) {
-                found = true;
-                break;
-            }
         }
-        if (!found && matchIndexes.length > 0) {
+        if (matchIndexes.length > 0) {
             // n番目のノードならn番目の出現位置を使う
             // 親ノードから同じタグ名の子の中で何番目かを取得
             let n = 0;
