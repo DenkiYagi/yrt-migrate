@@ -1,7 +1,6 @@
 // @ts-check
 
 import { DOMParser } from "@xmldom/xmldom";
-import { getXPath } from "../utils.js";
 import { warnWithLocation } from "../warn_with_location.mjs";
 
 /**
@@ -19,7 +18,7 @@ export function migrate(yrtDocument, originalXml) {
         for (let j = 0; j < images.length; j++) {
             const image = images[j];
             if (!image.hasAttribute("width")) {
-                warnWithLocation(entry.xml, image, "Image要素にwidth属性がありません（XPath: " + getXPath(image) + "）");
+                warnWithLocation(entry.xml, image, "Image要素にwidth属性がありません");
             }
         }
     }
@@ -30,7 +29,7 @@ export function migrate(yrtDocument, originalXml) {
         for (let j = 0; j < images.length; j++) {
             const image = images[j];
             if (!image.hasAttribute("width")) {
-                warnWithLocation(yrtDocument.style, image, "Image要素にwidth属性がありません（Style XML, XPath: " + getXPath(image) + "）");
+                warnWithLocation(yrtDocument.style, image, "Image要素にwidth属性がありません（Style XML）");
             }
         }
     }
