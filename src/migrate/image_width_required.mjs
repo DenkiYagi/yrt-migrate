@@ -18,20 +18,10 @@ export function migrate(yrtDocument, originalXml) {
         for (let j = 0; j < images.length; j++) {
             const image = images[j];
             if (!image.hasAttribute("width")) {
-                warnWithLocation(entry.xml, image, "Image要素にwidth属性がありません");
+                warnWithLocation(originalXml, image, "Image要素にwidth属性がありません");
             }
         }
     }
-    // Style XMLにも同様の処理を適用
-    if (typeof yrtDocument.style === "string" && yrtDocument.style.trim().length > 0) {
-        const styleDoc = new DOMParser().parseFromString(yrtDocument.style, "text/xml");
-        const images = styleDoc.getElementsByTagName("Image");
-        for (let j = 0; j < images.length; j++) {
-            const image = images[j];
-            if (!image.hasAttribute("width")) {
-                warnWithLocation(yrtDocument.style, image, "Image要素にwidth属性がありません（Style XML）");
-            }
-        }
-    }
+
     return yrtDocument;
 }
