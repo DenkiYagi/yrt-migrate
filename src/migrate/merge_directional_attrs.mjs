@@ -3,6 +3,36 @@
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 import { warnWithLocation } from "../warn_with_location.mjs";
 
+const FN_LIKE_TOKEN = /^\s*(\S*\([^()]*\)\S*)/;
+const SIMPLE_TOKEN = /^\s*(\S+)/;
+
+/**
+ * 括弧を含むトークンを1単位で扱いながら空白区切りを行う。
+ * @param {string} value
+ * @returns {string[]}
+ */
+function splitDirectionalAttrValues(value) {
+    /** @type {string[]} */
+    const tokens = [];
+    let rest = value.trim();
+    while (rest.length > 0) {
+        const fnMatch = rest.match(FN_LIKE_TOKEN);
+        if (fnMatch) {
+            tokens.push(fnMatch[1]);
+            rest = rest.slice(fnMatch[0].length);
+            continue;
+        }
+        const simpleMatch = rest.match(SIMPLE_TOKEN);
+        if (simpleMatch) {
+            tokens.push(simpleMatch[1]);
+            rest = rest.slice(simpleMatch[0].length);
+            continue;
+        }
+        break;
+    }
+    return tokens;
+}
+
 const ATTR_MAP = [
     {
         elements: ['*'],
@@ -322,7 +352,7 @@ export function normalizeDirectionalAttrsUnderscore(xmlString) {
             if (unified && unified.trim() !== '' && individual.every(v => v == null || v.trim() === '') && !unified.trim().includes(' ')) {
                 continue;
             }
-            let arr = unified ? unified.trim().split(/\s+/) : [];
+            let arr = unified ? splitDirectionalAttrValues(unified) : [];
             if (arr.length === 1) arr = [arr[0], arr[0], arr[0], arr[0]];
             else if (arr.length === 2) arr = [arr[0], arr[1], arr[0], arr[1]];
             else if (arr.length === 3) arr = [arr[0], arr[1], arr[2], arr[1]];

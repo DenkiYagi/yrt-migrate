@@ -1,6 +1,7 @@
 import { it, jest } from '@jest/globals';
 import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
 import { migrate } from '../../src/migrate/merge_directional_attrs.mjs';
+import { migrate as colorNotationMigrate } from '../../src/migrate/color_notation_illustrator.mjs';
 
 /**
  * XML文字列をDOMで正規化して返す
@@ -37,6 +38,38 @@ describe('mergeDirectionalAttributes', () => {
             const migrated = migrate(yrtDocument);
             const output = normalizeXml(migrated.layouts[0].xml);
             expect(output).toBe(normalizeXml(expected));
+        });
+
+        it('borderColor の rgb() 単一値は括弧内空白を保持したまま統合される', () => {
+            const input = '<LinearBlock borderColor="rgb(1, 0, 1)"/>';
+            const expected = '<LinearBlock borderColor="rgb(1, 0, 1)"/>';
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
+        });
+
+        it('borderColor の rgb() 4値は各値を崩さず統合される', () => {
+            const input = '<LinearBlock borderColor="rgb(1, 0, 1)   rgb(0, 1, 0)  rgb(0, 0, 1) rgb(1, 1, 1)"/>';
+            const expected = '<LinearBlock borderColor="rgb(1, 0, 1) rgb(0, 1, 0) rgb(0, 0, 1) rgb(1, 1, 1)"/>';
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const migrated = migrate(yrtDocument);
+            const output = normalizeXml(migrated.layouts[0].xml);
+            expect(output).toBe(normalizeXml(expected));
+        });
+
+        it('borderColor の rgb() 多値はカラー変換ステップまで保持され正しく変換される', () => {
+            const input = [
+                '<LinearLayout>',
+                '  <LayoutBody>',
+                '    <LinearBlock borderColor="rgb(1, 0, 1) rgb(0, 1, 0) rgb(0, 0, 1) rgb(0.5, 0.5, 0.5)"/>',
+                '  </LayoutBody>',
+                '</LinearLayout>',
+            ].join('');
+            const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+            const merged = migrate(yrtDocument, input);
+            const colored = colorNotationMigrate(merged);
+            expect(colored.layouts[0].xml).toContain('borderColor="R100G0B100 R0G100B0 R0G0B100 R50G50B50"');
         });
 
         it('borderStyle の統合', () => {
@@ -1052,4 +1085,3 @@ describe('mergeDirectionalAttributes', () => {
         });
     });
 });
-
