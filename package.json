@@ -15,10 +15,10 @@
   "author": "DenkiYagi Inc.",
   "license": "Apache-2.0",
   "dependencies": {
-    "@msgpack/msgpack": "^2.8.0",
-    "@xmldom/xmldom": "^0.8.10",
-    "xml-formatter": "^3.6.6",
-    "xpath": "^0.0.33"
+    "@msgpack/msgpack": "^3.1.2",
+    "@xmldom/xmldom": "^0.8.11",
+    "xml-formatter": "^3.6.7",
+    "xpath": "^0.0.34"
   },
   "devDependencies": {
     "jest": "^29.7.0"
