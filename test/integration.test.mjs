@@ -220,7 +220,7 @@ describe("yrt-migrate 統合テスト", () => {
                 assert(body.s !== null, "StyleXMLを含むこと");
                 assert(typeof body.s === "string", "StyleXMLは文字列であること");
                 assert(body.s.includes("<Style"), "StyleXMLのルート要素は<Style>であること");
-                assert(body.s.includes("styleelement-1"), "StyleXMLはstyleelement-1 (連番key名) を含むこと");
+                assert(body.s.includes("style-1"), "StyleXMLはstyle-1 (連番key名) を含むこと");
             });
         });
 

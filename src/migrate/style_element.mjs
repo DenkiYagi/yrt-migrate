@@ -37,7 +37,7 @@ export function migrate(yrtDocument, originalXml) {
                 const styleElems = Array.from(target.getElementsByTagName(styleTag));
                 if (styleElems.length > 0) {
                     styleAdded = true;
-                    const styleId = `styleelement-${styleIndex++}`;
+                    const styleId = `style-${styleIndex++}`;
                     target.setAttribute("rangeStyle", styleId);
 
                     // Style XMLにCellRangeList要素を追加
