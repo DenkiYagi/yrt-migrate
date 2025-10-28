@@ -20,6 +20,14 @@ describe("add_layout_body", () => {
     expect(normalize(migratedXml)).toBe(normalize(expected));
   });
 
+  it("自己終了タグの <LinearLayout/> にも <LayoutBody> を追加する", () => {
+    const input = "<LinearLayout/>";
+    const expected = "<LinearLayout><LayoutBody></LayoutBody></LinearLayout>";
+    const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+    const migrated = migrate(yrtDocument);
+    expect(normalize(migrated.layouts[0].xml)).toBe(normalize(expected));
+  });
+
   it("<LinearLayout> 直下に <LayoutBody> が既にある場合は何もしない", () => {
     const input = [
       '<LinearLayout>',

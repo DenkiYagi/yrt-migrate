@@ -28,6 +28,13 @@ export function migrate(yrtDocument, originalXml) {
  * @returns {string}
  */
 export function extractLayoutBody(xml, originalXml) {
+    const selfClosingMatch = xml.match(/<LinearLayout([^>]*)\/>/);
+    if (selfClosingMatch) {
+        const attrs = selfClosingMatch[1].replace(/\s+$/, "");
+        const layoutBody = `<LayoutBody></LayoutBody>`;
+        return xml.replace(/<LinearLayout([^>]*)\/>/, `<LinearLayout${attrs}>${layoutBody}</LinearLayout>`);
+    }
+
     const layoutMatch = xml.match(/<LinearLayout([^>]*)>([\s\S]*?)<\/LinearLayout>/);
     if (!layoutMatch) return xml;
     const attrs = layoutMatch[1];
