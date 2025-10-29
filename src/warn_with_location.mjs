@@ -46,6 +46,6 @@ export function warnWithLocation(xml, node, message) {
         }
     }
     const xpathStr = xpath ? ` (${xpath})` : '';
-    const locStr = (line && col) ? ` @${line}:${col}` : '';
+    const locStr = (line !== null && col !== null) ? ` @${line}:${col}` : '';
     console.warn(`[WARNING] ${message}${xpathStr}${locStr}`);
 }
