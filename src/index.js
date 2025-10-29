@@ -37,6 +37,7 @@ import { migrate as addLayoutBody } from "./migrate/add_layout_body.mjs";
 import { migrate as renameTableFrameElements } from "./migrate/rename_tableframe_elements.mjs";
 import { migrate as warnImageWidthRequired } from "./migrate/warn_image_width_required.mjs";
 import { migrate as renameAttrsMigrate } from "./migrate/rename_attrs.mjs";
+import { migrate as warnGridLikeBorderConflict } from "./migrate/warn_grid_like_border_conflict.mjs";
 import { migrate as mergeDirectionalAttrs } from "./migrate/merge_directional_attrs.mjs";
 import { migrate as warnWidthAutoRange } from "./migrate/warn_width_auto_range.mjs";
 import { migrate as colorNotationIllustrator } from "./migrate/color_notation_illustrator.mjs";
@@ -72,7 +73,8 @@ function migrate(yrtOldDocument) {
     doc = renameTableFrameElements(doc);
     doc = warnImageWidthRequired(doc, originalXml);
     doc = renameAttrsMigrate(doc);
-    doc = mergeDirectionalAttrs(doc, originalXml);
+    warnGridLikeBorderConflict(doc, originalXml); // 警告のみ
+    doc = mergeDirectionalAttrs(doc);
     warnWidthAutoRange(doc, originalXml); // 警告のみ
     doc = colorNotationIllustrator(doc);
     warnBindingRequired(doc, originalXml); // 警告のみ
