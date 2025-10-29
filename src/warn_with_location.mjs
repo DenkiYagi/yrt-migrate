@@ -1,5 +1,6 @@
 // @ts-check
 
+import { writeSync } from "node:fs";
 import { getXPath } from "./utils.js";
 
 /**
@@ -47,5 +48,12 @@ export function warnWithLocation(xml, node, message) {
     }
     const xpathStr = xpath ? ` (${xpath})` : '';
     const locStr = (line !== null && col !== null) ? ` @${line}:${col}` : '';
-    console.warn(`[WARNING] ${message}${xpathStr}${locStr}`);
+    const warningMessage = `[WARNING] ${message}${xpathStr}${locStr}\n`;
+    try {
+        // Coding agent がスクリプトを実行している場合にも対応するため、直接ファイルディスクリプタに書き込む
+        writeSync(2, warningMessage);
+    } catch {
+        // 普通の console.warn() にフォールバック
+        console.warn(warningMessage.trimEnd());
+    }
 }
