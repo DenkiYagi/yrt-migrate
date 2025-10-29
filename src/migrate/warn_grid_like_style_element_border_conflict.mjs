@@ -1,4 +1,9 @@
 // @ts-check
+/**
+ * Grid / Table / ColumnText 直下のスタイル要素同士で罫線の太さが不一致な場合に警告するモジュール。
+ * 行・列範囲 (`row` / `col` 属性など) の重なりは解釈せず、値が異なるだけで衝突可能性ありと判断するため、
+ * 実際には問題がないケースでも警告が出る（偽陽性がある）点に注意。
+ */
 
 import { DOMParser } from "@xmldom/xmldom";
 import { warnWithLocation } from "../warn_with_location.mjs";
