@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
-import { migrate } from '../../src/migrate/warn_style_element_binding.mjs';
+import { migrate } from '../../src/migrate/warn_grid_like_style_element_binding.mjs';
 
-describe('warn_style_element_binding', () => {
+describe('warn_grid_like_style_element_binding', () => {
     let warnSpy;
 
     beforeEach(() => {

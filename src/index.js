@@ -27,7 +27,7 @@ import { formatXmlPretty, removeIndents } from "./formatter.mjs";
 import { migrate as multipleXmls } from "./migrate/multiple_xmls.mjs";
 import { migrate as orientationRename } from "./migrate/orientation_rename.mjs";
 import { migrate as removeUnspecifiedAttr } from "./migrate/remove_unspecified_attr.mjs";
-import { migrate as warnStyleElementBinding } from "./migrate/warn_style_element_binding.mjs";
+import { migrate as warnStyleElementBinding } from "./migrate/warn_grid_like_style_element_binding.mjs";
 import { migrate as styleElementMigrate } from "./migrate/style_element.mjs";
 import { migrate as removeContentElements } from "./migrate/remove_content_elements.mjs";
 import { migrate as warnForeachHidden } from "./migrate/warn_foreach_hidden.mjs";
