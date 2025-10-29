@@ -12,7 +12,7 @@ describe('warn_grid_like_style_element_binding', () => {
         warnSpy.mockRestore();
     });
 
-    it('warns when GridStyle attribute contains binding', () => {
+    it('GridStyle の属性にバインドがある場合は警告する', () => {
         const xml = [
             '<?xml version="1.0" encoding="UTF-8"?>',
             '<StackLayout>',
@@ -26,7 +26,7 @@ describe('warn_grid_like_style_element_binding', () => {
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('GridStyle'));
     });
 
-    it('warns when TableStyle attribute contains binding', () => {
+    it('TableStyle の属性にバインドがある場合は警告する', () => {
         const xml = [
             '<StackLayout>',
             '  <Table>',
@@ -39,7 +39,7 @@ describe('warn_grid_like_style_element_binding', () => {
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('TableStyle'));
     });
 
-    it('warns when ColumnTextStyle attribute contains binding', () => {
+    it('ColumnTextStyle の属性にバインドがある場合は警告する', () => {
         const xml = [
             '<StackLayout>',
             '  <ColumnText>',
@@ -52,7 +52,7 @@ describe('warn_grid_like_style_element_binding', () => {
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('ColumnTextStyle'));
     });
 
-    it('warns for StyleXML as well', () => {
+    it('Style XML も同様に警告する', () => {
         const xml = '<StackLayout></StackLayout>';
         const style = [
             '<Style>',
@@ -64,7 +64,7 @@ describe('warn_grid_like_style_element_binding', () => {
         expect(warnSpy).toHaveBeenCalled();
     });
 
-    it('does not warn when no bindings present', () => {
+    it('バインドが無い場合は警告しない', () => {
         const xml = [
             '<StackLayout>',
             '  <Grid>',
