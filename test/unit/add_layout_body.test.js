@@ -1,4 +1,3 @@
-import { jest } from '@jest/globals';
 import { migrate } from "../../src/migrate/add_layout_body.mjs";
 
 describe("add_layout_body", () => {
@@ -64,7 +63,7 @@ describe("add_layout_body", () => {
     expect(normalize(migratedXml)).toBe(normalize(expected));
   });
 
-  it("<LinearLayout> 直下に LayoutXxx 系ではない要素があった場合は、警告だけ出して 後ろに並ぶようにする", () => {
+  it("<LinearLayout> 直下に LayoutXxx 系ではない要素があった場合は、エラーを投げる", () => {
     const input = [
       '<LinearLayout>',
       '  <LayoutHeader>header</LayoutHeader>',
@@ -72,23 +71,8 @@ describe("add_layout_body", () => {
       '  <LayoutFooter>footer</LayoutFooter>',
       '</LinearLayout>'
     ].join('\n');
-    const expected = [
-      '<LinearLayout>',
-      '  <LayoutHeader>header</LayoutHeader>',
-      '  <LayoutBody></LayoutBody>',
-      '  <LayoutFooter>footer</LayoutFooter>',
-      '  <Text>body</Text>',
-      '</LinearLayout>'
-    ].join('\n');
     const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
-    // 警告の監視
-    const warnMock = jest.spyOn(console, "warn").mockImplementation(() => { });
-    const migrated = migrate(yrtDocument);
-    // LayoutBodyが追加されていること
-    expect(normalize(migrated.layouts[0].xml)).toBe(normalize(expected));
-    // 警告が出ていることのみチェック
-    expect(warnMock).toHaveBeenCalled();
-    warnMock.mockRestore();
+    expect(() => migrate(yrtDocument)).toThrow(/unexpected child element/i);
   });
 
   it("LayoutBody の追加前後で LinearLayout の子要素の前後のホワイトスペースを変化させない", () => {

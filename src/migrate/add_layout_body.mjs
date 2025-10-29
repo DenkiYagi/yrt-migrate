@@ -1,8 +1,5 @@
 // @ts-check
 
-import { DOMParser } from "@xmldom/xmldom";
-import { warnWithLocation } from "../warn_with_location.mjs";
-
 /**
  * YrtDocument型: 全レイアウトXMLに対してLayoutBody追加変換を適用
  * @param {import('../yrt_format.js').YrtDocument} yrtDocument
@@ -59,7 +56,6 @@ export function extractLayoutBody(xml, originalXml) {
 
     const headers = [];
     const footers = [];
-    const others = [];
     for (const child of children) {
         if (/<LayoutHeader[\s>]/.test(child)) {
             headers.push(child);
@@ -70,26 +66,13 @@ export function extractLayoutBody(xml, originalXml) {
         } else if (/^\s*$/.test(child)) {
             // 空白は無視
         } else {
-            others.push(child);
-        }
-    }
-
-    if (others.length > 0 && others.some(e => e.trim())) {
-        try {
-            const doc = new DOMParser().parseFromString(xml, 'application/xml');
-            const linearNode = doc.getElementsByTagName('LinearLayout')[0];
-            if (linearNode) {
-                warnWithLocation(originalXml, linearNode, 'add_layout_body: LayoutXxx系以外の要素がありました。手動で修正してください。');
-            } else {
-                console.error('add_layout_body: LayoutXxx系以外の要素がありましたがLinearLayoutノードが特定できませんでした。');
-            }
-        } catch (e) {
-            console.error('add_layout_body: LayoutXxx系以外の要素がありましたがXMLパースに失敗しました。');
+            const snippet = child.trim().slice(0, 100);
+            throw new Error(`add_layout_body: LinearLayout has unexpected child element: ${snippet}`);
         }
     }
 
     const layoutBody = `<LayoutBody></LayoutBody>`;
 
-    const result = `<LinearLayout${attrs}>${headers.join('')}${layoutBody}${footers.join('')}${others.join('')}</LinearLayout>`;
+    const result = `<LinearLayout${attrs}>${headers.join('')}${layoutBody}${footers.join('')}</LinearLayout>`;
     return xml.replace(/<LinearLayout([^>]*)>[\s\S]*?<\/LinearLayout>/, result);
 }
