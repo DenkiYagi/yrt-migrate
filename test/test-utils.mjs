@@ -27,7 +27,9 @@ export async function runYrtMigrate(args = [], options = {}) {
             ...options,
         });
         return { stdout, stderr, exitCode: 0 };
-    } catch (error) {
+    } catch (e) {
+        /** @type {any} */
+        const error = e;
         return {
             stdout: error.stdout || "",
             stderr: error.stderr || "",
@@ -57,7 +59,8 @@ export function decodeAndValidateNewFormatYrt(data) {
     assert(body.l.length > 0, "Body.l should not be empty");
 
     // 各レイアウトエントリの検証
-    body.l.forEach(([name, xml]) => {
+    body.l.forEach((/** @type {Array<any>} */ entry) => {
+        const [name, xml] = entry;
         assert(name === null || typeof name === "string", "Layout name should be null or string");
         assert(typeof xml === "string", "Layout XML should be a string");
         assert(xml.length > 0, "Layout XML should not be empty");
