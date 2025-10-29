@@ -130,6 +130,7 @@ function checkTableNode(node, originalXml) {
         }
     }
     let warn = false;
+    const templateRowIndex = rowTypes.indexOf("TableColumnTemplate");
     for (const type of BORDER_TYPES) {
         for (const { cell, row, col, colspan } of cellList) {
             const rightCell = cellList.find(c => c.row === row && c.col === col + colspan);
@@ -151,6 +152,18 @@ function checkTableNode(node, originalXml) {
                 if (vals[2] !== "_" && bottomVals[0] !== "_" && vals[2] !== "" && bottomVals[0] !== "") {
                     warn = true;
                     break;
+                }
+            }
+        }
+        if (warn) break;
+        if (!warn && templateRowIndex >= 0) {
+            for (const { cell, row } of cellList) {
+                if (row === templateRowIndex) {
+                    const vals = expandBorderValues(/** @type {Element} */ (cell), type);
+                    if (vals[0] !== "_" && vals[2] !== "_" && vals[0] !== "" && vals[2] !== "") {
+                        warn = true;
+                        break;
+                    }
                 }
             }
         }

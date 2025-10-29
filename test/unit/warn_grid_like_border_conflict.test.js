@@ -104,4 +104,38 @@ describe('warn_grid_like_border_conflict', () => {
         expect(warnMock).not.toHaveBeenCalled();
         warnMock.mockRestore();
     });
+
+    it('Table: テンプレートの上下罫線が衝突する場合に警告を出す', () => {
+        const xml = [
+            '<Table>',
+            '  <TableColumn>',
+            '    <TableColumnHeader/>',
+            '    <TableColumnTemplate borderTopThickness="1" borderBottomThickness="2"/>',
+            '    <TableColumnFooter/>',
+            '  </TableColumn>',
+        '</Table>'
+        ].join('');
+        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
+        const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        migrate(yrtDocument, xml);
+        expect(warnMock).toHaveBeenCalled();
+        warnMock.mockRestore();
+    });
+
+    it('Table: テンプレート上下の片側のみ指定の場合は警告しない', () => {
+        const xml = [
+            '<Table>',
+            '  <TableColumn>',
+            '    <TableColumnHeader/>',
+            '    <TableColumnTemplate borderTopThickness="1"/>',
+            '    <TableColumnFooter/>',
+            '  </TableColumn>',
+        '</Table>'
+        ].join('');
+        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
+        const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        migrate(yrtDocument, xml);
+        expect(warnMock).not.toHaveBeenCalled();
+        warnMock.mockRestore();
+    });
 });
