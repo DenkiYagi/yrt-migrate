@@ -1,7 +1,6 @@
 // @ts-check
 
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
-import { warnWithLocation } from "../warn_with_location.mjs";
 
 /**
  * @param {string} val
@@ -14,9 +13,8 @@ function isBindingVariable(val) {
 
 /**
  * @param {any} el
- * @param {string} originalXml
  */
-function migrateElement(el, originalXml) {
+function migrateElement(el) {
     if (!el || !el.getAttribute) return;
     let foreach = el.getAttribute('foreach')?.trim();
     let hidden = el.getAttribute('hidden')?.trim();
@@ -33,16 +31,9 @@ function migrateElement(el, originalXml) {
 
     // foreachとhidden両方ある場合は自動変換できないため警告のみ
     if (foreach && hidden) {
-        warnWithLocation(originalXml, el, `foreach属性とhidden属性が同時に指定されているため自動変換できません。手動で修正してください。`);
-        if (!isBindingVariable(foreach)) {
-            warnWithLocation(originalXml, el, `foreach属性の値 "${foreach}" はバインド変数ではありません。バインド変数しか指定できないので修正してください。`);
-        }
         return;
     } else if (foreach) {
         const logicVal = `foreach:${foreach}`;
-        if (!isBindingVariable(foreach)) {
-            warnWithLocation(originalXml, el, `foreach属性の値 "${foreach}" はバインド変数ではありません。バインド変数しか指定できないので修正してください。`);
-        }
         el.setAttribute('logic', logicVal);
         el.removeAttribute('foreach');
     } else if (hidden) {
@@ -55,9 +46,6 @@ function migrateElement(el, originalXml) {
             // それ以外はそのまま
             logicVal = `if:${hidden}`;
         }
-        if (!isBindingVariable(hidden)) {
-            warnWithLocation(originalXml, el, `hidden属性の値 "${hidden}" はバインド変数ではありません。バインド変数しか指定できないので修正してください。`);
-        }
         el.setAttribute('logic', logicVal);
         el.removeAttribute('hidden');
     }
@@ -66,7 +54,7 @@ function migrateElement(el, originalXml) {
         for (let i = 0; i < el.childNodes.length; i++) {
             const child = el.childNodes[i];
             if (child.nodeType === 1) { // ELEMENT_NODE
-                migrateElement(child, originalXml);
+                migrateElement(child);
             }
         }
     }
@@ -75,16 +63,15 @@ function migrateElement(el, originalXml) {
 /**
  * YrtDocument型: 全レイアウトXMLに対してforeach/hidden→logic変換を適用
  * @param {import('../yrt_format.js').YrtDocument} yrtDocument
- * @param {string} originalXml - 変換前のXML文字列（警告出力用）
  * @returns {import('../yrt_format.js').YrtDocument} 変換後のYrtDocument
  */
-export function migrate(yrtDocument, originalXml) {
+export function migrate(yrtDocument) {
     const newDoc = structuredClone(yrtDocument);
     for (let i = 0; i < newDoc.layouts.length; i++) {
         const entry = newDoc.layouts[i];
         const doc = new DOMParser().parseFromString(entry.xml, "text/xml");
         if (doc && doc.documentElement) {
-            migrateElement(doc.documentElement, originalXml);
+            migrateElement(doc.documentElement);
         }
         entry.xml = new XMLSerializer().serializeToString(doc.documentElement);
     }
@@ -93,7 +80,7 @@ export function migrate(yrtDocument, originalXml) {
     if (typeof newDoc.style === "string" && newDoc.style.trim().length > 0) {
         const styleDoc = new DOMParser().parseFromString(newDoc.style, "text/xml");
         if (styleDoc && styleDoc.documentElement) {
-            migrateElement(styleDoc.documentElement, originalXml);
+            migrateElement(styleDoc.documentElement);
         }
         newDoc.style = new XMLSerializer().serializeToString(styleDoc.documentElement);
     }
