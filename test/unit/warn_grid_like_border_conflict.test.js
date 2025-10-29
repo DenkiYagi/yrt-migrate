@@ -61,6 +61,34 @@ describe('warn_grid_like_border_conflict', () => {
         warnMock.mockRestore();
     });
 
+    it('Grid: 縦方向の隣接セルで警告を出す', () => {
+        const xml = [
+            '<Grid cols="10" rows="10 10">',
+            '  <GridCell col="0" row="0" borderBottomStyle="solid"/>',
+            '  <GridCell col="0" row="1" borderTopStyle="dashed"/>',
+            '</Grid>'
+        ].join('\n');
+        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
+        const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        migrate(yrtDocument, xml);
+        expect(warnMock).toHaveBeenCalled();
+        warnMock.mockRestore();
+    });
+
+    it('Grid: "_" 指定がある場合は衝突扱いしない', () => {
+        const xml = [
+            '<Grid cols="10" rows="10 10">',
+            '  <GridCell col="0" row="0" borderThickness="1 1 2 1"/>',
+            '  <GridCell col="0" row="1" borderTopThickness="_"/>',
+            '</Grid>'
+        ].join('\n');
+        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
+        const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        migrate(yrtDocument, xml);
+        expect(warnMock).not.toHaveBeenCalled();
+        warnMock.mockRestore();
+    });
+
     it('Table: 隣接セルがある場合に警告を出す', () => {
         const xml = [
             '<Table>',
@@ -102,6 +130,40 @@ describe('warn_grid_like_border_conflict', () => {
         const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
         migrate(yrtDocument, xml);
         expect(warnMock).not.toHaveBeenCalled();
+        warnMock.mockRestore();
+    });
+
+    it('Table: ヘッダーとテンプレートの隣接セルで警告を出す', () => {
+        const xml = [
+            '<Table>',
+            '  <TableColumn>',
+            '    <TableColumnHeader borderBottomColor="blue"/>',
+            '    <TableColumnTemplate borderTopColor="red"/>',
+            '    <TableColumnFooter/>',
+            '  </TableColumn>',
+            '</Table>'
+        ].join('');
+        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
+        const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        migrate(yrtDocument, xml);
+        expect(warnMock).toHaveBeenCalled();
+        warnMock.mockRestore();
+    });
+
+    it('Table: テンプレートとフッターの隣接セルで警告を出す', () => {
+        const xml = [
+            '<Table>',
+            '  <TableColumn>',
+            '    <TableColumnHeader/>',
+            '    <TableColumnTemplate borderBottomColor="green"/>',
+            '    <TableColumnFooter borderTopColor="black"/>',
+            '  </TableColumn>',
+            '</Table>'
+        ].join('');
+        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
+        const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        migrate(yrtDocument, xml);
+        expect(warnMock).toHaveBeenCalled();
         warnMock.mockRestore();
     });
 
