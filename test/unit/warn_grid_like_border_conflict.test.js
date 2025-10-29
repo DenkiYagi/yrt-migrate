@@ -1,5 +1,6 @@
-import { describe, it, expect, jest } from '@jest/globals';
+import { describe, it, expect } from '@jest/globals';
 import { migrate } from '../../src/migrate/warn_grid_like_border_conflict.mjs';
+import { withWarningSpy } from '../helpers/warning_spy.js';
 
 describe('warn_grid_like_border_conflict', () => {
     it('Grid: 隣接セルがある場合に警告を出す', () => {
@@ -12,11 +13,9 @@ describe('warn_grid_like_border_conflict', () => {
             '</StackBlock>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
-        migrate(yrtDocument, xml);
-        expect(warnMock).toHaveBeenCalled();
-        expect(warnMock.mock.calls[0][0]).toContain('@2:3');
-        warnMock.mockRestore();
+        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        expect(warnings).not.toHaveLength(0);
+        expect(warnings[0]).toContain('@2:3');
     });
 
     it('Grid: colspan/rowspanで隣接セルがborder系で衝突する場合に警告を出す', () => {
@@ -27,10 +26,8 @@ describe('warn_grid_like_border_conflict', () => {
             '</Grid>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
-        migrate(yrtDocument, xml);
-        expect(warnMock).toHaveBeenCalled();
-        warnMock.mockRestore();
+        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        expect(warnings).not.toHaveLength(0);
     });
 
     it('Grid: 隣接セルでもborderThickness未指定なら警告しない', () => {
@@ -41,10 +38,8 @@ describe('warn_grid_like_border_conflict', () => {
             '</Grid>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
-        migrate(yrtDocument, xml);
-        expect(warnMock).not.toHaveBeenCalled();
-        warnMock.mockRestore();
+        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        expect(warnings).toHaveLength(0);
     });
 
     it('Grid: colspan/rowspanで隣接セルがborder系で衝突しない場合は警告しない', () => {
@@ -55,10 +50,8 @@ describe('warn_grid_like_border_conflict', () => {
             '</Grid>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
-        migrate(yrtDocument, xml);
-        expect(warnMock).not.toHaveBeenCalled();
-        warnMock.mockRestore();
+        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        expect(warnings).toHaveLength(0);
     });
 
     it('Grid: 縦方向の隣接セルで警告を出す', () => {
@@ -69,10 +62,8 @@ describe('warn_grid_like_border_conflict', () => {
             '</Grid>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
-        migrate(yrtDocument, xml);
-        expect(warnMock).toHaveBeenCalled();
-        warnMock.mockRestore();
+        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        expect(warnings).not.toHaveLength(0);
     });
 
     it('Grid: 同じ太さの隣接セルは警告しない', () => {
@@ -83,10 +74,8 @@ describe('warn_grid_like_border_conflict', () => {
             '</Grid>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
-        migrate(yrtDocument, xml);
-        expect(warnMock).not.toHaveBeenCalled();
-        warnMock.mockRestore();
+        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        expect(warnings).toHaveLength(0);
     });
 
     it('Grid: "_" 指定がある場合は衝突扱いしない', () => {
@@ -97,10 +86,8 @@ describe('warn_grid_like_border_conflict', () => {
             '</Grid>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
-        migrate(yrtDocument, xml);
-        expect(warnMock).not.toHaveBeenCalled();
-        warnMock.mockRestore();
+        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        expect(warnings).toHaveLength(0);
     });
 
     it('Table: 隣接セルがある場合に警告を出す', () => {
@@ -119,10 +106,8 @@ describe('warn_grid_like_border_conflict', () => {
             '</Table>'
         ].join('');
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
-        migrate(yrtDocument, xml);
-        expect(warnMock).toHaveBeenCalled();
-        warnMock.mockRestore();
+        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        expect(warnings).not.toHaveLength(0);
     });
 
     it('Table: 隣接セルの厚さが同じ場合は警告しない', () => {
@@ -141,10 +126,8 @@ describe('warn_grid_like_border_conflict', () => {
             '</Table>'
         ].join('');
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
-        migrate(yrtDocument, xml);
-        expect(warnMock).not.toHaveBeenCalled();
-        warnMock.mockRestore();
+        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        expect(warnings).toHaveLength(0);
     });
 
     it('Table: ヘッダーとテンプレートの隣接セルで警告を出す', () => {
@@ -158,10 +141,8 @@ describe('warn_grid_like_border_conflict', () => {
             '</Table>'
         ].join('');
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
-        migrate(yrtDocument, xml);
-        expect(warnMock).toHaveBeenCalled();
-        warnMock.mockRestore();
+        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        expect(warnings).not.toHaveLength(0);
     });
 
     it('Table: テンプレートとフッターの隣接セルで警告を出す', () => {
@@ -175,10 +156,8 @@ describe('warn_grid_like_border_conflict', () => {
             '</Table>'
         ].join('');
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
-        migrate(yrtDocument, xml);
-        expect(warnMock).toHaveBeenCalled();
-        warnMock.mockRestore();
+        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        expect(warnings).not.toHaveLength(0);
     });
 
     it('Table: テンプレートの上下罫線が衝突する場合に警告を出す', () => {
@@ -192,10 +171,8 @@ describe('warn_grid_like_border_conflict', () => {
         '</Table>'
         ].join('');
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
-        migrate(yrtDocument, xml);
-        expect(warnMock).toHaveBeenCalled();
-        warnMock.mockRestore();
+        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        expect(warnings).not.toHaveLength(0);
     });
 
     it('Table: テンプレート上下の片側のみ指定の場合は警告しない', () => {
@@ -209,9 +186,7 @@ describe('warn_grid_like_border_conflict', () => {
         '</Table>'
         ].join('');
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
-        migrate(yrtDocument, xml);
-        expect(warnMock).not.toHaveBeenCalled();
-        warnMock.mockRestore();
-    });
+        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        expect(warnings).toHaveLength(0);
+});
 });

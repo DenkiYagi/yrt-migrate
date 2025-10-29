@@ -3,6 +3,42 @@
 import { writeSync } from "node:fs";
 import { getXPath } from "./utils.js";
 
+/** @type {((message: string) => boolean | void) | null} */
+let warningHandler = null;
+
+/**
+ * Exposed for unit tests to intercept warning messages.
+ * If the handler returns true, the warning is treated as handled
+ * and will not be written to stderr.
+ * @param {(message: string) => boolean | void} handler
+ */
+export function setWarningHandler(handler) {
+    const previous = warningHandler;
+    warningHandler = handler;
+    return previous;
+}
+
+/**
+ * Clears the currently registered warning handler.
+ * @param {((message: string) => boolean | void) | null} [fallback]
+ */
+export function clearWarningHandler(fallback = null) {
+    warningHandler = fallback;
+}
+
+/**
+ * @param {string} message
+ */
+function emitWarning(message) {
+    if (warningHandler) {
+        const handled = warningHandler(message);
+        if (handled === true) {
+            return;
+        }
+    }
+    writeSync(2, message);
+}
+
 /**
  * 共通の警告出力関数。変換前のXML文字列と該当ノードを受け取り、行番号・列番号を出力する。
  *
@@ -51,7 +87,7 @@ export function warnWithLocation(xml, node, message) {
     const warningMessage = `[WARNING] ${message}${xpathStr}${locStr}\n`;
     try {
         // Coding agent がスクリプトを実行している場合にも対応するため、直接ファイルディスクリプタに書き込む
-        writeSync(2, warningMessage);
+        emitWarning(warningMessage);
     } catch {
         // 普通の console.warn() にフォールバック
         console.warn(warningMessage.trimEnd());

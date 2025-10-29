@@ -1,13 +1,13 @@
-import { jest } from "@jest/globals";
 import { migrate } from "../../src/migrate/grid_cols_rows_required.mjs";
+import { setupWarningSpy } from "../helpers/warning_spy.js";
 
 describe("<Grid> cols, rows がなければそれぞれ \"*\" と \"auto\" を追加する", () => {
-    let warnSpy;
+    let warningSpy;
     beforeEach(() => {
-        warnSpy = jest.spyOn(console, "warn").mockImplementation(() => { });
+        warningSpy = setupWarningSpy();
     });
     afterEach(() => {
-        warnSpy.mockRestore();
+        warningSpy.restore();
     });
 
     it("colsが未指定の場合に cols=\"*\" が追加される", () => {
@@ -39,14 +39,14 @@ describe("<Grid> cols, rows がなければそれぞれ \"*\" と \"auto\" を�
         const xml = '<LinearLayout><Grid cols="   1 1 1   " rows="   1 1 1   "></Grid></LinearLayout>';
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
         migrate(yrtDocument);
-        expect(warnSpy).not.toHaveBeenCalled();
+        expect(warningSpy.messages()).toHaveLength(0);
     });
 
     it("cols, rows両方指定されていれば警告が出ない", () => {
         const xml = '<LinearLayout><Grid cols="1 1 1" rows="1 1 1"></Grid></LinearLayout>';
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
         migrate(yrtDocument);
-        expect(warnSpy).not.toHaveBeenCalled();
+        expect(warningSpy.messages()).toHaveLength(0);
     });
 
     it("Style XML に移した Grid には cols, rows を補完しない", () => {
@@ -56,6 +56,6 @@ describe("<Grid> cols, rows がなければそれぞれ \"*\" と \"auto\" を�
         // style内の<Grid>にはcols, rowsが追加されない
         expect(result.style).toBe(styleXml);
         // 警告も出ない
-        expect(warnSpy).not.toHaveBeenCalled();
+        expect(warningSpy.messages()).toHaveLength(0);
     });
 });

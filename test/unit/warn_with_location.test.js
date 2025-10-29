@@ -1,14 +1,14 @@
-import { jest } from '@jest/globals';
 import { DOMParser } from "@xmldom/xmldom";
 import { warnWithLocation } from "../../src/warn_with_location.mjs";
+import { setupWarningSpy } from "../helpers/warning_spy.js";
 
 describe("warnWithLocation", () => {
-    let spy;
+    let warningSpy;
     beforeEach(() => {
-        spy = jest.spyOn(console, "warn").mockImplementation(() => { });
+        warningSpy = setupWarningSpy();
     });
     afterEach(() => {
-        spy.mockRestore();
+        warningSpy.restore();
     });
 
     it("行番号・列番号・XPath付きで警告が出力される", () => {
@@ -23,7 +23,7 @@ describe("warnWithLocation", () => {
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         const foo = doc.getElementsByTagName("Foo")[0];
         warnWithLocation(xml, foo, "テスト警告");
-        const call = spy.mock.calls[0][0];
+        const call = warningSpy.messages()[0];
         expect(call).toContain("[WARNING]");
         expect(call).toContain("テスト警告");
         expect(call).toContain("@3:3");
@@ -40,7 +40,7 @@ describe("warnWithLocation", () => {
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         const foos = doc.getElementsByTagName("Foo");
         warnWithLocation(xml, foos[1], "重複タグ");
-        const call = spy.mock.calls[0][0];
+        const call = warningSpy.messages()[0];
         expect(call).toContain("重複タグ");
         expect(call).toContain("@3:3");
         expect(call).toContain("/Root/Foo[2]");
@@ -61,25 +61,25 @@ describe("warnWithLocation", () => {
         const qux = doc.getElementsByTagName("qux")[0];
 
         warnWithLocation(xml, foos[0], "foo1");
-        let call = spy.mock.calls[spy.mock.calls.length - 1][0];
+        let call = warningSpy.messages().at(-1);
         expect(call).toContain("foo1");
         expect(call).toContain("@1:7");
         expect(call).toContain("/Root/foo");
 
         warnWithLocation(xml, bar, "bar");
-        call = spy.mock.calls[spy.mock.calls.length - 1][0];
+        call = warningSpy.messages().at(-1);
         expect(call).toContain("bar");
         expect(call).toContain("@1:20");
         expect(call).toContain("/Root/bar");
 
         warnWithLocation(xml, foos[1], "foo2");
-        call = spy.mock.calls[spy.mock.calls.length - 1][0];
+        call = warningSpy.messages().at(-1);
         expect(call).toContain("foo2");
         expect(call).toContain("@1:34");
         expect(call).toContain("/Root/foo[2]");
 
         warnWithLocation(xml, qux, "qux");
-        call = spy.mock.calls[spy.mock.calls.length - 1][0];
+        call = warningSpy.messages().at(-1);
         expect(call).toContain("qux");
         expect(call).toContain("@1:52");
         expect(call).toContain("/Root/baz/qux");
@@ -90,7 +90,7 @@ describe("warnWithLocation", () => {
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         const child = doc.getElementsByTagName("Child")[0];
         warnWithLocation(xml, child, "子要素");
-        const call = spy.mock.calls[spy.mock.calls.length - 1][0];
+        const call = warningSpy.messages().at(-1);
         expect(call).toContain("子要素");
         expect(call).toContain("@2:35");
         expect(call).toContain("/Root/Child");

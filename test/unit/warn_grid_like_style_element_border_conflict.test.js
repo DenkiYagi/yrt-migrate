@@ -1,16 +1,16 @@
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { migrate } from '../../src/migrate/warn_grid_like_style_element_border_conflict.mjs';
+import { setupWarningSpy } from '../helpers/warning_spy.js';
 
 describe('warn_grid_like_style_element_border_conflict', () => {
-    /** @type {jest.SpiedFunction<typeof console.warn>} */
-    let warnSpy;
+    let warningSpy;
 
     beforeEach(() => {
-        warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        warningSpy = setupWarningSpy();
     });
 
     afterEach(() => {
-        warnSpy.mockRestore();
+        warningSpy.restore();
     });
 
     it('GridStyle の borderThickness が異なる場合は警告する', () => {
@@ -24,7 +24,8 @@ describe('warn_grid_like_style_element_border_conflict', () => {
         ].join('\n');
         const doc = { layouts: [{ name: null, xml }], style: null, assets: null };
         migrate(doc, xml);
-        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Grid'));
+        const warnings = warningSpy.messages();
+        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining('Grid')]));
     });
 
     it('GridStyle の太さが同じ場合は警告しない', () => {
@@ -38,7 +39,7 @@ describe('warn_grid_like_style_element_border_conflict', () => {
         ].join('\n');
         const doc = { layouts: [{ name: null, xml }], style: null, assets: null };
         migrate(doc, xml);
-        expect(warnSpy).not.toHaveBeenCalled();
+        expect(warningSpy.messages()).toHaveLength(0);
     });
 
     it('TableStyle の outerBorderThickness が異なる場合は警告する', () => {
@@ -52,7 +53,8 @@ describe('warn_grid_like_style_element_border_conflict', () => {
         ].join('\n');
         const doc = { layouts: [{ name: null, xml }], style: null, assets: null };
         migrate(doc, xml);
-        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Table'));
+        const warnings = warningSpy.messages();
+        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining('Table')]));
     });
 
     it('ColumnTextStyle で太さ指定が片方のみの場合は警告しない', () => {
@@ -66,6 +68,6 @@ describe('warn_grid_like_style_element_border_conflict', () => {
         ].join('\n');
         const doc = { layouts: [{ name: null, xml }], style: null, assets: null };
         migrate(doc, xml);
-        expect(warnSpy).not.toHaveBeenCalled();
+        expect(warningSpy.messages()).toHaveLength(0);
     });
 });

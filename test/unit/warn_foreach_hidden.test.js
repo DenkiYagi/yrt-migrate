@@ -1,13 +1,13 @@
-import { jest } from '@jest/globals';
 import { migrate } from "../../src/migrate/warn_foreach_hidden.mjs";
+import { setupWarningSpy } from "../helpers/warning_spy.js";
 
 describe("warn_foreach_hidden", () => {
-    let warnSpy;
+    let warningSpy;
     beforeEach(() => {
-        warnSpy = jest.spyOn(console, "warn").mockImplementation(() => { });
+        warningSpy = setupWarningSpy();
     });
     afterEach(() => {
-        warnSpy.mockRestore();
+        warningSpy.restore();
     });
 
     it("foreachとhiddenが同時指定された場合に警告する", () => {
@@ -16,7 +16,8 @@ describe("warn_foreach_hidden", () => {
 
         migrate(yrtDocument, inputXml);
 
-        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("foreach属性とhidden属性が同時に指定されている"));
+        const warnings = warningSpy.messages();
+        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining("foreach属性とhidden属性が同時に指定されている")]));
     });
 
     it("foreachがバインド変数でなければ警告する", () => {
@@ -25,7 +26,8 @@ describe("warn_foreach_hidden", () => {
 
         migrate(yrtDocument, inputXml);
 
-        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('foreach属性の値 "items" はバインド変数ではありません'));
+        const warnings = warningSpy.messages();
+        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining('foreach属性の値 "items" はバインド変数ではありません')]));
     });
 
     it("hiddenがバインド変数でなければ警告する", () => {
@@ -34,7 +36,8 @@ describe("warn_foreach_hidden", () => {
 
         migrate(yrtDocument, inputXml);
 
-        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('hidden属性の値 "true" はバインド変数ではありません'));
+        const warnings = warningSpy.messages();
+        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining('hidden属性の値 "true" はバインド変数ではありません')]));
     });
 
     it("バインド変数のforeach/hiddenのみの場合は警告しない", () => {
@@ -43,7 +46,7 @@ describe("warn_foreach_hidden", () => {
 
         migrate(yrtDocument, inputXml);
 
-        expect(warnSpy).not.toHaveBeenCalled();
+        expect(warningSpy.messages()).toHaveLength(0);
     });
 
     it("属性値が空文字の場合は警告しない", () => {
@@ -52,6 +55,6 @@ describe("warn_foreach_hidden", () => {
 
         migrate(yrtDocument, inputXml);
 
-        expect(warnSpy).not.toHaveBeenCalled();
+        expect(warningSpy.messages()).toHaveLength(0);
     });
 });

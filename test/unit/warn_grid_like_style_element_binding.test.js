@@ -1,15 +1,15 @@
-import { jest } from '@jest/globals';
 import { migrate } from '../../src/migrate/warn_grid_like_style_element_binding.mjs';
+import { setupWarningSpy } from '../helpers/warning_spy.js';
 
 describe('warn_grid_like_style_element_binding', () => {
-    let warnSpy;
+    let warningSpy;
 
     beforeEach(() => {
-        warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        warningSpy = setupWarningSpy();
     });
 
     afterEach(() => {
-        warnSpy.mockRestore();
+        warningSpy.restore();
     });
 
     it('GridStyle の属性にバインドがある場合は警告する', () => {
@@ -23,7 +23,7 @@ describe('warn_grid_like_style_element_binding', () => {
         ].join('\n');
         const doc = { layouts: [{ name: null, xml }], style: null, assets: null };
         migrate(doc, xml);
-        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('GridStyle'));
+        expect(warningSpy.messages()).toEqual(expect.arrayContaining([expect.stringContaining('GridStyle')]));
     });
 
     it('TableStyle の属性にバインドがある場合は警告する', () => {
@@ -36,7 +36,7 @@ describe('warn_grid_like_style_element_binding', () => {
         ].join('\n');
         const doc = { layouts: [{ name: null, xml }], style: null, assets: null };
         migrate(doc, xml);
-        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('TableStyle'));
+        expect(warningSpy.messages()).toEqual(expect.arrayContaining([expect.stringContaining('TableStyle')]));
     });
 
     it('ColumnTextStyle の属性にバインドがある場合は警告する', () => {
@@ -49,7 +49,7 @@ describe('warn_grid_like_style_element_binding', () => {
         ].join('\n');
         const doc = { layouts: [{ name: null, xml }], style: null, assets: null };
         migrate(doc, xml);
-        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('ColumnTextStyle'));
+        expect(warningSpy.messages()).toEqual(expect.arrayContaining([expect.stringContaining('ColumnTextStyle')]));
     });
 
     it('Style XML も同様に警告する', () => {
@@ -61,7 +61,7 @@ describe('warn_grid_like_style_element_binding', () => {
         ].join('\n');
         const doc = { layouts: [{ name: null, xml }], style, assets: null };
         migrate(doc, style);
-        expect(warnSpy).toHaveBeenCalled();
+        expect(warningSpy.messages()).not.toHaveLength(0);
     });
 
     it('バインドが無い場合は警告しない', () => {
@@ -74,6 +74,6 @@ describe('warn_grid_like_style_element_binding', () => {
         ].join('\n');
         const doc = { layouts: [{ name: null, xml }], style: null, assets: null };
         migrate(doc, xml);
-        expect(warnSpy).not.toHaveBeenCalled();
+        expect(warningSpy.messages()).toHaveLength(0);
     });
 });

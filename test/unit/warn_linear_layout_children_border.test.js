@@ -1,53 +1,53 @@
-import { jest } from '@jest/globals';
 import { migrate } from "../../src/migrate/warn_linear_layout_children_border.mjs";
+import { setupWarningSpy } from "../helpers/warning_spy.js";
 
 describe("border_adjacent_line_warning（レイアウト隣接罫線警告）", () => {
-    let warnSpy;
+    let warningSpy;
     beforeEach(() => {
-        warnSpy = jest.spyOn(console, "warn").mockImplementation(() => { });
+        warningSpy = setupWarningSpy();
     });
     afterEach(() => {
-        warnSpy.mockRestore();
+        warningSpy.restore();
     });
 
     it("LayoutHeaderにborderThickness属性があれば警告する", () => {
         const xml = `<LinearLayout><LayoutHeader borderThickness="1"/></LinearLayout>`;
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
         migrate(yrtDocument);
-        expect(warnSpy).toHaveBeenCalledWith(
+        expect(warningSpy.messages()).toEqual(expect.arrayContaining([
             expect.stringContaining("LayoutHeader 要素")
-        );
+        ]));
     });
 
     it("LayoutBodyにborderColor属性があれば警告する", () => {
         const xml = `<LinearLayout><LayoutBody borderColor="#000"/></LinearLayout>`;
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
         migrate(yrtDocument);
-        expect(warnSpy).toHaveBeenCalledWith(
+        expect(warningSpy.messages()).toEqual(expect.arrayContaining([
             expect.stringContaining("LayoutBody 要素")
-        );
+        ]));
     });
 
     it("LayoutFooterにborderStyle属性があれば警告する", () => {
         const xml = `<LinearLayout><LayoutFooter borderStyle="solid"/></LinearLayout>`;
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
         migrate(yrtDocument);
-        expect(warnSpy).toHaveBeenCalledWith(
+        expect(warningSpy.messages()).toEqual(expect.arrayContaining([
             expect.stringContaining("LayoutFooter 要素")
-        );
+        ]));
     });
 
     it("対象属性がなければ警告しない", () => {
         const xml = `<LinearLayout><LayoutHeader/><LayoutBody/><LayoutFooter/></LinearLayout>`;
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
         migrate(yrtDocument);
-        expect(warnSpy).not.toHaveBeenCalled();
+        expect(warningSpy.messages()).toHaveLength(0);
     });
 
     it("複数要素に対象属性があればそれぞれ警告する", () => {
         const xml = `<LinearLayout><LayoutHeader borderThickness="1"/><LayoutBody borderColor="#000"/></LinearLayout>`;
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
         migrate(yrtDocument);
-        expect(warnSpy).toHaveBeenCalledTimes(2);
+        expect(warningSpy.messages()).toHaveLength(2);
     });
 });
