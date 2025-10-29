@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import { migrate } from "../../src/migrate/rectangle_border_radius_multi_warn.mjs";
+import { migrate } from "../../src/migrate/warn_rectangle_border_radius_multi.mjs";
 
 // <Rectangle> borderRadius属性の複数方向指定警告テスト
 

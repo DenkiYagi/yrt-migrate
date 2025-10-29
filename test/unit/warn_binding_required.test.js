@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { migrate } from "../../src/migrate/binding_required_warn.mjs";
+import { migrate } from "../../src/migrate/warn_binding_required.mjs";
 
 describe("バインド変数必須化マイグレーション (bindingRequiredWarn)", () => {
     let warnSpy;

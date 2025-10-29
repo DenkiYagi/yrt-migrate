@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { migrate } from "../../src/migrate/width_auto_range_warn.mjs";
+import { migrate } from "../../src/migrate/warn_width_auto_range.mjs";
 
 describe("<Grid> cols属性のauto/range廃止マイグレーション 警告出力", () => {
     it("cols='auto' で警告が出る", () => {

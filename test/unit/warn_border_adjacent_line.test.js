@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { migrate } from "../../src/migrate/border_adjacent_line_warn";
+import { migrate } from "../../src/migrate/warn_border_adjacent_line.mjs";
 
 describe("border_adjacent_line_warning（レイアウト隣接罫線警告）", () => {
     let warnSpy;

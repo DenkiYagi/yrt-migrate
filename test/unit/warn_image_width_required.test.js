@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import { migrate } from "../../src/migrate/image_width_required.mjs";
+import { migrate } from "../../src/migrate/warn_image_width_required.mjs";
 
 describe("<Image> width属性必須化マイグレーション", () => {
     let warnSpy;

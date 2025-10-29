@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import { migrate } from "../../src/migrate/span_color_binding_warn.mjs";
+import { migrate } from "../../src/migrate/warn_span_color_binding.mjs";
 
 describe("<Span> color属性バインド変数警告マイグレーション", () => {
     let warnSpy;

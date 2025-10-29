@@ -33,18 +33,18 @@ import { migrate as foreachHiddenToLogicMigrate } from "./migrate/foreach_hidden
 import { migrate as removeDeprecatedLayoutAttrs } from "./migrate/remove_deprecated_layout_attrs.mjs";
 import { migrate as addLayoutBody } from "./migrate/add_layout_body.mjs";
 import { migrate as renameTableFrameElements } from "./migrate/rename_tableframe_elements.mjs";
-import { migrate as imageWidthRequired } from "./migrate/image_width_required.mjs";
+import { migrate as warnImageWidthRequired } from "./migrate/warn_image_width_required.mjs";
 import { migrate as renameAttrsMigrate } from "./migrate/rename_attrs.mjs";
 import { migrate as mergeDirectionalAttrs } from "./migrate/merge_directional_attrs.mjs";
-import { migrate as widthAutoRangeWarn } from "./migrate/width_auto_range_warn.mjs";
+import { migrate as warnWidthAutoRange } from "./migrate/warn_width_auto_range.mjs";
 import { migrate as colorNotationIllustrator } from "./migrate/color_notation_illustrator.mjs";
-import { migrate as bindingRequiredWarn } from "./migrate/binding_required_warn.mjs";
-import { migrate as spanColorBindingWarn } from "./migrate/span_color_binding_warn.mjs";
+import { migrate as warnBindingRequired } from "./migrate/warn_binding_required.mjs";
+import { migrate as warnSpanColorBinding } from "./migrate/warn_span_color_binding.mjs";
 import { migrate as gridColsRowsRequired } from "./migrate/grid_cols_rows_required.mjs";
-import { migrate as rectangleBorderRadiusMultiWarn } from "./migrate/rectangle_border_radius_multi_warn.mjs";
+import { migrate as warnRectangleBorderRadiusMulti } from "./migrate/warn_rectangle_border_radius_multi.mjs";
 import { migrate as sizeCommaToSpace } from "./migrate/size_comma_to_space.mjs";
 import { migrate as borderstyleDasharrayToColon } from "./migrate/borderstyle_dasharray_to_colon.mjs";
-import { migrate as borderAdjacentLineWarn } from "./migrate/border_adjacent_line_warn.mjs";
+import { migrate as warnBorderAdjacentLine } from "./migrate/warn_border_adjacent_line.mjs";
 import { migrate as applySchema } from "./migrate/apply_schema.mjs";
 import { validateXmlInput, validateYrtInput } from "./input_file_validator.mjs";
 
@@ -66,18 +66,18 @@ function migrate(yrtOldDocument) {
     doc = removeDeprecatedLayoutAttrs(doc, originalXml);
     doc = addLayoutBody(doc, originalXml);
     doc = renameTableFrameElements(doc);
-    doc = imageWidthRequired(doc, originalXml);
+    doc = warnImageWidthRequired(doc, originalXml);
     doc = renameAttrsMigrate(doc);
     doc = mergeDirectionalAttrs(doc, originalXml);
-    widthAutoRangeWarn(doc, originalXml); // 警告のみ
+    warnWidthAutoRange(doc, originalXml); // 警告のみ
     doc = colorNotationIllustrator(doc);
-    bindingRequiredWarn(doc, originalXml); // 警告のみ
-    spanColorBindingWarn(doc, originalXml); // 警告のみ
+    warnBindingRequired(doc, originalXml); // 警告のみ
+    warnSpanColorBinding(doc, originalXml); // 警告のみ
     doc = gridColsRowsRequired(doc);
-    rectangleBorderRadiusMultiWarn(doc, originalXml); // 警告のみ
+    warnRectangleBorderRadiusMulti(doc, originalXml); // 警告のみ
     doc = sizeCommaToSpace(doc);
     doc = borderstyleDasharrayToColon(doc);
-    borderAdjacentLineWarn(doc, originalXml); // 警告のみ
+    warnBorderAdjacentLine(doc, originalXml); // 警告のみ
 
     // 最後にスキーマ指定用の属性追加
     doc = applySchema(doc);
