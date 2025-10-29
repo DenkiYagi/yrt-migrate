@@ -1,5 +1,6 @@
-# Testing Output
+# Testing
 /test-out/
+/test/regression/test-data/*
 
 # --------------------------------
 
