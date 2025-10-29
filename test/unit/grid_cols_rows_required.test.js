@@ -15,8 +15,8 @@ describe("<Grid> cols, rows がなければそれぞれ \"*\" と \"auto\" を�
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
         const result = migrate(yrtDocument);
         const outXml = result.layouts[0].xml;
-        expect(outXml).toMatch(/<Grid[^>]*cols="\*"/);
-        expect(outXml).toMatch(/<Grid[^>]*rows="1 1 1"/);
+        expect(outXml).toMatch(/<Grid\b[^>]*cols="\*"/);
+        expect(outXml).toMatch(/<Grid\b[^>]*rows="1 1 1"/);
     });
 
     it("rowsが未指定の場合に rows=\"auto\" が追加される", () => {
@@ -24,7 +24,7 @@ describe("<Grid> cols, rows がなければそれぞれ \"*\" と \"auto\" を�
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
         const result = migrate(yrtDocument);
         const outXml = result.layouts[0].xml;
-        expect(outXml).toMatch(/<Grid[^>]*cols="1 1 1"[^>]*rows="auto"/);
+        expect(outXml).toMatch(/<Grid\b[^>]*cols="1 1 1"[^>]*rows="auto"/);
     });
 
     it("cols, rows両方未指定の場合に cols=\"*\" rows=\"auto\" が追加される", () => {
@@ -32,7 +32,7 @@ describe("<Grid> cols, rows がなければそれぞれ \"*\" と \"auto\" を�
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
         const result = migrate(yrtDocument);
         const outXml = result.layouts[0].xml;
-        expect(outXml).toMatch(/<Grid[^>]*cols="\*"[^>]*rows="auto"/);
+        expect(outXml).toMatch(/<Grid\b[^>]*cols="\*"[^>]*rows="auto"/);
     });
 
     it("cols, rows属性値に前後空白があっても正しく判定される", () => {

@@ -16,7 +16,7 @@ describe("style_element", () => {
         const migrated = migrate(yrtDocument, '');
         expect(migrated.layouts[0].xml).toContain('rangeStyle="style-1"');
         expect(migrated.layouts[0].xml).not.toContain("<GridStyle");
-        const gridMatch = migrated.layouts[0].xml.match(/<Grid([^>]*)>/);
+        const gridMatch = migrated.layouts[0].xml.match(/<Grid\b([^>]*)>/);
         expect(gridMatch).not.toBeNull();
         const attrs = gridMatch[1];
         expect(attrs).not.toContain("borderColor");
@@ -58,7 +58,7 @@ describe("style_element", () => {
         const migrated = migrate(yrtDocument, '');
         expect(migrated.layouts[0].xml).toContain('rangeStyle="style-1"');
         expect(migrated.layouts[0].xml).not.toContain("<TableStyle");
-        const tableMatch = migrated.layouts[0].xml.match(/<Table([^>]*)>/);
+        const tableMatch = migrated.layouts[0].xml.match(/<Table\b([^>]*)>/);
         expect(tableMatch).not.toBeNull();
         const attrs = tableMatch[1];
         expect(attrs).not.toContain("borderColor");
@@ -99,7 +99,7 @@ describe("style_element", () => {
         const migrated = migrate(yrtDocument, '');
         expect(migrated.layouts[0].xml).toContain('rangeStyle="style-1"');
         expect(migrated.layouts[0].xml).not.toContain("<ColumnTextStyle");
-        const colMatch = migrated.layouts[0].xml.match(/<ColumnText([^>]*)>/);
+        const colMatch = migrated.layouts[0].xml.match(/<ColumnText\b([^>]*)>/);
         expect(colMatch).not.toBeNull();
         const attrs = colMatch[1];
         expect(attrs).not.toContain("borderColor");
@@ -210,7 +210,7 @@ describe("style_element", () => {
         expect(migrated.style).toContain('<CellRange borderColor="red"');
         expect(migrated.style).toContain('<CellRangeList key="style-2"');
         expect(migrated.style).toContain('<CellRange borderColor="blue"');
-        expect((migrated.style.match(/<Style>/g) || []).length).toBe(1);
+        expect((migrated.style.match(/<Style\b>/g) || []).length).toBe(1);
     });
 
     it("同一親要素内に複数のXxxStyle要素が存在した場合に、1つの親に対して複数のCellRange要素が正しく移行される", () => {

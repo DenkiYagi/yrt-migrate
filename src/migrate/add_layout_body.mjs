@@ -25,19 +25,19 @@ export function migrate(yrtDocument, originalXml) {
  * @returns {string}
  */
 export function extractLayoutBody(xml, originalXml) {
-    const selfClosingMatch = xml.match(/<LinearLayout([^>]*)\/>/);
+    const selfClosingMatch = xml.match(/<LinearLayout\b([^>]*)\/>/);
     if (selfClosingMatch) {
         const attrs = selfClosingMatch[1].replace(/\s+$/, "");
         const layoutBody = `<LayoutBody></LayoutBody>`;
-        return xml.replace(/<LinearLayout([^>]*)\/>/, `<LinearLayout${attrs}>${layoutBody}</LinearLayout>`);
+        return xml.replace(/<LinearLayout\b([^>]*)\/>/, `<LinearLayout${attrs}>${layoutBody}</LinearLayout>`);
     }
 
-    const layoutMatch = xml.match(/<LinearLayout([^>]*)>([\s\S]*?)<\/LinearLayout>/);
+    const layoutMatch = xml.match(/<LinearLayout\b([^>]*)>([\s\S]*?)<\/LinearLayout>/);
     if (!layoutMatch) return xml;
     const attrs = layoutMatch[1];
     const inner = layoutMatch[2];
 
-    if (/<LayoutBody[\s>]/.test(inner)) return xml;
+    if (/<LayoutBody\b[\s>]/.test(inner)) return xml;
 
     const childRegex = /(\s*)(<([A-Za-z0-9]+)[^>]*>[\s\S]*?<\/\3>)(\s*)/g;
     let children = [];
@@ -57,11 +57,11 @@ export function extractLayoutBody(xml, originalXml) {
     const headers = [];
     const footers = [];
     for (const child of children) {
-        if (/<LayoutHeader[\s>]/.test(child)) {
+        if (/<LayoutHeader\b[\s>]/.test(child)) {
             headers.push(child);
-        } else if (/<LayoutFooter[\s>]/.test(child)) {
+        } else if (/<LayoutFooter\b[\s>]/.test(child)) {
             footers.push(child);
-        } else if (/<LayoutBody[\s>]/.test(child)) {
+        } else if (/<LayoutBody\b[\s>]/.test(child)) {
             // 既存のLayoutBody（この分岐は本来不要だが保険）
         } else if (/^\s*$/.test(child)) {
             // 空白は無視
@@ -74,5 +74,5 @@ export function extractLayoutBody(xml, originalXml) {
     const layoutBody = `<LayoutBody></LayoutBody>`;
 
     const result = `<LinearLayout${attrs}>${headers.join('')}${layoutBody}${footers.join('')}</LinearLayout>`;
-    return xml.replace(/<LinearLayout([^>]*)>[\s\S]*?<\/LinearLayout>/, result);
+    return xml.replace(/<LinearLayout\b([^>]*)>[\s\S]*?<\/LinearLayout>/, result);
 }
