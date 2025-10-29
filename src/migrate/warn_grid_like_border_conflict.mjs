@@ -3,30 +3,43 @@
 import { DOMParser } from "@xmldom/xmldom";
 import { warnWithLocation } from "../warn_with_location.mjs";
 
-const BORDER_TYPES = [
-    { base: "borderThickness", keys: ["borderTopThickness", "borderRightThickness", "borderBottomThickness", "borderLeftThickness"] },
-    { base: "borderStyle", keys: ["borderTopStyle", "borderRightStyle", "borderBottomStyle", "borderLeftStyle"] },
-    { base: "borderColor", keys: ["borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor"] },
+const BORDER_THICKNESS_SIDE_SPECIFIC_KEYS = [
+    "borderTopThickness",
+    "borderRightThickness",
+    "borderBottomThickness",
+    "borderLeftThickness",
 ];
 
 /**
  * @param {Element} cell
- * @param {{ base: string, keys: string[] }} type
  * @returns {string[]}
  */
-function expandBorderValues(cell, type) {
-    let values = ["", "", "", ""];
-    if (cell.hasAttribute(type.base)) {
-        const arr = cell.getAttribute(type.base)?.split(/\s+/) ?? [];
+function expandBorderThickness(cell) {
+    let values = ["", "", "", ""]; // top, right, bottom, left
+    if (cell.hasAttribute("borderThickness")) {
+        const attr = cell.getAttribute("borderThickness") ?? "";
+        const trimmed = attr.trim();
+        const arr = trimmed.length > 0 ? trimmed.split(/\s+/) : [];
         if (arr.length === 1) values = [arr[0] ?? "", arr[0] ?? "", arr[0] ?? "", arr[0] ?? ""];
         else if (arr.length === 2) values = [arr[0] ?? "", arr[1] ?? "", arr[0] ?? "", arr[1] ?? ""];
         else if (arr.length === 3) values = [arr[0] ?? "", arr[1] ?? "", arr[2] ?? "", arr[1] ?? ""];
         else if (arr.length === 4) values = [arr[0] ?? "", arr[1] ?? "", arr[2] ?? "", arr[3] ?? ""];
     }
-    type.keys.forEach((key, d) => {
+    BORDER_THICKNESS_SIDE_SPECIFIC_KEYS.forEach((key, d) => {
         if (cell.hasAttribute(key)) values[d] = cell.getAttribute(key) ?? "";
     });
     return values;
+}
+
+/**
+ * @param {string} value
+ * @returns {string}
+ */
+function normalizeThickness(value) {
+    const trimmed = (value ?? "").trim();
+    if (!trimmed) return "";
+    if (trimmed === "_") return "";
+    return trimmed.toLowerCase();
 }
 
 /**
@@ -60,32 +73,48 @@ function checkGridNode(node, originalXml) {
             }
         }
     }
+    /** @type {Map<Element, string[]>} */
+    const thicknessCache = new Map();
+    /**
+     * @param {Element} cell
+     * @returns {string[]}
+     */
+    function getThickness(cell) {
+        let cached = thicknessCache.get(cell);
+        if (!cached) {
+            cached = expandBorderThickness(cell);
+            thicknessCache.set(cell, cached);
+        }
+        return cached;
+    }
     let warn = false;
-    for (const type of BORDER_TYPES) {
-        for (const { cell, row, col, colspan } of cellList) {
-            const rightCell = cellList.find(c => c.row === row && c.col === col + colspan);
-            if (rightCell) {
-                const vals = expandBorderValues(cell, type);
-                const rightVals = expandBorderValues(rightCell.cell, type);
-                if (vals[1] !== "_" && rightVals[3] !== "_" && vals[1] !== "" && rightVals[3] !== "") {
-                    warn = true;
-                    break;
-                }
+    for (const { cell, row, col, colspan } of cellList) {
+        const rightCell = cellList.find(c => c.row === row && c.col === col + colspan);
+        if (rightCell) {
+            const vals = getThickness(cell);
+            const rightVals = getThickness(rightCell.cell);
+            const right = normalizeThickness(vals[1]);
+            const left = normalizeThickness(rightVals[3]);
+            if (right && left && right !== left) {
+                warn = true;
+                break;
             }
         }
-        if (warn) break;
+    }
+    if (!warn) {
         for (const { cell, col, row, rowspan } of cellList) {
             const bottomCell = cellList.find(c => c.col === col && c.row === row + rowspan);
             if (bottomCell) {
-                const vals = expandBorderValues(cell, type);
-                const bottomVals = expandBorderValues(bottomCell.cell, type);
-                if (vals[2] !== "_" && bottomVals[0] !== "_" && vals[2] !== "" && bottomVals[0] !== "") {
+                const vals = getThickness(cell);
+                const bottomVals = getThickness(bottomCell.cell);
+                const bottom = normalizeThickness(vals[2]);
+                const top = normalizeThickness(bottomVals[0]);
+                if (bottom && top && bottom !== top) {
                     warn = true;
                     break;
                 }
             }
         }
-        if (warn) break;
     }
     if (warn) {
         warnWithLocation(originalXml, node, "隣接セルの罫線挙動が変わる可能性があります。必要に応じて手動で直してください。");
@@ -129,45 +158,62 @@ function checkTableNode(node, originalXml) {
             }
         }
     }
+    /** @type {Map<Element, string[]>} */
+    const thicknessCache = new Map();
+    /**
+     * @param {Element} cell
+     * @returns {string[]}
+     */
+    function getThickness(cell) {
+        let cached = thicknessCache.get(cell);
+        if (!cached) {
+            cached = expandBorderThickness(cell);
+            thicknessCache.set(cell, cached);
+        }
+        return cached;
+    }
     let warn = false;
     const templateRowIndex = rowTypes.indexOf("TableColumnTemplate");
-    for (const type of BORDER_TYPES) {
-        for (const { cell, row, col, colspan } of cellList) {
-            const rightCell = cellList.find(c => c.row === row && c.col === col + colspan);
-            if (rightCell) {
-                const vals = expandBorderValues(/** @type {Element} */ (cell), type);
-                const rightVals = expandBorderValues(/** @type {Element} */ (rightCell.cell), type);
-                if (vals[1] !== "_" && rightVals[3] !== "_" && vals[1] !== "" && rightVals[3] !== "") {
-                    warn = true;
-                    break;
-                }
+    for (const { cell, row, col, colspan } of cellList) {
+        const rightCell = cellList.find(c => c.row === row && c.col === col + colspan);
+        if (rightCell) {
+            const vals = getThickness(/** @type {Element} */(cell));
+            const rightVals = getThickness(/** @type {Element} */(rightCell.cell));
+            const right = normalizeThickness(vals[1]);
+            const left = normalizeThickness(rightVals[3]);
+            if (right && left && right !== left) {
+                warn = true;
+                break;
             }
         }
-        if (warn) break;
+    }
+    if (!warn) {
         for (const { cell, col, row, rowspan } of cellList) {
             const bottomCell = cellList.find(c => c.col === col && c.row === row + rowspan);
             if (bottomCell) {
-                const vals = expandBorderValues(/** @type {Element} */ (cell), type);
-                const bottomVals = expandBorderValues(/** @type {Element} */ (bottomCell.cell), type);
-                if (vals[2] !== "_" && bottomVals[0] !== "_" && vals[2] !== "" && bottomVals[0] !== "") {
+                const vals = getThickness(/** @type {Element} */(cell));
+                const bottomVals = getThickness(/** @type {Element} */(bottomCell.cell));
+                const bottom = normalizeThickness(vals[2]);
+                const top = normalizeThickness(bottomVals[0]);
+                if (bottom && top && bottom !== top) {
                     warn = true;
                     break;
                 }
             }
         }
-        if (warn) break;
-        if (!warn && templateRowIndex >= 0) {
-            for (const { cell, row } of cellList) {
-                if (row === templateRowIndex) {
-                    const vals = expandBorderValues(/** @type {Element} */ (cell), type);
-                    if (vals[0] !== "_" && vals[2] !== "_" && vals[0] !== "" && vals[2] !== "") {
-                        warn = true;
-                        break;
-                    }
+    }
+    if (!warn && templateRowIndex >= 0) {
+        for (const { cell, row } of cellList) {
+            if (row === templateRowIndex) {
+                const vals = getThickness(/** @type {Element} */(cell));
+                const top = normalizeThickness(vals[0]);
+                const bottom = normalizeThickness(vals[2]);
+                if (top && bottom && top !== bottom) {
+                    warn = true;
+                    break;
                 }
             }
         }
-        if (warn) break;
     }
     if (warn) {
         warnWithLocation(originalXml, node, "隣接セルの罫線挙動が変わる可能性があります。必要に応じて手動で直してください。");
@@ -188,7 +234,7 @@ function traverse(node, originalXml) {
         for (let i = 0; i < node.childNodes.length; i++) {
             const child = node.childNodes[i];
             if (child?.nodeType === 1) {
-                traverse(/** @type {Element} */ (child), originalXml);
+                traverse(/** @type {Element} */(child), originalXml);
             }
         }
     }
@@ -198,7 +244,7 @@ function traverse(node, originalXml) {
  * @param {string} xmlString
  * @param {string} originalXml
  */
-function warnForAdjacentBorders(xmlString, originalXml) {
+function warnForBorderConflict(xmlString, originalXml) {
     const doc = new DOMParser().parseFromString(xmlString, "text/xml");
     if (doc.documentElement) {
         traverse(doc.documentElement, originalXml);
@@ -213,9 +259,9 @@ function warnForAdjacentBorders(xmlString, originalXml) {
  */
 export function migrate(yrtDocument, originalXml) {
     for (const entry of yrtDocument.layouts) {
-        warnForAdjacentBorders(entry.xml, originalXml);
+        warnForBorderConflict(entry.xml, originalXml);
     }
     if (typeof yrtDocument.style === "string" && yrtDocument.style.trim().length > 0) {
-        warnForAdjacentBorders(yrtDocument.style, originalXml);
+        warnForBorderConflict(yrtDocument.style, originalXml);
     }
 }

@@ -23,7 +23,7 @@ describe('warn_grid_like_border_conflict', () => {
         const xml = [
             '<Grid cols="10 10 10" rows="10 10">',
             '  <GridCell col="0" row="0" colspan="2" borderRightThickness="3"/>',
-            '  <GridCell col="2" row="0" borderLeftThickness="3"/>',
+            '  <GridCell col="2" row="0" borderLeftThickness="2"/>',
             '</Grid>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
@@ -33,7 +33,7 @@ describe('warn_grid_like_border_conflict', () => {
         warnMock.mockRestore();
     });
 
-    it('Grid: 隣接セルがない場合は警告しない', () => {
+    it('Grid: 隣接セルでもborderThickness未指定なら警告しない', () => {
         const xml = [
             '<Grid cols="10 10" rows="10">',
             '  <GridCell col="0" row="0" borderRightStyle="dashed"/>',
@@ -64,14 +64,28 @@ describe('warn_grid_like_border_conflict', () => {
     it('Grid: 縦方向の隣接セルで警告を出す', () => {
         const xml = [
             '<Grid cols="10" rows="10 10">',
-            '  <GridCell col="0" row="0" borderBottomStyle="solid"/>',
-            '  <GridCell col="0" row="1" borderTopStyle="dashed"/>',
+            '  <GridCell col="0" row="0" borderBottomThickness="1pt"/>',
+            '  <GridCell col="0" row="1" borderTopThickness="2pt"/>',
             '</Grid>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
         const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
         migrate(yrtDocument, xml);
         expect(warnMock).toHaveBeenCalled();
+        warnMock.mockRestore();
+    });
+
+    it('Grid: 同じ太さの隣接セルは警告しない', () => {
+        const xml = [
+            '<Grid cols="10 10" rows="10">',
+            '  <GridCell col="0" row="0" borderRightThickness=" THICK "/>',
+            '  <GridCell col="1" row="0" borderLeftThickness="thick"/>',
+            '</Grid>'
+        ].join('\n');
+        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
+        const warnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        migrate(yrtDocument, xml);
+        expect(warnMock).not.toHaveBeenCalled();
         warnMock.mockRestore();
     });
 
@@ -94,12 +108,12 @@ describe('warn_grid_like_border_conflict', () => {
             '<Table>',
             '  <TableColumn>',
             '    <TableColumnHeader/>',
-            '    <TableColumnTemplate borderRightColor="blue"/>',
+            '    <TableColumnTemplate borderRightThickness="2px"/>',
             '    <TableColumnFooter/>',
             '  </TableColumn>',
             '  <TableColumn>',
             '    <TableColumnHeader/>',
-            '    <TableColumnTemplate borderLeftColor="red"/>',
+            '    <TableColumnTemplate borderLeftThickness="1px"/>',
             '    <TableColumnFooter/>',
             '  </TableColumn>',
             '</Table>'
@@ -111,17 +125,17 @@ describe('warn_grid_like_border_conflict', () => {
         warnMock.mockRestore();
     });
 
-    it('Table: 隣接セルがない場合は警告しない', () => {
+    it('Table: 隣接セルの厚さが同じ場合は警告しない', () => {
         const xml = [
             '<Table>',
             '  <TableColumn>',
             '    <TableColumnHeader/>',
-            '    <TableColumnTemplate borderTopColor="blue"/>',
+            '    <TableColumnTemplate borderRightThickness="3"/>',
             '    <TableColumnFooter/>',
             '  </TableColumn>',
             '  <TableColumn>',
             '    <TableColumnHeader/>',
-            '    <TableColumnTemplate borderBottomColor="red"/>',
+            '    <TableColumnTemplate borderLeftThickness="3"/>',
             '    <TableColumnFooter/>',
             '  </TableColumn>',
             '</Table>'
@@ -137,8 +151,8 @@ describe('warn_grid_like_border_conflict', () => {
         const xml = [
             '<Table>',
             '  <TableColumn>',
-            '    <TableColumnHeader borderBottomColor="blue"/>',
-            '    <TableColumnTemplate borderTopColor="red"/>',
+            '    <TableColumnHeader borderBottomThickness="3px"/>',
+            '    <TableColumnTemplate borderTopThickness="1px"/>',
             '    <TableColumnFooter/>',
             '  </TableColumn>',
             '</Table>'
@@ -155,8 +169,8 @@ describe('warn_grid_like_border_conflict', () => {
             '<Table>',
             '  <TableColumn>',
             '    <TableColumnHeader/>',
-            '    <TableColumnTemplate borderBottomColor="green"/>',
-            '    <TableColumnFooter borderTopColor="black"/>',
+            '    <TableColumnTemplate borderBottomThickness="5px"/>',
+            '    <TableColumnFooter borderTopThickness="1px"/>',
             '  </TableColumn>',
             '</Table>'
         ].join('');
