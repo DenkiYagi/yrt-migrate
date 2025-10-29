@@ -62,30 +62,34 @@ const DO_FORMAT_XML = true;
 function migrate(yrtOldDocument) {
     const originalXml = yrtOldDocument.xml;
     let doc = multipleXmls(yrtOldDocument);
+
+    // 警告系
+    warnStyleElementBinding(doc, originalXml);
+    warnForeachHidden(doc, originalXml);
+    warnDeprecatedLayoutAttrs(doc, originalXml);
+    warnImageWidthRequired(doc, originalXml);
+    warnGridLikeBorderConflict(doc, originalXml);
+    warnGridLikeStyleElementBorderConflict(doc, originalXml);
+    warnWidthAutoRange(doc, originalXml);
+    warnBindingRequired(doc, originalXml);
+    warnSpanColorBinding(doc, originalXml);
+    warnRectangleBorderRadiusMulti(doc, originalXml);
+    warnLinearLayoutChildrenBorder(doc, originalXml);
+
+    // 変換系
     doc = orientationRename(doc);
     doc = removeUnspecifiedAttr(doc);
-    warnStyleElementBinding(doc, originalXml); // 警告のみ
     doc = styleElementMigrate(doc);
     doc = removeContentElements(doc);
-    warnForeachHidden(doc, originalXml); // 警告のみ
     doc = foreachHiddenToLogicMigrate(doc);
-    warnDeprecatedLayoutAttrs(doc, originalXml);
     doc = addLayoutBody(doc, originalXml);
     doc = renameTableFrameElements(doc);
-    doc = warnImageWidthRequired(doc, originalXml);
     doc = renameAttrsMigrate(doc);
-    warnGridLikeBorderConflict(doc, originalXml); // 警告のみ
-    warnGridLikeStyleElementBorderConflict(doc, originalXml); // 警告のみ
     doc = mergeDirectionalAttrs(doc);
-    warnWidthAutoRange(doc, originalXml); // 警告のみ
     doc = colorNotationIllustrator(doc);
-    warnBindingRequired(doc, originalXml); // 警告のみ
-    warnSpanColorBinding(doc, originalXml); // 警告のみ
     doc = gridColsRowsRequired(doc);
-    warnRectangleBorderRadiusMulti(doc, originalXml); // 警告のみ
     doc = sizeCommaToSpace(doc);
     doc = borderstyleDasharrayToColon(doc);
-    warnLinearLayoutChildrenBorder(doc, originalXml); // 警告のみ
 
     // 最後にスキーマ指定用の属性追加
     doc = applySchema(doc);
