@@ -16,7 +16,8 @@ export function warnWithLocation(xml, node, message) {
     let line = null, col = null;
     if (node.tagName) {
         // タグ名で検索
-        const tagPattern = new RegExp(`<${node.tagName}[^>]*`, 'g');
+        const escapedTagName = node.tagName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const tagPattern = new RegExp(`<${escapedTagName}\\b[^>]*`, 'g');
         let match;
         let matchIndexes = [];
         while ((match = tagPattern.exec(xml)) !== null) {
