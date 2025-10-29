@@ -1,16 +1,14 @@
 // @ts-check
 
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
-import { warnWithLocation } from "../warn_with_location.mjs";
 
 
 /**
  * YrtDocument型のみを受け取り、layouts配列のxmlを変換し、styleプロパティにStyle XMLを格納して返す
- * @param {string} originalXml - 変換前のXML文字列
  * @param {import('../yrt_format.js').YrtDocument} yrtDocument
  * @returns {import('../yrt_format.js').YrtDocument} 変換後のYrtDocument
  */
-export function migrate(yrtDocument, originalXml) {
+export function migrate(yrtDocument) {
     if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) {
         throw new Error("style_element.mjs: 入力がYRT構造ではありません");
     }
@@ -50,17 +48,6 @@ export function migrate(yrtDocument, originalXml) {
                         for (let j = 0; j < styleElem.attributes.length; j++) {
                             const attr = styleElem.attributes[j];
                             cellRange.setAttribute(attr.name, attr.value);
-                            // バインド変数判定: ${...} で始まり終わるもののみ
-                            if (
-                                typeof attr.value === "string" &&
-                                /^\$\{[^}]+\}$/.test(attr.value)
-                            ) {
-                                warnWithLocation(
-                                    originalXml,
-                                    styleElem,
-                                    `${styleTag} の ${attr.name} 属性値にバインド変数 (${attr.value}) が含まれています`
-                                );
-                            }
                         }
                         if (!cellRange.hasAttribute("col")) {
                             cellRange.setAttribute("col", "all");
