@@ -82,7 +82,7 @@ function migrate(yrtOldDocument) {
     doc = styleElementMigrate(doc);
     doc = removeContentElements(doc);
     doc = foreachHiddenToLogicMigrate(doc);
-    doc = addLayoutBody(doc, originalXml);
+    doc = addLayoutBody(doc);
     doc = renameTableFrameElements(doc);
     doc = renameAttrsMigrate(doc);
     doc = mergeDirectionalAttrs(doc);
