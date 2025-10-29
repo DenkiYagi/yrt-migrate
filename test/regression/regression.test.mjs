@@ -2,9 +2,10 @@
  * `test/regression/test-data` 以下のすべてのデータセットに対してリグレッションテストを実行します。
  *
  * 各ディレクトリから `input.xml` をコピーし、CLI (`yrt-migrate`) を実行して `.yrt` を生成します。
- * 生成された YRT をデコードし、各 LayoutXML（および必要なら StyleXML）を
- * 対応する `expected-*.xml` と比較します。データセット名をハードコーディングせず、
- * 実行時にディレクトリ一覧を取得するため、ローカルで未コミットのフィクスチャにも自動対応します。
+ * 生成された YRT をデコードし、各 LayoutXML（および必要なら StyleXML）を対応する `expected-*.xml` と比較。
+ * さらに CLI の警告出力 (`stderr`) を `expected-warnings.txt` と照合します。
+ * データセット名はハードコーディングせず、実行時にディレクトリ一覧を取得するため、
+ * ローカルで未コミットのフィクスチャにも自動対応します。
  */
 
 // @ts-check
@@ -30,6 +31,14 @@ const TEST_OUT_ROOT = "test-out/regression";
  */
 function normalizeXml(xml) {
     return xml.replace(/\r\n/g, "\n").trim();
+}
+
+/**
+ * 警告メッセージを正規化し、末尾の改行差異などを吸収する。
+ * @param {string} warnings
+ */
+function normalizeWarnings(warnings) {
+    return warnings.replace(/\r\n/g, "\n").trim();
 }
 
 /**
@@ -67,13 +76,26 @@ async function loadExpectedStyle(datasetDir) {
     }
 }
 
+/**
+ * 保存済みの警告メッセージ期待値を読み込む。
+ * @param {string} datasetDir
+ */
+async function loadExpectedWarnings(datasetDir) {
+    try {
+        const data = await readFile(join(datasetDir, "expected-warnings.txt"), "utf8");
+        return normalizeWarnings(data);
+    } catch {
+        return null;
+    }
+}
+
 const datasetDirEntries = await readdir(TEST_DATA_ROOT, { withFileTypes: true });
 const datasetNames = datasetDirEntries
     .filter(entry => entry.isDirectory())
     .map(entry => entry.name)
     .sort();
 
-describe("yrt-migrate regression fixtures", () => {
+describe("リグレッションテスト", () => {
     before(async () => {
         await setupTestOutputDir(TEST_OUT_ROOT);
     });
@@ -84,12 +106,11 @@ describe("yrt-migrate regression fixtures", () => {
     }
 
     for (const datasetName of datasetNames) {
-        test(`"${datasetName}" matches expected XML`, async () => {
+        test(`"${datasetName}" matches expected output`, async () => {
             const datasetDir = join(TEST_DATA_ROOT, datasetName);
             const testCaseDir = await createTestCaseDir(TEST_OUT_ROOT, datasetName);
             const inputFile = await prepareInputFile(join(datasetDir, "input.xml"), testCaseDir, "input.xml");
             const outputFile = join(testCaseDir, "output.yrt");
-
             const { exitCode, stderr } = await runYrtMigrate([
                 "--input",
                 inputFile,
@@ -141,6 +162,17 @@ describe("yrt-migrate regression fixtures", () => {
                     `StyleXML does not match for dataset "${datasetName}"`
                 );
             }
+
+            const expectedWarnings = await loadExpectedWarnings(datasetDir);
+            assert(
+                expectedWarnings !== null,
+                `expected-warnings.txt not found in ${datasetDir}`
+            );
+            assert.strictEqual(
+                normalizeWarnings(stderr),
+                expectedWarnings,
+                `Warning output does not match for dataset "${datasetName}"`
+            );
         });
     }
 });
