@@ -22,6 +22,7 @@ Supported environment: Node.js v20+
 - `yarn test` - Run all tests
 - `yarn test:unit` - Run unit tests
 - `yarn test:integration` - Run integration tests
+- `yarn test:regression` - Run regression tests
 - `yarn test:generate-fixtures` - Update YRT fixtures for integration tests. Only needed when modified the existing XML fixtures.
 
 
