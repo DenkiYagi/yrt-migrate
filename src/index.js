@@ -30,7 +30,7 @@ import { migrate as removeUnspecifiedAttr } from "./migrate/remove_unspecified_a
 import { migrate as styleElementMigrate } from "./migrate/style_element.mjs";
 import { migrate as removeContentElements } from "./migrate/remove_content_elements.mjs";
 import { migrate as foreachHiddenToLogicMigrate } from "./migrate/foreach_hidden_to_logic.mjs";
-import { migrate as removeDeprecatedLayoutAttrs } from "./migrate/remove_deprecated_layout_attrs.mjs";
+import { migrate as warnDeprecatedLayoutAttrs } from "./migrate/warn_deprecated_layout_attrs.mjs";
 import { migrate as addLayoutBody } from "./migrate/add_layout_body.mjs";
 import { migrate as renameTableFrameElements } from "./migrate/rename_tableframe_elements.mjs";
 import { migrate as warnImageWidthRequired } from "./migrate/warn_image_width_required.mjs";
@@ -63,7 +63,7 @@ function migrate(yrtOldDocument) {
     doc = styleElementMigrate(doc, originalXml);
     doc = removeContentElements(doc);
     doc = foreachHiddenToLogicMigrate(doc, originalXml);
-    doc = removeDeprecatedLayoutAttrs(doc, originalXml);
+    warnDeprecatedLayoutAttrs(doc, originalXml);
     doc = addLayoutBody(doc, originalXml);
     doc = renameTableFrameElements(doc);
     doc = warnImageWidthRequired(doc, originalXml);
