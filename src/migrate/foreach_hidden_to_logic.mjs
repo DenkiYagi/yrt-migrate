@@ -29,23 +29,15 @@ function migrateElement(el) {
         hidden = null;
     }
 
-    // foreachとhidden両方ある場合は自動変換できないため警告のみ
-    if (foreach && hidden) {
-        return;
-    } else if (foreach) {
+    const canConvertForeach = foreach && !hidden && isBindingVariable(foreach);
+    const canConvertHidden = hidden && !foreach && isBindingVariable(hidden);
+
+    if (canConvertForeach) {
         const logicVal = `foreach:${foreach}`;
         el.setAttribute('logic', logicVal);
         el.removeAttribute('foreach');
-    } else if (hidden) {
-        // 真偽値を反転してlogic属性に変換
-        let logicVal;
-        if (isBindingVariable(hidden)) {
-            // ${...} の場合は ! を付与
-            logicVal = `if:${hidden.replace(/\$\{([^}]+)\}/, '${!$1}')}`;
-        } else {
-            // それ以外はそのまま
-            logicVal = `if:${hidden}`;
-        }
+    } else if (canConvertHidden) {
+        const logicVal = `if:${hidden.replace(/\$\{([^}]+)\}/, '${!$1}')}`;
         el.setAttribute('logic', logicVal);
         el.removeAttribute('hidden');
     }

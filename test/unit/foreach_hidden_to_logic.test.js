@@ -76,7 +76,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
         spy.mockRestore();
     });
 
-    it("foreach値がバインド変数でない場合も変換される", () => {
+    it("foreach値がバインド変数でない場合は変換されない", () => {
         const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
         const inputXml = [
             '<?xml version="1.0" encoding="UTF-8"?>',
@@ -85,13 +85,13 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
         const migrated = migrate(yrtDocument, inputXml);
         const xml = migrated.layouts[0].xml;
-        expect(xml).toContain('logic="foreach:[]"');
-        expect(xml).not.toContain("foreach=");
+        expect(xml).toContain('foreach="[]"');
+        expect(xml).not.toContain('logic=');
         expect(spy).not.toHaveBeenCalled();
         spy.mockRestore();
     });
 
-    it("hidden値がバインド変数でない場合も変換される", () => {
+    it("hidden値がバインド変数でない場合は変換されない", () => {
         const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
         const inputXml = [
             '<?xml version="1.0" encoding="UTF-8"?>',
@@ -100,8 +100,8 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
         const migrated = migrate(yrtDocument, inputXml);
         const xml = migrated.layouts[0].xml;
-        expect(xml).toContain('logic="if:true"');
-        expect(xml).not.toContain("hidden=");
+        expect(xml).toContain('hidden="true"');
+        expect(xml).not.toContain("logic='");
         expect(spy).not.toHaveBeenCalled();
         spy.mockRestore();
     });
