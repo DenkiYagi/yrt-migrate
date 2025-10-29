@@ -32,18 +32,17 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
         spy.mockRestore();
     });
 
-    it("foreach/hidden属性値に前後空白があっても正しく判定される", () => {
-        const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
-        const inputXml = [
-            '<Grid foreach="  ${items}  " hidden="  ${isHidden}  "/>'
-        ].join('\n');
+    it("foreach/hidden属性値に前後空白があっても同時指定なら変換せず警告する", () => {
+        const warnMock = jest.spyOn(console, "warn").mockImplementation(() => { });
+        const inputXml = '<Grid foreach="  ${items}  " hidden="  ${isHidden}  "/>';
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
         const migrated = migrate(yrtDocument, inputXml);
         const xml = migrated.layouts[0].xml;
-        expect(xml).toContain('logic="foreach:${items}"');
-        expect(xml).not.toContain("foreach=");
-        expect(xml).toContain('hidden="  ${isHidden}  "'); // hiddenはlogic化されない
-        spy.mockRestore();
+        expect(xml).toContain('foreach="  ${items}  "');
+        expect(xml).toContain('hidden="  ${isHidden}  "');
+        expect(xml).not.toContain('logic=');
+        expect(warnMock).toHaveBeenCalled();
+        warnMock.mockRestore();
     });
 
     it("foreach/hidden属性値が空白のみの場合は変換・警告しない", () => {
@@ -61,7 +60,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
         spy.mockRestore();
     });
 
-    it("foreach属性とhidden属性が両方ある場合はforeachのみlogic化し、hiddenは警告のみで変換しない", () => {
+    it("foreach属性とhidden属性が両方ある場合は変換せず警告する", () => {
         const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
         const inputXml = [
             '<?xml version="1.0" encoding="UTF-8"?>',
@@ -70,24 +69,9 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
         const migrated = migrate(yrtDocument, inputXml);
         const xml = migrated.layouts[0].xml;
-        expect(xml).toContain('logic="foreach:${items}"');
-        expect(xml).not.toContain("foreach=");
-        expect(xml).toContain('hidden="isHidden"');
-        expect(spy).toHaveBeenCalled();
-        spy.mockRestore();
-    });
-
-    it("既にlogic属性がある場合は警告し、変換しない", () => {
-        const spy = jest.spyOn(console, "warn").mockImplementation(() => { });
-        const inputXml = [
-            '<?xml version="1.0" encoding="UTF-8"?>',
-            '<Grid foreach="${items}" logic="foo"/>'
-        ].join('\n');
-        const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
-        const migrated = migrate(yrtDocument, inputXml);
-        const xml = migrated.layouts[0].xml;
         expect(xml).toContain('foreach="${items}"');
-        expect(xml).toContain('logic="foo"');
+        expect(xml).toContain('hidden="isHidden"');
+        expect(xml).not.toContain('logic=');
         expect(spy).toHaveBeenCalled();
         spy.mockRestore();
     });

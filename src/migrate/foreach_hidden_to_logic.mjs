@@ -20,7 +20,6 @@ function migrateElement(el, originalXml) {
     if (!el || !el.getAttribute) return;
     let foreach = el.getAttribute('foreach')?.trim();
     let hidden = el.getAttribute('hidden')?.trim();
-    const logic = el.getAttribute('logic')?.trim();
 
     // まず値なしのパターンを処理
     if (foreach === "") {
@@ -32,45 +31,35 @@ function migrateElement(el, originalXml) {
         hidden = null;
     }
 
-    // foreachとhidden両方ある場合はforeachのみlogic化、hiddenは警告のみ
-    if (foreach && hidden && !logic) {
+    // foreachとhidden両方ある場合は自動変換できないため警告のみ
+    if (foreach && hidden) {
+        warnWithLocation(originalXml, el, `foreach属性とhidden属性が同時に指定されているため自動変換できません。手動で修正してください。`);
+        if (!isBindingVariable(foreach)) {
+            warnWithLocation(originalXml, el, `foreach属性の値 "${foreach}" はバインド変数ではありません。バインド変数しか指定できないので修正してください。`);
+        }
+        return;
+    } else if (foreach) {
         const logicVal = `foreach:${foreach}`;
         if (!isBindingVariable(foreach)) {
             warnWithLocation(originalXml, el, `foreach属性の値 "${foreach}" はバインド変数ではありません。バインド変数しか指定できないので修正してください。`);
         }
         el.setAttribute('logic', logicVal);
         el.removeAttribute('foreach');
-        warnWithLocation(originalXml, el, `logic属性が既に存在するためhidden属性は変換しませんでした`);
-    } else if (foreach) {
-        if (logic) {
-            warnWithLocation(originalXml, el, `logic属性が既に存在するためforeach属性は変換しませんでした`);
-        } else {
-            const logicVal = `foreach:${foreach}`;
-            if (!isBindingVariable(foreach)) {
-                warnWithLocation(originalXml, el, `foreach属性の値 "${foreach}" はバインド変数ではありません。バインド変数しか指定できないので修正してください。`);
-            }
-            el.setAttribute('logic', logicVal);
-            el.removeAttribute('foreach');
-        }
     } else if (hidden) {
-        if (logic) {
-            warnWithLocation(originalXml, el, `logic属性が既に存在するためhidden属性は変換しませんでした`);
+        // 真偽値を反転してlogic属性に変換
+        let logicVal;
+        if (isBindingVariable(hidden)) {
+            // ${...} の場合は ! を付与
+            logicVal = `if:${hidden.replace(/\$\{([^}]+)\}/, '${!$1}')}`;
         } else {
-            // 真偽値を反転してlogic属性に変換
-            let logicVal;
-            if (isBindingVariable(hidden)) {
-                // ${...} の場合は ! を付与
-                logicVal = `if:${hidden.replace(/\$\{([^}]+)\}/, '${!$1}')}`;
-            } else {
-                // それ以外はそのまま
-                logicVal = `if:${hidden}`;
-            }
-            if (!isBindingVariable(hidden)) {
-                warnWithLocation(originalXml, el, `hidden属性の値 "${hidden}" はバインド変数ではありません。バインド変数しか指定できないので修正してください。`);
-            }
-            el.setAttribute('logic', logicVal);
-            el.removeAttribute('hidden');
+            // それ以外はそのまま
+            logicVal = `if:${hidden}`;
         }
+        if (!isBindingVariable(hidden)) {
+            warnWithLocation(originalXml, el, `hidden属性の値 "${hidden}" はバインド変数ではありません。バインド変数しか指定できないので修正してください。`);
+        }
+        el.setAttribute('logic', logicVal);
+        el.removeAttribute('hidden');
     }
     // 子要素を再帰的に処理
     if (el.childNodes) {
