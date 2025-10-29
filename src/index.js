@@ -44,7 +44,7 @@ import { migrate as gridColsRowsRequired } from "./migrate/grid_cols_rows_requir
 import { migrate as warnRectangleBorderRadiusMulti } from "./migrate/warn_rectangle_border_radius_multi.mjs";
 import { migrate as sizeCommaToSpace } from "./migrate/size_comma_to_space.mjs";
 import { migrate as borderstyleDasharrayToColon } from "./migrate/borderstyle_dasharray_to_colon.mjs";
-import { migrate as warnBorderAdjacentLine } from "./migrate/warn_border_adjacent_line.mjs";
+import { migrate as warnLinearLayoutChildrenBorder } from "./migrate/warn_linear_layout_children_border.mjs";
 import { migrate as applySchema } from "./migrate/apply_schema.mjs";
 import { validateXmlInput, validateYrtInput } from "./input_file_validator.mjs";
 
@@ -77,7 +77,7 @@ function migrate(yrtOldDocument) {
     warnRectangleBorderRadiusMulti(doc, originalXml); // 警告のみ
     doc = sizeCommaToSpace(doc);
     doc = borderstyleDasharrayToColon(doc);
-    warnBorderAdjacentLine(doc, originalXml); // 警告のみ
+    warnLinearLayoutChildrenBorder(doc, originalXml); // 警告のみ
 
     // 最後にスキーマ指定用の属性追加
     doc = applySchema(doc);
