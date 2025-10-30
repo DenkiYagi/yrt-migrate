@@ -6,9 +6,13 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import * as msgpack from "@msgpack/msgpack";
 import assert from "node:assert";
+import { fileURLToPath } from "node:url";
 
 const CLI_ENTRY_POINT_FILE_PATH = "src/index.js";
 const execFileAsync = promisify(execFile);
+const TEST_DIR = fileURLToPath(new URL(".", import.meta.url));
+const PROJECT_ROOT = path.resolve(TEST_DIR, "..");
+const TEST_OUT_ROOT = path.join(PROJECT_ROOT, "test-out");
 
 // テストケースごとに自動インクリメントするためのカウンタを保持
 const testCaseDirCounters = new Map();
@@ -120,10 +124,15 @@ export async function prepareInputFile(originalPath, testCaseDir, fileName) {
  * @param {string} testOutDir - 指定のディレクトリのパス
  */
 export async function setupTestOutputDir(testOutDir) {
-    if (!testOutDir.startsWith("test-out")) throw new Error("Invalid test output directory");
+    const resolvedPath = path.isAbsolute(testOutDir) ? testOutDir : path.join(PROJECT_ROOT, testOutDir);
+    const relativeToTestOutRoot = path.relative(TEST_OUT_ROOT, resolvedPath);
+    if (relativeToTestOutRoot.startsWith("..") || path.isAbsolute(relativeToTestOutRoot)) {
+        throw new Error("Invalid test output directory");
+    }
 
-    await fs.rm(testOutDir, { recursive: true, force: true });
-    await fs.mkdir(testOutDir, { recursive: true });
+    await fs.rm(resolvedPath, { recursive: true, force: true });
+    await fs.mkdir(resolvedPath, { recursive: true });
+    return resolvedPath;
 }
 
 /**

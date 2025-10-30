@@ -14,6 +14,7 @@ import { describe, test, before } from "node:test";
 import assert from "node:assert";
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
     runYrtMigrate,
     setupTestOutputDir,
@@ -22,8 +23,8 @@ import {
     readAndValidateNewFormatYrtFile
 } from "../test-utils.mjs";
 
-const TEST_DATA_ROOT = "test/regression/test-data";
-const TEST_OUT_ROOT = "test-out/regression";
+const TEST_DATA_ROOT = fileURLToPath(new URL("./test-data", import.meta.url));
+const TEST_OUT_ROOT = fileURLToPath(new URL("../../test-out/regression", import.meta.url));
 
 /**
  * 正規化したXML文字列を返す。改行コードと末尾改行の差異を吸収する。
