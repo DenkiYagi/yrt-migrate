@@ -1,14 +1,11 @@
 import { DOMParser } from "@xmldom/xmldom";
 import { warnWithLocation } from "../../src/warn_with_location.mjs";
-import { setupWarningSpy } from "../helpers/warning_spy.js";
+import { createDiagnosticsBuffer, formatDiagnostic } from "../../src/diagnostics.mjs";
 
 describe("warnWithLocation", () => {
-    let warningSpy;
+    let diagnostics;
     beforeEach(() => {
-        warningSpy = setupWarningSpy();
-    });
-    afterEach(() => {
-        warningSpy.restore();
+        diagnostics = createDiagnosticsBuffer();
     });
 
     it("行番号・列番号・要素名付きで警告が出力される", () => {
@@ -22,12 +19,21 @@ describe("warnWithLocation", () => {
         ].join('\n');
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         const foo = doc.getElementsByTagName("Foo")[0];
-        warnWithLocation(warningSpy.diagnostics, xml, foo, "テスト警告");
-        const call = warningSpy.messages()[0];
-        expect(call).toContain("[WARNING]");
-        expect(call).toContain("テスト警告");
-        expect(call).toContain("@3:3");
-        expect(call).toContain("(<Foo>)");
+        warnWithLocation(diagnostics, xml, foo, "テスト警告");
+
+        expect(diagnostics).toHaveLength(1);
+        const diagnostic = diagnostics[0];
+        expect(diagnostic).toMatchObject({
+            type: "warning",
+            message: "テスト警告",
+            elementName: "Foo",
+            line: 3,
+            column: 3,
+        });
+        const formatted = formatDiagnostic(diagnostic);
+        expect(formatted).toContain("[WARNING]");
+        expect(formatted).toContain("(<Foo>)");
+        expect(formatted).toContain("@3:3");
     });
 
     it("タグ名が重複していても指定ノードの位置を特定できる", () => {
@@ -39,11 +45,16 @@ describe("warnWithLocation", () => {
         ].join('\n');
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         const foos = doc.getElementsByTagName("Foo");
-        warnWithLocation(warningSpy.diagnostics, xml, foos[1], "重複タグ");
-        const call = warningSpy.messages()[0];
-        expect(call).toContain("重複タグ");
-        expect(call).toContain("@3:3");
-        expect(call).toContain("(<Foo>)");
+        warnWithLocation(diagnostics, xml, foos[1], "重複タグ");
+
+        expect(diagnostics).toHaveLength(1);
+        expect(diagnostics[0]).toMatchObject({
+            type: "warning",
+            message: "重複タグ",
+            elementName: "Foo",
+            line: 3,
+            column: 3,
+        });
     });
 
     it("同名要素が別階層に存在しても正しい位置を特定できる", () => {
@@ -59,18 +70,23 @@ describe("warnWithLocation", () => {
         ].join('\n');
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         const targets = doc.getElementsByTagName("Target");
-        warnWithLocation(warningSpy.diagnostics, xml, targets[1], "nested");
-        const call = warningSpy.messages().at(-1);
-        expect(call).toContain("nested");
-        expect(call).toContain("@6:5");
-        expect(call).toContain("(<Target>)");
+        warnWithLocation(diagnostics, xml, targets[1], "nested");
+
+        expect(diagnostics).toHaveLength(1);
+        expect(diagnostics[0]).toMatchObject({
+            type: "warning",
+            message: "nested",
+            elementName: "Target",
+            line: 6,
+            column: 5,
+        });
     });
 
     it("タグ名が存在しない場合でもエラーにならない", () => {
         const xml = '<Root></Root>';
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         const root = doc.documentElement;
-        expect(() => warnWithLocation(warningSpy.diagnostics, xml, root, "タグなし")).not.toThrow();
+        expect(() => warnWithLocation(diagnostics, xml, root, "タグなし")).not.toThrow();
     });
 
     it("改行なしXMLで各要素の位置を正しく特定できる", () => {
@@ -80,39 +96,58 @@ describe("warnWithLocation", () => {
         const bar = doc.getElementsByTagName("bar")[0];
         const qux = doc.getElementsByTagName("qux")[0];
 
-        warnWithLocation(warningSpy.diagnostics, xml, foos[0], "foo1");
-        let call = warningSpy.messages().at(-1);
-        expect(call).toContain("foo1");
-        expect(call).toContain("@1:7");
-        expect(call).toContain("(<foo>)");
+        warnWithLocation(diagnostics, xml, foos[0], "foo1");
+        expect(diagnostics[0]).toMatchObject({
+            type: "warning",
+            message: "foo1",
+            elementName: "foo",
+            line: 1,
+            column: 7,
+        });
 
-        warnWithLocation(warningSpy.diagnostics, xml, bar, "bar");
-        call = warningSpy.messages().at(-1);
-        expect(call).toContain("bar");
-        expect(call).toContain("@1:20");
-        expect(call).toContain("(<bar>)");
+        warnWithLocation(diagnostics, xml, bar, "bar");
+        expect(diagnostics[1]).toMatchObject({
+            type: "warning",
+            message: "bar",
+            elementName: "bar",
+            line: 1,
+            column: 20,
+        });
 
-        warnWithLocation(warningSpy.diagnostics, xml, foos[1], "foo2");
-        call = warningSpy.messages().at(-1);
-        expect(call).toContain("foo2");
-        expect(call).toContain("@1:34");
-        expect(call).toContain("(<foo>)");
+        warnWithLocation(diagnostics, xml, foos[1], "foo2");
+        expect(diagnostics[2]).toMatchObject({
+            type: "warning",
+            message: "foo2",
+            elementName: "foo",
+            line: 1,
+            column: 34,
+        });
 
-        warnWithLocation(warningSpy.diagnostics, xml, qux, "qux");
-        call = warningSpy.messages().at(-1);
-        expect(call).toContain("qux");
-        expect(call).toContain("@1:52");
-        expect(call).toContain("(<qux>)");
+        warnWithLocation(diagnostics, xml, qux, "qux");
+        expect(diagnostics[3]).toMatchObject({
+            type: "warning",
+            message: "qux",
+            elementName: "qux",
+            line: 1,
+            column: 52,
+        });
     });
 
     it("XML内にコメントやCDATAが含まれていてもElementノードの位置を正しく特定できる", () => {
         const xml = '<?xml version="1.0" encoding="UTF-8"?>\n<Root><!-- コメント --><![CDATA[abc]]><Child>foo</Child></Root>';
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         const child = doc.getElementsByTagName("Child")[0];
-        warnWithLocation(warningSpy.diagnostics, xml, child, "子要素");
-        const call = warningSpy.messages().at(-1);
-        expect(call).toContain("子要素");
-        expect(call).toContain("@2:35");
-        expect(call).toContain("(<Child>)");
+        warnWithLocation(diagnostics, xml, child, "子要素");
+
+        expect(diagnostics).toHaveLength(1);
+        const diagnostic = diagnostics[0];
+        expect(diagnostic).toMatchObject({
+            type: "warning",
+            message: "子要素",
+            elementName: "Child",
+            line: 2,
+            column: 35,
+        });
+        expect(formatDiagnostic(diagnostic)).toContain("@2:35");
     });
 });
