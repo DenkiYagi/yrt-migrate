@@ -30,9 +30,8 @@ describe("warnWithLocation", () => {
             elementName: "Foo",
             line: 3,
             column: 3,
-            inputXmlPath: SOURCE_PATH,
         });
-        const formatted = formatDiagnostic(diagnostic);
+        const formatted = formatDiagnostic(diagnostic, SOURCE_PATH);
         expect(formatted).toBe(
             [
                 "[WARNING] 3行3列目: <Foo>",
@@ -154,6 +153,6 @@ describe("warnWithLocation", () => {
             line: 2,
             column: 35,
         });
-        expect(formatDiagnostic(diagnostic)).toContain("2行35列目");
+        expect(formatDiagnostic(diagnostic, SOURCE_PATH)).toContain("2行35列目");
     });
 });

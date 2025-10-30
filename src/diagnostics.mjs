@@ -11,7 +11,6 @@
  * @property {string} elementName
  * @property {number | null} line
  * @property {number | null} column
- * @property {string | null} inputXmlPath
  */
 
 /**
@@ -45,21 +44,16 @@ export function createDiagnosticsBuffer(sourcePath) {
  * @param {Diagnostic} diagnostic
  */
 export function addDiagnostic(diagnostics, diagnostic) {
-    diagnostics.items.push({
-        ...diagnostic,
-        inputXmlPath:
-            typeof diagnostic.inputXmlPath === "string" && diagnostic.inputXmlPath.length > 0
-                ? diagnostic.inputXmlPath
-                : diagnostics.sourcePath,
-    });
+    diagnostics.items.push(diagnostic);
 }
 
 /**
  * 診断メッセージを人が読みやすい文字列に整形する。
  * @param {Diagnostic} diagnostic
+ * @param {string} sourcePath
  * @returns {string}
  */
-export function formatDiagnostic(diagnostic) {
+export function formatDiagnostic(diagnostic, sourcePath) {
     const elementLabel =
         diagnostic.elementName && diagnostic.elementName.length > 0
             ? `<${diagnostic.elementName}>`
@@ -85,10 +79,8 @@ export function formatDiagnostic(diagnostic) {
             ? message.split(/\r?\n/).map(line => `    ${line}`)
             : [];
     const locationLine =
-        hasLineAndColumn &&
-            typeof diagnostic.inputXmlPath === "string" &&
-            diagnostic.inputXmlPath.length > 0
-            ? `    ${diagnostic.inputXmlPath}:${diagnostic.line}:${diagnostic.column}`
+        hasLineAndColumn && sourcePath.length > 0
+            ? `    ${sourcePath}:${diagnostic.line}:${diagnostic.column}`
             : null;
     const lines = [header, ...messageLines];
     if (locationLine) {
@@ -104,6 +96,6 @@ export function formatDiagnostic(diagnostic) {
  */
 export function flushDiagnostics(diagnostics, emit = console.warn) {
     diagnostics.items.forEach(diagnostic => {
-        emit(formatDiagnostic(diagnostic));
+        emit(formatDiagnostic(diagnostic, diagnostics.sourcePath));
     });
 }

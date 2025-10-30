@@ -11,7 +11,7 @@ export function setupWarningSpy() {
         messages: () =>
             diagnostics.items
                 .filter(diagnostic => diagnostic.type === "warning")
-                .map(formatDiagnostic),
+                .map(d => formatDiagnostic(d, diagnostics.sourcePath)),
         restore() {
             diagnostics.items.length = 0;
         },
@@ -29,6 +29,6 @@ export function withWarningSpy(callback) {
     const result = callback(diagnostics);
     const warnings = diagnostics.items
         .filter(diagnostic => diagnostic.type === "warning")
-        .map(formatDiagnostic);
+        .map(d => formatDiagnostic(d, diagnostics.sourcePath));
     return { warnings, diagnostics, result };
 }

@@ -181,7 +181,7 @@ async function main() {
         const diagnostics = createDiagnosticsBuffer(inputFileName);
         let migratedDoc = migrate(inputLegacyDoc, diagnostics);
         if (diagnosticsOutput) {
-            const formatted = diagnostics.items.map(formatDiagnostic).join("\n");
+            const formatted = diagnostics.items.map(d => formatDiagnostic(d, diagnostics.sourcePath)).join("\n");
             await fs.writeFile(diagnosticsOutput, formatted.length > 0 ? `${formatted}\n` : "");
         } else {
             flushDiagnostics(diagnostics);
