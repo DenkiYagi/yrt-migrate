@@ -56,23 +56,26 @@ export function warnWithLocation(xml, node, message) {
         const escapedTagName = node.tagName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const tagPattern = new RegExp(`<${escapedTagName}\\b[^>]*`, 'g');
         let match;
-        let matchIndexes = [];
+        const matchIndexes = [];
         while ((match = tagPattern.exec(xml)) !== null) {
             matchIndexes.push(match.index);
         }
         if (matchIndexes.length > 0) {
-            // n番目のノードならn番目の出現位置を使う
-            // 親ノードから同じタグ名の子の中で何番目かを取得
-            let n = 0;
-            if (node.parentNode) {
-                const siblings = Array.from(node.parentNode.childNodes).filter(
-                    el => el.nodeType === 1 && /** @type {Element} */(el).tagName === node.tagName
-                );
-                n = siblings.indexOf(node);
+            let occurrenceIndex = null;
+            const doc = node.ownerDocument ?? null;
+            if (doc && typeof doc.getElementsByTagName === "function") {
+                const candidates = doc.getElementsByTagName(node.tagName);
+                for (let i = 0; i < candidates.length; i += 1) {
+                    if (candidates.item(i) === node) {
+                        occurrenceIndex = i;
+                        break;
+                    }
+                }
             }
-            // n番目（0-indexed）
-            const idx = n >= 0 && n < matchIndexes.length ? matchIndexes[n] : matchIndexes[0];
-            match = { index: idx };
+            if (occurrenceIndex == null || occurrenceIndex < 0 || occurrenceIndex >= matchIndexes.length) {
+                occurrenceIndex = 0;
+            }
+            match = { index: matchIndexes[occurrenceIndex] };
         }
         if (match) {
             // 行・列番号計算

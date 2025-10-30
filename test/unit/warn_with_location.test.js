@@ -46,6 +46,26 @@ describe("warnWithLocation", () => {
         expect(call).toContain("/Root/Foo[2]");
     });
 
+    it("同名要素が別階層に存在しても正しい位置を特定できる", () => {
+        const xml = [
+            '<Root>',
+            '  <Container>',
+            '    <Target id="first"/>',
+            '  </Container>',
+            '  <Wrapper>',
+            '    <Target id="second"/>',
+            '  </Wrapper>',
+            '</Root>'
+        ].join('\n');
+        const doc = new DOMParser().parseFromString(xml, "text/xml");
+        const targets = doc.getElementsByTagName("Target");
+        warnWithLocation(xml, targets[1], "nested");
+        const call = warningSpy.messages().at(-1);
+        expect(call).toContain("nested");
+        expect(call).toContain("@6:5");
+        expect(call).toContain("/Root/Wrapper/Target");
+    });
+
     it("タグ名が存在しない場合でもエラーにならない", () => {
         const xml = '<Root></Root>';
         const doc = new DOMParser().parseFromString(xml, "text/xml");
