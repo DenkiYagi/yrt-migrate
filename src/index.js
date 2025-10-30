@@ -137,12 +137,14 @@ async function main() {
     } catch (error) {
         console.error(error);
         printHelp();
-        process.exit(1);
+        process.exitCode = 1;
+        return;
     }
 
     if (args.values.help) {
         printHelp();
-        process.exit(0);
+        process.exitCode = 0;
+        return;
     }
 
     let inputFileName;
@@ -152,7 +154,8 @@ async function main() {
         inputFileName = args.positionals[0];
     } else {
         console.error("入力ファイルを指定してください");
-        process.exit(1);
+        process.exitCode = 1;
+        return;
     }
 
     const ext = path.extname(inputFileName);
@@ -181,7 +184,8 @@ async function main() {
             inputYrtDoc = await validateYrtInput(inputFileName);
         } else {
             console.error("非対応のファイル形式です");
-            process.exit(1);
+            process.exitCode = 1;
+            return;
         }
 
         const migratedYrtDoc = migrate(inputYrtDoc);
@@ -215,7 +219,8 @@ async function main() {
         }
     } catch (error) {
         console.error(error);
-        process.exit(1);
+        process.exitCode = 1;
+        return;
     }
 }
 
