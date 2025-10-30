@@ -10,7 +10,9 @@
     "test": "npm run test:unit && npm run test:integration && npm run test:regression",
     "test:unit": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
     "test:integration": "node --test test/cli.test.mjs test/integration.test.mjs",
+    "test:ai:integration": "node --test --test-reporter=junit test/cli.test.mjs test/integration.test.mjs",
     "test:regression": "node --test test/regression/regression.test.mjs",
+    "test:ai:regression": "node --test --test-reporter=junit test/regression/regression.test.mjs",
     "test:generate-fixtures": "node test/generate-fixtures.mjs"
   },
   "author": "DenkiYagi Inc.",
