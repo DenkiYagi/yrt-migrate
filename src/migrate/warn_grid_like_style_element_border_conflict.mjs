@@ -58,7 +58,7 @@ function collectThicknessValues(styleNode) {
 }
 
 /**
- * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
+ * @param {import("../diagnostics.mjs").DiagnosticsBuffer} diagnostics
  * @param {Element} node
  * @param {string} originalXml
  */
@@ -103,7 +103,7 @@ function checkNode(diagnostics, node, originalXml) {
 
 /**
  * Grid/Table/ColumnText スタイル要素間の罫線太さの競合を警告する
- * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
+ * @param {import("../diagnostics.mjs").DiagnosticsBuffer} diagnostics
  * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
  * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）
  * @returns {void}

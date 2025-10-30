@@ -5,7 +5,7 @@ import { addDiagnostic } from "./diagnostics.mjs";
 /**
  * 共通の警告出力関数。変換前のXML文字列と該当ノードを受け取り、行番号・列番号を出力する。
  *
- * @param {import("./diagnostics.mjs").Diagnostic[]} diagnostics
+ * @param {import("./diagnostics.mjs").DiagnosticsBuffer} diagnostics
  * @param {string} xml - 変換前のXML文字列
  * @param {Element} node - 警告対象ノード
  * @param {string} message - 警告メッセージ

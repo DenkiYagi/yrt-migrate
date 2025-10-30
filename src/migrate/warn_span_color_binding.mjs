@@ -11,7 +11,7 @@ function isBinding(val) {
 }
 
 /**
- * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
+ * @param {import("../diagnostics.mjs").DiagnosticsBuffer} diagnostics
  * @param {Element} node
  * @param {string} originalXml
  */
@@ -35,7 +35,7 @@ function checkSpan(diagnostics, node, originalXml) {
 
 /**
  * <Span>要素のcolor属性がバインド変数なら警告を出す
- * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
+ * @param {import("../diagnostics.mjs").DiagnosticsBuffer} diagnostics
  * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
  * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）
  * @returns {void} 警告のみ、値は返さない

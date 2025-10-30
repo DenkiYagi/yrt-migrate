@@ -3,7 +3,7 @@
 import { warnWithLocation } from "../warn_with_location.mjs";
 
 /**
- * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
+ * @param {import("../diagnostics.mjs").DiagnosticsBuffer} diagnostics
  * @param {Document} document
  * @param {string} originalXml
  */
@@ -25,7 +25,7 @@ function checkTableBindingWarn(diagnostics, document, originalXml) {
 
 /**
  * <Table>要素のitems/breakCondition属性がバインド変数でなければ警告を出す
- * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
+ * @param {import("../diagnostics.mjs").DiagnosticsBuffer} diagnostics
  * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
  * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）
  * @returns {void} 警告のみ、値は返さない

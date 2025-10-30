@@ -57,7 +57,7 @@ const DO_FORMAT_XML = true;
 
 /**
  * @param {import('./yrt_format.js').LegacyLayoutDocument} legacyDocument
- * @param {import('./diagnostics.mjs').Diagnostic[]} diagnostics
+ * @param {import('./diagnostics.mjs').DiagnosticsBuffer} diagnostics
  * @returns {import('./yrt_format.js').MigratedXmlCollection}
  */
 function migrate(legacyDocument, diagnostics) {
@@ -178,7 +178,7 @@ async function main() {
         const inputLegacyDoc = await validateXmlInput(inputFileName);
 
         const diagnosticsOutput = args.values.diagnostics;
-        const diagnostics = createDiagnosticsBuffer();
+        const diagnostics = createDiagnosticsBuffer({ sourcePath: inputFileName });
         let migratedDoc = migrate(inputLegacyDoc, diagnostics);
         if (diagnosticsOutput) {
             const formatted = diagnostics.map(formatDiagnostic).join("\n");

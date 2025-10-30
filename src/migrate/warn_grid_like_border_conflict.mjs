@@ -42,7 +42,7 @@ function normalizeThickness(value) {
 }
 
 /**
- * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
+ * @param {import("../diagnostics.mjs").DiagnosticsBuffer} diagnostics
  * @param {Element} node
  * @param {string} originalXml
  */
@@ -122,7 +122,7 @@ function checkGridNode(diagnostics, node, originalXml) {
 }
 
 /**
- * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
+ * @param {import("../diagnostics.mjs").DiagnosticsBuffer} diagnostics
  * @param {Element} node
  * @param {string} originalXml
  */
@@ -222,7 +222,7 @@ function checkTableNode(diagnostics, node, originalXml) {
 }
 
 /**
- * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
+ * @param {import("../diagnostics.mjs").DiagnosticsBuffer} diagnostics
  * @param {Element} node
  * @param {string} originalXml
  */
@@ -244,7 +244,7 @@ function traverse(diagnostics, node, originalXml) {
 
 /**
  * Grid/Table の隣接セル罫線の競合を検出し警告を出す
- * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
+ * @param {import("../diagnostics.mjs").DiagnosticsBuffer} diagnostics
  * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
  * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）
  * @returns {void}

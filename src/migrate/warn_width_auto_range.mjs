@@ -4,7 +4,7 @@ import { warnWithLocation } from "../warn_with_location.mjs";
 
 /**
  * width系属性のauto/range廃止マイグレーション: 警告のみ出力
- * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
+ * @param {import("../diagnostics.mjs").DiagnosticsBuffer} diagnostics
  * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
  * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）
  * @returns {void} 警告のみ、値は返さない
@@ -14,7 +14,7 @@ export function migrate(diagnostics, originalDocument, originalXml) {
 }
 
 /**
- * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
+ * @param {import("../diagnostics.mjs").DiagnosticsBuffer} diagnostics
  * @param {Element} root
  * @param {string} originalXml
  */

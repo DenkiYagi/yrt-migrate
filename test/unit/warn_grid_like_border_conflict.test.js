@@ -17,7 +17,7 @@ describe('warn_grid_like_border_conflict', () => {
         ].join('\n');
         const { warnings } = withWarningSpy(diagnostics => migrate(diagnostics, parse(xml), xml));
         expect(warnings).not.toHaveLength(0);
-        expect(warnings[0]).toContain('@2:3');
+        expect(warnings[0]).toContain('2行3列目');
     });
 
     it('Grid: colspan/rowspanで隣接セルがborder系で衝突する場合に警告を出す', () => {

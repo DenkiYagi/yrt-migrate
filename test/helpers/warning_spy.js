@@ -21,8 +21,8 @@ export function setupWarningSpy() {
 /**
  * Utility to run a function with an isolated diagnostics buffer.
  * @template T
- * @param {(diagnostics: import("../../src/diagnostics.mjs").Diagnostic[]) => T} callback
- * @returns {{ warnings: string[], diagnostics: import("../../src/diagnostics.mjs").Diagnostic[], result: T }}
+ * @param {(diagnostics: import("../../src/diagnostics.mjs").DiagnosticsBuffer) => T} callback
+ * @returns {{ warnings: string[], diagnostics: import("../../src/diagnostics.mjs").DiagnosticsBuffer, result: T }}
  */
 export function withWarningSpy(callback) {
     const diagnostics = createDiagnosticsBuffer();

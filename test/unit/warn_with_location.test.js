@@ -3,9 +3,10 @@ import { warnWithLocation } from "../../src/warn_with_location.mjs";
 import { createDiagnosticsBuffer, formatDiagnostic } from "../../src/diagnostics.mjs";
 
 describe("warnWithLocation", () => {
+    const SOURCE_PATH = "input.xml";
     let diagnostics;
     beforeEach(() => {
-        diagnostics = createDiagnosticsBuffer();
+        diagnostics = createDiagnosticsBuffer({ sourcePath: SOURCE_PATH });
     });
 
     it("行番号・列番号・要素名付きで警告が出力される", () => {
@@ -29,11 +30,16 @@ describe("warnWithLocation", () => {
             elementName: "Foo",
             line: 3,
             column: 3,
+            inputXmlPath: SOURCE_PATH,
         });
         const formatted = formatDiagnostic(diagnostic);
-        expect(formatted).toContain("[WARNING]");
-        expect(formatted).toContain("(<Foo>)");
-        expect(formatted).toContain("@3:3");
+        expect(formatted).toBe(
+            [
+                "[WARNING] 3行3列目: <Foo>",
+                "    テスト警告",
+                "    input.xml:3:3"
+            ].join("\n")
+        );
     });
 
     it("タグ名が重複していても指定ノードの位置を特定できる", () => {
@@ -148,6 +154,6 @@ describe("warnWithLocation", () => {
             line: 2,
             column: 35,
         });
-        expect(formatDiagnostic(diagnostic)).toContain("@2:35");
+        expect(formatDiagnostic(diagnostic)).toContain("2行35列目");
     });
 });

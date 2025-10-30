@@ -1,7 +1,7 @@
 /**
  * `test/regression/test-data` 以下のすべてのデータセットに対してリグレッションテストを実行します。
  *
- * 各ディレクトリから `input.xml` をコピーし、CLI (`yrt-migrate`) を実行して変換後の LayoutXML / StyleXML を取得します。
+ * 各ディレクトリの `input.xml` を直接CLI (`yrt-migrate`) に渡して変換後の LayoutXML / StyleXML を取得します。
  * 生成されたファイルを対応する `expected-*.xml` と比較します。
  * さらに CLI の警告出力を `expected-warnings.txt` と照合します。
  * データセット名はハードコーディングせず、実行時にディレクトリ一覧を取得するため、
@@ -13,13 +13,12 @@
 import { describe, test, before } from "node:test";
 import assert from "node:assert";
 import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
     runYrtMigrate,
     setupTestOutputDir,
     createTestCaseDir,
-    prepareInputFile,
     readMigratedLayoutXmls,
     readMigratedStyleXml
 } from "../test-utils.mjs";
@@ -46,6 +45,34 @@ function normalizeWarnings(warnings) {
  */
 function splitNormalizedLines(text) {
     return text === "" ? [] : text.split("\n");
+}
+
+/**
+ * `[WARNING]` で始まる行を基点に警告ブロックを分割する。
+ * @param {string} text
+ * @returns {string[]}
+ */
+function splitWarningBlocks(text) {
+    const lines = splitNormalizedLines(text);
+    if (lines.length === 0) return [];
+    /** @type {string[][]} */
+    const blocks = [];
+    /** @type {string[]} */
+    let current = [];
+    for (const line of lines) {
+        if (line.startsWith("[WARNING]")) {
+            if (current.length > 0) {
+                blocks.push(current);
+            }
+            current = [line];
+        } else if (current.length > 0) {
+            current.push(line);
+        }
+    }
+    if (current.length > 0) {
+        blocks.push(current);
+    }
+    return blocks.map(block => block.join("\n"));
 }
 
 /**
@@ -130,7 +157,9 @@ describe("リグレッションテスト", async () => {
                 if (!testOutRootDir) assert.fail("Test setup failed: testOutRootDir is unspecified");
                 const datasetDir = join(testDataRootDir, datasetName);
                 const testCaseDir = await createTestCaseDir(testOutRootDir, datasetName);
-                const inputFile = await prepareInputFile(join(datasetDir, "input.xml"), testCaseDir, "input.xml");
+                const datasetInputPath = join(datasetDir, "input.xml");
+                const inputFileRelative = relative(process.cwd(), datasetInputPath);
+                const inputFile = inputFileRelative.split(sep).join("/");
                 const outputDir = join(testCaseDir, "output");
                 const diagnosticsFile = join(testCaseDir, "diagnostics.log");
                 const { exitCode, stderr } = await runYrtMigrate([
@@ -187,16 +216,16 @@ describe("リグレッションテスト", async () => {
                     `expected-warnings.txt not found in ${datasetDir}`
                 );
                 const expectedWarningsPath = join(datasetDir, "expected-warnings.txt");
-                const expectedWarningLines = splitNormalizedLines(expectedWarnings);
+                const expectedWarningBlocks = splitWarningBlocks(expectedWarnings);
                 const actualDiagnostics = normalizeWarnings(await readFile(diagnosticsFile, "utf8"));
-                const actualWarningLines = splitNormalizedLines(actualDiagnostics).filter(line => line.startsWith("[WARNING]"));
-                const maxLineCount = Math.max(actualWarningLines.length, expectedWarningLines.length);
-                for (let i = 0; i < maxLineCount; i += 1) {
+                const actualWarningBlocks = splitWarningBlocks(actualDiagnostics);
+                const maxWarningCount = Math.max(actualWarningBlocks.length, expectedWarningBlocks.length);
+                for (let i = 0; i < maxWarningCount; i += 1) {
                     assert.strictEqual(
-                        actualWarningLines[i],
-                        expectedWarningLines[i],
+                        actualWarningBlocks[i],
+                        expectedWarningBlocks[i],
                         [
-                            `Warning line ${i + 1} does not match for dataset "${datasetName}"`,
+                            `Warning ${i + 1} does not match for dataset "${datasetName}"`,
                             `expected warnings:  ${expectedWarningsPath}`,
                             `actual diagnostics: ${diagnosticsFile}`
                         ].join("\n")

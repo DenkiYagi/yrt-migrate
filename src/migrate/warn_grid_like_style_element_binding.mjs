@@ -5,7 +5,7 @@ import { warnWithLocation } from "../warn_with_location.mjs";
 const STYLE_TAGS = ["GridStyle", "TableStyle", "ColumnTextStyle"];
 
 /**
- * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
+ * @param {import("../diagnostics.mjs").DiagnosticsBuffer} diagnostics
  * @param {Element} node
  * @param {string} originalXml
  */
@@ -36,7 +36,7 @@ function checkNode(diagnostics, node, originalXml) {
 
 /**
  * 旧スタイル要素（`GridStyle` 等）に含まれるバインド変数を警告する
- * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
+ * @param {import("../diagnostics.mjs").DiagnosticsBuffer} diagnostics
  * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
  * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）
  * @returns {void}
