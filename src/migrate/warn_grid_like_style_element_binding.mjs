@@ -19,7 +19,7 @@ function checkNode(diagnostics, node, originalXml) {
                     diagnostics,
                     originalXml,
                     node,
-                    `${node.tagName} の ${attr.name} 属性値にバインド変数 (${attr.value}) が含まれています`
+                    [`${node.tagName} の ${attr.name} 属性値にバインド変数 (${attr.value}) が含まれています`]
                 );
             }
         }

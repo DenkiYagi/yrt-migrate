@@ -8,9 +8,9 @@ import { addDiagnostic } from "./diagnostics.mjs";
  * @param {import("./diagnostics.mjs").DiagnosticsBuffer} diagnostics
  * @param {string} xml - 変換前のXML文字列
  * @param {Element} node - 警告対象ノード
- * @param {string} message - 警告メッセージ
+ * @param {string[]} messageLines - 警告メッセージ（複数行）
  */
-export function warnWithLocation(diagnostics, xml, node, message) {
+export function warnWithLocation(diagnostics, xml, node, messageLines) {
     const elementName = typeof node.tagName === "string" ? node.tagName : "";
 
     // 行番号・列番号推定: XML文字列内で該当ノードの開始タグを検索
@@ -51,7 +51,7 @@ export function warnWithLocation(diagnostics, xml, node, message) {
     }
     addDiagnostic(diagnostics, {
         type: "warning",
-        message,
+        messageLines,
         elementName,
         line,
         column: col,

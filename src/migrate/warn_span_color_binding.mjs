@@ -19,7 +19,7 @@ function checkSpan(diagnostics, node, originalXml) {
     if (node.nodeType === 1 && node.nodeName === "Span") {
         const color = node.getAttribute("color")?.trim();
         if (isBinding(color)) {
-            warnWithLocation(diagnostics, originalXml, node, `<Span>のcolor属性にバインド変数は指定できません`);
+            warnWithLocation(diagnostics, originalXml, node, [`<Span>のcolor属性にバインド変数は指定できません`]);
         }
     }
     // 子要素も再帰的にチェック

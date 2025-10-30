@@ -22,13 +22,13 @@ function warnElement(diagnostics, el, originalXml) {
     let hidden = el.getAttribute("hidden")?.trim();
 
     if (foreach && hidden) {
-        warnWithLocation(diagnostics, originalXml, el, `foreach属性とhidden属性が同時に指定されているため自動変換できません。手動で修正してください。`);
+        warnWithLocation(diagnostics, originalXml, el, [`foreach属性とhidden属性が同時に指定されているため自動変換できません。手動で修正してください。`]);
     }
     if (foreach && !isBindingVariable(foreach)) {
-        warnWithLocation(diagnostics, originalXml, el, `foreach属性の値 "${foreach}" はバインド変数ではありません。バインド変数しか指定できないので修正してください。`);
+        warnWithLocation(diagnostics, originalXml, el, [`foreach属性の値 "${foreach}" はバインド変数ではありません。バインド変数しか指定できないので修正してください。`]);
     }
     if (hidden && !isBindingVariable(hidden)) {
-        warnWithLocation(diagnostics, originalXml, el, `hidden属性の値 "${hidden}" はバインド変数ではありません。バインド変数しか指定できないので修正してください。`);
+        warnWithLocation(diagnostics, originalXml, el, [`hidden属性の値 "${hidden}" はバインド変数ではありません。バインド変数しか指定できないので修正してください。`]);
     }
 
     if (el.childNodes) {

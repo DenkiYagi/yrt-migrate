@@ -117,7 +117,7 @@ function checkGridNode(diagnostics, node, originalXml) {
         }
     }
     if (warn) {
-        warnWithLocation(diagnostics, originalXml, node, "隣接セルの罫線挙動が変わる可能性があります。必要に応じて手動で直してください。");
+        warnWithLocation(diagnostics, originalXml, node, ["隣接セルの罫線挙動が変わる可能性があります。必要に応じて手動で直してください。"]);
     }
 }
 
@@ -217,7 +217,7 @@ function checkTableNode(diagnostics, node, originalXml) {
         }
     }
     if (warn) {
-        warnWithLocation(diagnostics, originalXml, node, "隣接セルの罫線挙動が変わる可能性があります。必要に応じて手動で直してください。");
+        warnWithLocation(diagnostics, originalXml, node, ["隣接セルの罫線挙動が変わる可能性があります。必要に応じて手動で直してください。"]);
     }
 }
 

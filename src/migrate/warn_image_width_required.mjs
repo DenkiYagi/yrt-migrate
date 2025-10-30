@@ -15,7 +15,7 @@ export function migrate(diagnostics, originalDocument, originalXml) {
     for (let j = 0; j < images.length; j++) {
         const image = images[j];
         if (!image.hasAttribute("width")) {
-            warnWithLocation(diagnostics, originalXml, image, "Image要素にwidth属性がありません");
+            warnWithLocation(diagnostics, originalXml, image, ["Image要素にwidth属性がありません"]);
         }
     }
 }

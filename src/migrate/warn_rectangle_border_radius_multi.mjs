@@ -16,7 +16,7 @@ function checkRectangleBorderRadiusMultiWarn(diagnostics, document, originalXml)
         const trimmed = borderRadius.trim();
         // スペース区切りで複数値の場合は警告
         if (trimmed.split(/\s+/).length > 1) {
-            warnWithLocation(diagnostics, originalXml, rect, `<Rectangle>のborderRadius属性は単一値のみ許可されています`);
+            warnWithLocation(diagnostics, originalXml, rect, [`<Rectangle>のborderRadius属性は単一値のみ許可されています`]);
         }
     }
 }

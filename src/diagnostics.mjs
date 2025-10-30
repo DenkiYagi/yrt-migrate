@@ -7,7 +7,7 @@
 /**
  * @typedef {Object} Diagnostic
  * @property {DiagnosticType} type
- * @property {string} message
+ * @property {string[]} messageLines
  * @property {string} elementName
  * @property {number | null} line
  * @property {number | null} column
@@ -73,11 +73,9 @@ export function formatDiagnostic(diagnostic, sourcePath) {
         headerSuffix && headerSuffix.length > 0
             ? `[${diagnostic.type.toUpperCase()}] ${headerSuffix}`
             : `[${diagnostic.type.toUpperCase()}]`;
-    const message = typeof diagnostic.message === "string" ? diagnostic.message : "";
-    const messageLines =
-        message.length > 0
-            ? message.split(/\r?\n/).map(line => `    ${line}`)
-            : [];
+    const messageLines = Array.isArray(diagnostic.messageLines)
+        ? diagnostic.messageLines.map((line, index) => index === 0 ? `    ${line}` : `    ${line}`)
+        : [];
     const locationLine =
         hasLineAndColumn && sourcePath.length > 0
             ? `    ${sourcePath}:${diagnostic.line}:${diagnostic.column}`

@@ -25,16 +25,16 @@ function warnDeprecatedAttrs(diagnostics, node, originalXml) {
     if (tag === "LinearLayout") {
         const targets = ["borderThickness", "borderColor", "borderStyle"];
         if (targets.some(attr => node.hasAttribute(attr))) {
-            warnWithLocation(diagnostics, originalXml, node, `LinearLayoutのborder系属性（borderThickness, borderColor, borderStyle）は廃止されました。レイアウトが変わる可能性があるため手直ししてください。`);
+            warnWithLocation(diagnostics, originalXml, node, [`LinearLayoutのborder系属性（borderThickness, borderColor, borderStyle）は廃止されました。レイアウトが変わる可能性があるため手直ししてください。`]);
         }
     } else if (tag === "StackLayout") {
         const targets = ["borderThickness", "borderColor", "borderStyle", "padding"];
         if (targets.some(attr => node.hasAttribute(attr))) {
-            warnWithLocation(diagnostics, originalXml, node, `<StackLayout>のborder系属性・padding属性（borderThickness, borderColor, borderStyle, padding）は廃止されました。レイアウトが変わる可能性があるため手直ししてください。`);
+            warnWithLocation(diagnostics, originalXml, node, [`<StackLayout>のborder系属性・padding属性（borderThickness, borderColor, borderStyle, padding）は廃止されました。レイアウトが変わる可能性があるため手直ししてください。`]);
         }
     } else if (tag === "StackBlock") {
         if (node.hasAttribute("padding")) {
-            warnWithLocation(diagnostics, originalXml, node, `<StackBlock>のpadding属性は廃止されました。レイアウトが変わる可能性があるため手直ししてください。`);
+            warnWithLocation(diagnostics, originalXml, node, [`<StackBlock>のpadding属性は廃止されました。レイアウトが変わる可能性があるため手直ししてください。`]);
         }
     }
     for (let i = 0; i < node.childNodes.length; i++) {

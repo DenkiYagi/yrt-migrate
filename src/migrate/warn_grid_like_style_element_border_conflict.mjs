@@ -87,7 +87,7 @@ function checkNode(diagnostics, node, originalXml) {
                 diagnostics,
                 originalXml,
                 node,
-                `${node.tagName} 直下に ${styleTagName} 要素が複数存在し、罫線の太さが均一ではありません。帳票エンジンの挙動変更に伴い、描画結果が変化している可能性があるため、実際のPDF出力を目視で確認し、必要に応じてレイアウトXMLを手動で調整してください。`
+                [`${node.tagName} 直下に ${styleTagName} 要素が複数存在し、罫線の太さが均一ではありません。帳票エンジンの挙動変更に伴い、描画結果が変化している可能性があるため、実際のPDF出力を目視で確認し、必要に応じてレイアウトXMLを手動で調整してください。`]
             );
         }
     }

@@ -13,12 +13,12 @@ function checkTableBindingWarn(diagnostics, document, originalXml) {
         // items属性
         const items = table.getAttribute("items")?.trim();
         if (items && !/^\$\{[^}]+\}$/.test(items)) {
-            warnWithLocation(diagnostics, originalXml, table, `items属性はバインド変数で指定してください`);
+            warnWithLocation(diagnostics, originalXml, table, [`items属性はバインド変数で指定してください`]);
         }
         // breakCondition属性
         const breakCond = table.getAttribute("breakCondition")?.trim();
         if (breakCond && !/^\$\{[^}]+\}$/.test(breakCond)) {
-            warnWithLocation(diagnostics, originalXml, table, `breakCondition属性はバインド変数で指定してください`);
+            warnWithLocation(diagnostics, originalXml, table, [`breakCondition属性はバインド変数で指定してください`]);
         }
     }
 }

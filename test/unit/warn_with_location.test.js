@@ -20,13 +20,13 @@ describe("warnWithLocation", () => {
         ].join('\n');
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         const foo = doc.getElementsByTagName("Foo")[0];
-        warnWithLocation(diagnostics, xml, foo, "テスト警告");
+        warnWithLocation(diagnostics, xml, foo, ["テスト警告"]);
 
         expect(diagnostics.items).toHaveLength(1);
         const diagnostic = diagnostics.items[0];
         expect(diagnostic).toMatchObject({
             type: "warning",
-            message: "テスト警告",
+            messageLines: ["テスト警告"],
             elementName: "Foo",
             line: 3,
             column: 3,
@@ -50,12 +50,12 @@ describe("warnWithLocation", () => {
         ].join('\n');
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         const foos = doc.getElementsByTagName("Foo");
-        warnWithLocation(diagnostics, xml, foos[1], "重複タグ");
+        warnWithLocation(diagnostics, xml, foos[1], ["重複タグ"]);
 
         expect(diagnostics.items).toHaveLength(1);
         expect(diagnostics.items[0]).toMatchObject({
             type: "warning",
-            message: "重複タグ",
+            messageLines: ["重複タグ"],
             elementName: "Foo",
             line: 3,
             column: 3,
@@ -75,12 +75,12 @@ describe("warnWithLocation", () => {
         ].join('\n');
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         const targets = doc.getElementsByTagName("Target");
-        warnWithLocation(diagnostics, xml, targets[1], "nested");
+        warnWithLocation(diagnostics, xml, targets[1], ["nested"]);
 
         expect(diagnostics.items).toHaveLength(1);
         expect(diagnostics.items[0]).toMatchObject({
             type: "warning",
-            message: "nested",
+            messageLines: ["nested"],
             elementName: "Target",
             line: 6,
             column: 5,
@@ -91,7 +91,7 @@ describe("warnWithLocation", () => {
         const xml = '<Root></Root>';
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         const root = doc.documentElement;
-        expect(() => warnWithLocation(diagnostics, xml, root, "タグなし")).not.toThrow();
+        expect(() => warnWithLocation(diagnostics, xml, root, ["タグなし"])).not.toThrow();
     });
 
     it("改行なしXMLで各要素の位置を正しく特定できる", () => {
@@ -101,37 +101,37 @@ describe("warnWithLocation", () => {
         const bar = doc.getElementsByTagName("bar")[0];
         const qux = doc.getElementsByTagName("qux")[0];
 
-        warnWithLocation(diagnostics, xml, foos[0], "foo1");
+        warnWithLocation(diagnostics, xml, foos[0], ["foo1"]);
         expect(diagnostics.items[0]).toMatchObject({
             type: "warning",
-            message: "foo1",
+            messageLines: ["foo1"],
             elementName: "foo",
             line: 1,
             column: 7,
         });
 
-        warnWithLocation(diagnostics, xml, bar, "bar");
+        warnWithLocation(diagnostics, xml, bar, ["bar"]);
         expect(diagnostics.items[1]).toMatchObject({
             type: "warning",
-            message: "bar",
+            messageLines: ["bar"],
             elementName: "bar",
             line: 1,
             column: 20,
         });
 
-        warnWithLocation(diagnostics, xml, foos[1], "foo2");
+        warnWithLocation(diagnostics, xml, foos[1], ["foo2"]);
         expect(diagnostics.items[2]).toMatchObject({
             type: "warning",
-            message: "foo2",
+            messageLines: ["foo2"],
             elementName: "foo",
             line: 1,
             column: 34,
         });
 
-        warnWithLocation(diagnostics, xml, qux, "qux");
+        warnWithLocation(diagnostics, xml, qux, ["qux"]);
         expect(diagnostics.items[3]).toMatchObject({
             type: "warning",
-            message: "qux",
+            messageLines: ["qux"],
             elementName: "qux",
             line: 1,
             column: 52,
@@ -142,13 +142,13 @@ describe("warnWithLocation", () => {
         const xml = '<?xml version="1.0" encoding="UTF-8"?>\n<Root><!-- コメント --><![CDATA[abc]]><Child>foo</Child></Root>';
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         const child = doc.getElementsByTagName("Child")[0];
-        warnWithLocation(diagnostics, xml, child, "子要素");
+        warnWithLocation(diagnostics, xml, child, ["子要素"]);
 
         expect(diagnostics.items).toHaveLength(1);
         const diagnostic = diagnostics.items[0];
         expect(diagnostic).toMatchObject({
             type: "warning",
-            message: "子要素",
+            messageLines: ["子要素"],
             elementName: "Child",
             line: 2,
             column: 35,
