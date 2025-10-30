@@ -11,6 +11,7 @@ function isBinding(val) {
 }
 
 /**
+ * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
  * @param {Element} node
  * @param {string} originalXml
  */

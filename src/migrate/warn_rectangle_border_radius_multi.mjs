@@ -3,6 +3,7 @@
 import { warnWithLocation } from "../warn_with_location.mjs";
 
 /**
+ * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
  * @param {Document} document
  * @param {string} originalXml
  */

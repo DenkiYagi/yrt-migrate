@@ -11,6 +11,7 @@ function isBindingVariable(val) {
 }
 
 /**
+ * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
  * @param {Element} el
  * @param {string} originalXml
  * @returns {void}
