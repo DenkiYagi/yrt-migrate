@@ -15,43 +15,28 @@
  */
 
 /**
- * @typedef {Object} DiagnosticsBufferOptions
- * @property {string | null | undefined} [sourcePath]
+ * 診断メッセージを保持するバッファー。
+ * 入力ファイルパスと診断メッセージの配列を保持する。
  */
-
-/**
- * 診断メッセージを保持する配列ラッパー。
- * Array を継承し、入力ファイルパスなどのメタデータを保持する。
- * @extends Array<Diagnostic>
- */
-export class DiagnosticsBuffer extends Array {
+export class DiagnosticsBuffer {
     /**
-     * @param {DiagnosticsBufferOptions | number} [options]
+     * @param {string} sourcePath
      */
-    constructor(options = {}) {
-        if (typeof options === "number") {
-            super(options);
-            /** @type {string | null} */
-            this.sourcePath = null;
-        } else {
-            super();
-            /** @type {string | null} */
-            this.sourcePath = options?.sourcePath ?? null;
-        }
-    }
-
-    static get [Symbol.species]() {
-        return Array;
+    constructor(sourcePath) {
+        /** @type {string} */
+        this.sourcePath = sourcePath;
+        /** @type {Diagnostic[]} */
+        this.items = [];
     }
 }
 
 /**
  * 診断メッセージを蓄えるバッファーを生成する。
- * @param {DiagnosticsBufferOptions} [options]
+ * @param {string} sourcePath
  * @returns {DiagnosticsBuffer}
  */
-export function createDiagnosticsBuffer(options = {}) {
-    return new DiagnosticsBuffer(options);
+export function createDiagnosticsBuffer(sourcePath) {
+    return new DiagnosticsBuffer(sourcePath);
 }
 
 /**
@@ -60,16 +45,12 @@ export function createDiagnosticsBuffer(options = {}) {
  * @param {Diagnostic} diagnostic
  */
 export function addDiagnostic(diagnostics, diagnostic) {
-    const sourcePath =
-        typeof diagnostics.sourcePath === "string" && diagnostics.sourcePath.length > 0
-            ? diagnostics.sourcePath
-            : null;
-    diagnostics.push({
+    diagnostics.items.push({
         ...diagnostic,
         inputXmlPath:
             typeof diagnostic.inputXmlPath === "string" && diagnostic.inputXmlPath.length > 0
                 ? diagnostic.inputXmlPath
-                : sourcePath,
+                : diagnostics.sourcePath,
     });
 }
 
@@ -122,7 +103,7 @@ export function formatDiagnostic(diagnostic) {
  * @param {(message: string) => void} [emit]
  */
 export function flushDiagnostics(diagnostics, emit = console.warn) {
-    diagnostics.forEach(diagnostic => {
+    diagnostics.items.forEach(diagnostic => {
         emit(formatDiagnostic(diagnostic));
     });
 }

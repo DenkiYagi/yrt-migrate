@@ -6,7 +6,7 @@ describe("warnWithLocation", () => {
     const SOURCE_PATH = "input.xml";
     let diagnostics;
     beforeEach(() => {
-        diagnostics = createDiagnosticsBuffer({ sourcePath: SOURCE_PATH });
+        diagnostics = createDiagnosticsBuffer(SOURCE_PATH);
     });
 
     it("行番号・列番号・要素名付きで警告が出力される", () => {
@@ -22,8 +22,8 @@ describe("warnWithLocation", () => {
         const foo = doc.getElementsByTagName("Foo")[0];
         warnWithLocation(diagnostics, xml, foo, "テスト警告");
 
-        expect(diagnostics).toHaveLength(1);
-        const diagnostic = diagnostics[0];
+        expect(diagnostics.items).toHaveLength(1);
+        const diagnostic = diagnostics.items[0];
         expect(diagnostic).toMatchObject({
             type: "warning",
             message: "テスト警告",
@@ -53,8 +53,8 @@ describe("warnWithLocation", () => {
         const foos = doc.getElementsByTagName("Foo");
         warnWithLocation(diagnostics, xml, foos[1], "重複タグ");
 
-        expect(diagnostics).toHaveLength(1);
-        expect(diagnostics[0]).toMatchObject({
+        expect(diagnostics.items).toHaveLength(1);
+        expect(diagnostics.items[0]).toMatchObject({
             type: "warning",
             message: "重複タグ",
             elementName: "Foo",
@@ -78,8 +78,8 @@ describe("warnWithLocation", () => {
         const targets = doc.getElementsByTagName("Target");
         warnWithLocation(diagnostics, xml, targets[1], "nested");
 
-        expect(diagnostics).toHaveLength(1);
-        expect(diagnostics[0]).toMatchObject({
+        expect(diagnostics.items).toHaveLength(1);
+        expect(diagnostics.items[0]).toMatchObject({
             type: "warning",
             message: "nested",
             elementName: "Target",
@@ -103,7 +103,7 @@ describe("warnWithLocation", () => {
         const qux = doc.getElementsByTagName("qux")[0];
 
         warnWithLocation(diagnostics, xml, foos[0], "foo1");
-        expect(diagnostics[0]).toMatchObject({
+        expect(diagnostics.items[0]).toMatchObject({
             type: "warning",
             message: "foo1",
             elementName: "foo",
@@ -112,7 +112,7 @@ describe("warnWithLocation", () => {
         });
 
         warnWithLocation(diagnostics, xml, bar, "bar");
-        expect(diagnostics[1]).toMatchObject({
+        expect(diagnostics.items[1]).toMatchObject({
             type: "warning",
             message: "bar",
             elementName: "bar",
@@ -121,7 +121,7 @@ describe("warnWithLocation", () => {
         });
 
         warnWithLocation(diagnostics, xml, foos[1], "foo2");
-        expect(diagnostics[2]).toMatchObject({
+        expect(diagnostics.items[2]).toMatchObject({
             type: "warning",
             message: "foo2",
             elementName: "foo",
@@ -130,7 +130,7 @@ describe("warnWithLocation", () => {
         });
 
         warnWithLocation(diagnostics, xml, qux, "qux");
-        expect(diagnostics[3]).toMatchObject({
+        expect(diagnostics.items[3]).toMatchObject({
             type: "warning",
             message: "qux",
             elementName: "qux",
@@ -145,8 +145,8 @@ describe("warnWithLocation", () => {
         const child = doc.getElementsByTagName("Child")[0];
         warnWithLocation(diagnostics, xml, child, "子要素");
 
-        expect(diagnostics).toHaveLength(1);
-        const diagnostic = diagnostics[0];
+        expect(diagnostics.items).toHaveLength(1);
+        const diagnostic = diagnostics.items[0];
         expect(diagnostic).toMatchObject({
             type: "warning",
             message: "子要素",

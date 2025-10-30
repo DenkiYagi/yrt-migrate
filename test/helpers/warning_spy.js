@@ -5,15 +5,15 @@ import { createDiagnosticsBuffer, formatDiagnostic } from "../../src/diagnostics
  * Retained for backward compatibility with existing tests that expect a spy object.
  */
 export function setupWarningSpy() {
-    const diagnostics = createDiagnosticsBuffer();
+    const diagnostics = createDiagnosticsBuffer("test-input.xml");
     return {
         diagnostics,
         messages: () =>
-            diagnostics
+            diagnostics.items
                 .filter(diagnostic => diagnostic.type === "warning")
                 .map(formatDiagnostic),
         restore() {
-            diagnostics.length = 0;
+            diagnostics.items.length = 0;
         },
     };
 }
@@ -25,9 +25,9 @@ export function setupWarningSpy() {
  * @returns {{ warnings: string[], diagnostics: import("../../src/diagnostics.mjs").DiagnosticsBuffer, result: T }}
  */
 export function withWarningSpy(callback) {
-    const diagnostics = createDiagnosticsBuffer();
+    const diagnostics = createDiagnosticsBuffer("test-input.xml");
     const result = callback(diagnostics);
-    const warnings = diagnostics
+    const warnings = diagnostics.items
         .filter(diagnostic => diagnostic.type === "warning")
         .map(formatDiagnostic);
     return { warnings, diagnostics, result };
