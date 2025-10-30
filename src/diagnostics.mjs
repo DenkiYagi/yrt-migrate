@@ -8,7 +8,7 @@
  * @typedef {Object} Diagnostic
  * @property {DiagnosticType} type
  * @property {string} message
- * @property {string | null} xpath
+ * @property {string} elementName
  * @property {number | null} line
  * @property {number | null} column
  */
@@ -36,12 +36,15 @@ export function addDiagnostic(diagnostics, diagnostic) {
  * @returns {string}
  */
 export function formatDiagnostic(diagnostic) {
-    const xpathPart = diagnostic.xpath ? ` (${diagnostic.xpath})` : "";
+    const elementPart =
+        diagnostic.elementName && diagnostic.elementName.length > 0
+            ? ` (<${diagnostic.elementName}>)`
+            : "";
     const locationPart =
         diagnostic.line != null && diagnostic.column != null
             ? ` @${diagnostic.line}:${diagnostic.column}`
             : "";
-    return `[${diagnostic.type.toUpperCase()}] ${diagnostic.message}${xpathPart}${locationPart}`;
+    return `[${diagnostic.type.toUpperCase()}] ${diagnostic.message}${elementPart}${locationPart}`;
 }
 
 /**

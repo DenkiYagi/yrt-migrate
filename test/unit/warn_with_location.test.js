@@ -11,7 +11,7 @@ describe("warnWithLocation", () => {
         warningSpy.restore();
     });
 
-    it("行番号・列番号・XPath付きで警告が出力される", () => {
+    it("行番号・列番号・要素名付きで警告が出力される", () => {
         const xml = [
             '<?xml version="1.0" encoding="UTF-8"?>',
             '<Root>',
@@ -27,7 +27,7 @@ describe("warnWithLocation", () => {
         expect(call).toContain("[WARNING]");
         expect(call).toContain("テスト警告");
         expect(call).toContain("@3:3");
-        expect(call).toContain("/Root/Foo");
+        expect(call).toContain("(<Foo>)");
     });
 
     it("タグ名が重複していても指定ノードの位置を特定できる", () => {
@@ -43,7 +43,7 @@ describe("warnWithLocation", () => {
         const call = warningSpy.messages()[0];
         expect(call).toContain("重複タグ");
         expect(call).toContain("@3:3");
-        expect(call).toContain("/Root/Foo[2]");
+        expect(call).toContain("(<Foo>)");
     });
 
     it("同名要素が別階層に存在しても正しい位置を特定できる", () => {
@@ -63,7 +63,7 @@ describe("warnWithLocation", () => {
         const call = warningSpy.messages().at(-1);
         expect(call).toContain("nested");
         expect(call).toContain("@6:5");
-        expect(call).toContain("/Root/Wrapper/Target");
+        expect(call).toContain("(<Target>)");
     });
 
     it("タグ名が存在しない場合でもエラーにならない", () => {
@@ -84,25 +84,25 @@ describe("warnWithLocation", () => {
         let call = warningSpy.messages().at(-1);
         expect(call).toContain("foo1");
         expect(call).toContain("@1:7");
-        expect(call).toContain("/Root/foo");
+        expect(call).toContain("(<foo>)");
 
         warnWithLocation(warningSpy.diagnostics, xml, bar, "bar");
         call = warningSpy.messages().at(-1);
         expect(call).toContain("bar");
         expect(call).toContain("@1:20");
-        expect(call).toContain("/Root/bar");
+        expect(call).toContain("(<bar>)");
 
         warnWithLocation(warningSpy.diagnostics, xml, foos[1], "foo2");
         call = warningSpy.messages().at(-1);
         expect(call).toContain("foo2");
         expect(call).toContain("@1:34");
-        expect(call).toContain("/Root/foo[2]");
+        expect(call).toContain("(<foo>)");
 
         warnWithLocation(warningSpy.diagnostics, xml, qux, "qux");
         call = warningSpy.messages().at(-1);
         expect(call).toContain("qux");
         expect(call).toContain("@1:52");
-        expect(call).toContain("/Root/baz/qux");
+        expect(call).toContain("(<qux>)");
     });
 
     it("XML内にコメントやCDATAが含まれていてもElementノードの位置を正しく特定できる", () => {
@@ -113,6 +113,6 @@ describe("warnWithLocation", () => {
         const call = warningSpy.messages().at(-1);
         expect(call).toContain("子要素");
         expect(call).toContain("@2:35");
-        expect(call).toContain("/Root/Child");
+        expect(call).toContain("(<Child>)");
     });
 });

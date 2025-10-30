@@ -1,7 +1,6 @@
 // @ts-check
 
 import { addDiagnostic } from "./diagnostics.mjs";
-import { getXPath } from "./utils.js";
 
 /**
  * 共通の警告出力関数。変換前のXML文字列と該当ノードを受け取り、行番号・列番号を出力する。
@@ -12,7 +11,7 @@ import { getXPath } from "./utils.js";
  * @param {string} message - 警告メッセージ
  */
 export function warnWithLocation(diagnostics, xml, node, message) {
-    let xpath = getXPath(node);
+    const elementName = typeof node.tagName === "string" ? node.tagName : "";
 
     // 行番号・列番号推定: XML文字列内で該当ノードの開始タグを検索
     let line = null, col = null;
@@ -53,7 +52,7 @@ export function warnWithLocation(diagnostics, xml, node, message) {
     addDiagnostic(diagnostics, {
         type: "warning",
         message,
-        xpath: xpath || null,
+        elementName,
         line,
         column: col,
     });
