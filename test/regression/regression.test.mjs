@@ -12,7 +12,7 @@
 
 import { describe, test, before } from "node:test";
 import assert from "node:assert";
-import { readdir, readFile } from "node:fs/promises";
+import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
     runYrtMigrate,
@@ -39,6 +39,14 @@ function normalizeXml(xml) {
  */
 function normalizeWarnings(warnings) {
     return warnings.replace(/\r\n/g, "\n").trim();
+}
+
+/**
+ * @param {string} text 
+ * @returns {string[]}
+ */
+function splitNormalizedLines(text) {
+    return text === "" ? [] : text.split("\n");
 }
 
 /**
@@ -106,7 +114,7 @@ describe("リグレッションテスト", () => {
     }
 
     for (const datasetName of datasetNames) {
-        test(`"${datasetName}" matches expected output`, async () => {
+        test(`"${datasetName}" matches expected output`, async (t) => {
             const datasetDir = join(TEST_DATA_ROOT, datasetName);
             const testCaseDir = await createTestCaseDir(TEST_OUT_ROOT, datasetName);
             const inputFile = await prepareInputFile(join(datasetDir, "input.xml"), testCaseDir, "input.xml");
@@ -168,11 +176,24 @@ describe("リグレッションテスト", () => {
                 expectedWarnings !== null,
                 `expected-warnings.txt not found in ${datasetDir}`
             );
-            assert.strictEqual(
-                normalizeWarnings(stderr),
-                expectedWarnings,
-                `Warning output does not match for dataset "${datasetName}"`
-            );
+            const warningsOutFile = join(testCaseDir, "warnings.actual.txt");
+            const normalizedActualWarnings = normalizeWarnings(stderr);
+            await writeFile(warningsOutFile, normalizedActualWarnings, "utf8");
+            const expectedWarningsPath = join(datasetDir, "expected-warnings.txt");
+            const expectedWarningLines = splitNormalizedLines(expectedWarnings);
+            const actualWarningLines = splitNormalizedLines(normalizedActualWarnings);
+            const maxLineCount = Math.max(actualWarningLines.length, expectedWarningLines.length);
+            for (let i = 0; i < maxLineCount; i += 1) {
+                assert.strictEqual(
+                    actualWarningLines[i],
+                    expectedWarningLines[i],
+                    [
+                        `Warning line ${i + 1} does not match for dataset "${datasetName}"`,
+                        `expected: ${expectedWarningsPath}`,
+                        `actual:   ${warningsOutFile}`
+                    ].join("\n")
+                );
+            }
         });
     }
 });
