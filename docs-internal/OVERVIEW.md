@@ -19,11 +19,10 @@ Supported environment: Node.js v20+
 
 ## Commands
 
-- `yarn test` - Run all tests
-- `yarn test:unit` - Run unit tests
-- `yarn test:ai:integration` - Run integration tests
-- `yarn test:ai:regression` - Run regression tests
-- `yarn test:generate-fixtures` - Update YRT fixtures for integration tests. Only needed when modified the existing XML fixtures.
+- `npm run test:unit` - Run unit tests
+- `npm run test:ai:integration` - Run integration tests
+- `npm run test:ai:regression` - Run regression tests
+- `npm run test:generate-fixtures` - Update YRT fixtures for integration tests. Only needed when modified the existing XML fixtures.
 
 
 ## Understanding the YRT format
