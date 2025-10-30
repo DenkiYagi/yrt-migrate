@@ -4,7 +4,6 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import * as fs from "fs/promises";
 import * as path from "path";
-import * as msgpack from "@msgpack/msgpack";
 import assert from "node:assert";
 import { fileURLToPath } from "node:url";
 
@@ -40,38 +39,6 @@ export async function runYrtMigrate(args = [], options = {}) {
             exitCode: error.code || 1
         };
     }
-}
-
-/**
- * 新YRT形式の構造を検証するヘルパー関数
- * @param {Buffer} data - YRTバイナリデータ
- * @returns {import("../src/yrt_format").YrtBinary} - デコード後のYRTデータオブジェクト
- */
-export function decodeAndValidateNewFormatYrt(data) {
-    const decoded = msgpack.decode(data);
-
-    // YrtRoot形式の検証
-    assert(Array.isArray(decoded), "YRT data should be an array");
-    assert.strictEqual(decoded.length, 3, "YRT array should have 3 elements");
-    assert.strictEqual(decoded[0], "YRT", "First element should be 'YRT'");
-    assert.strictEqual(decoded[1], 1, "Second element should be version 1");
-    assert.strictEqual(typeof decoded[2], "object", "Third element should be an object");
-
-    const body = decoded[2];
-    assert(body.hasOwnProperty("l"), "Body should have 'l' property");
-    assert(Array.isArray(body.l), "Body.l should be an array");
-    assert(body.l.length > 0, "Body.l should not be empty");
-
-    // 各レイアウトエントリの検証
-    body.l.forEach((/** @type {Array<any>} */ entry) => {
-        const [name, xml] = entry;
-        assert(name === null || typeof name === "string", "Layout name should be null or string");
-        assert(typeof xml === "string", "Layout XML should be a string");
-        assert(xml.length > 0, "Layout XML should not be empty");
-    });
-
-    // @ts-ignore
-    return decoded;
 }
 
 /**
@@ -136,11 +103,38 @@ export async function setupTestOutputDir(testOutDir) {
 }
 
 /**
- * マイグレート後のYRTファイルを読み込んでデコード・検証する
- * @param {string} filePath - YRTファイル（新形式）のパス
- * @returns {Promise<import("../src/yrt_format").YrtBinary>} - デコード後のYRTデータオブジェクト
+ * 指定ディレクトリから `layout-*.xml` をソートして読み込む。
+ * @param {string} outputDir
+ * @returns {Promise<string[]>} - 各LayoutXML文字列の配列
  */
-export async function readAndValidateNewFormatYrtFile(filePath) {
-    const data = await fs.readFile(filePath);
-    return decodeAndValidateNewFormatYrt(data);
+export async function readMigratedLayoutXmls(outputDir) {
+    const entries = await fs.readdir(outputDir, { withFileTypes: true });
+    const layouts = entries
+        .filter(entry => entry.isFile() && /^layout-\d+\.xml$/u.test(entry.name))
+        .map(entry => ({
+            name: entry.name,
+            index: Number(entry.name.match(/^layout-(\d+)\.xml$/u)?.[1] ?? NaN)
+        }))
+        .filter(({ index }) => Number.isInteger(index))
+        .sort((a, b) => a.index - b.index);
+    assert(layouts.length > 0, "No layout XML files were generated.");
+    const results = [];
+    for (const layout of layouts) {
+        const filePath = path.join(outputDir, layout.name);
+        results.push(await fs.readFile(filePath, "utf8"));
+    }
+    return results;
+}
+
+/**
+ * 指定ディレクトリから `style.xml` を読み込む。存在しなければ null を返す。
+ * @param {string} outputDir
+ * @returns {Promise<string|null>} - `style.xml` の内容、存在しなければ null
+ */
+export async function readMigratedStyleXml(outputDir) {
+    const stylePath = path.join(outputDir, "style.xml");
+    if (await fileExists(stylePath)) {
+        return fs.readFile(stylePath, "utf8");
+    }
+    return null;
 }

@@ -20,10 +20,8 @@
 
 import * as fs from "fs/promises";
 import * as path from "path";
-import * as msgpack from "@msgpack/msgpack";
 import * as util from "util";
 import { DOMParser } from "@xmldom/xmldom";
-import { documentToYrtBinary } from "./yrt_format.js";
 import { formatXmlPretty, removeIndents } from "./formatter.mjs";
 import { migrate as multipleXmls } from "./migrate/multiple_xmls.mjs";
 import { migrate as orientationRename } from "./migrate/orientation_rename.mjs";
@@ -102,8 +100,7 @@ function migrate(yrtOldDocument, diagnostics) {
 function printHelp() {
     console.log(`Usage: npx yrt-migrate [options...] [input_file]
     -i, --input <input_file>   入力ファイル名を指定します。このオプションを使用した場合は末尾のファイル名は省略できます
-    -o, --output <output_file> 出力ファイル名を指定します。省略した場合は入力ファイルを上書きします
-    -b, --backup <backup_file> バックアップファイル名を指定します。省略した場合は {input_file}.old を使用します
+    -o, --output <output_dir>  出力ディレクトリを指定します。省略した場合は入力ファイルと同じディレクトリに {input_file_without_ext}-v1.0 を作成します
     -d, --dry-run              変換結果を表示します。ファイルへは出力されません
     --diagnostics <file>       警告メッセージを標準エラー出力ではなく指定したファイルへ書き出します
     -h, --help                 このメッセージを表示します`);
@@ -121,10 +118,6 @@ async function main() {
                 output: {
                     type: "string",
                     short: "o",
-                },
-                backup: {
-                    type: "string",
-                    short: "b",
                 },
                 "dry-run": {
                     type: "boolean",
@@ -166,27 +159,20 @@ async function main() {
 
     const ext = path.extname(inputFileName);
 
-    let backupFileName;
-    if (args.values.backup) {
-        backupFileName = args.values.backup;
-    } else {
-        backupFileName = `${inputFileName}.old`;
-    }
-
-    let outputFileName;
+    let outputDir;
     if (args.values.output) {
-        outputFileName = args.values.output;
-    } else if (ext === ".xml") {
-        outputFileName = inputFileName.replace(/\.xml$/i, ".yrt");
+        outputDir = args.values.output;
     } else {
-        outputFileName = inputFileName;
+        const parsed = path.parse(inputFileName);
+        const parentDir = parsed.dir === "" ? "." : parsed.dir;
+        outputDir = path.join(parentDir, `${parsed.name}-v1.0`);
     }
 
     try {
         let inputYrtDoc;
-        if (ext === ".xml") {
+        if (ext.toLowerCase() === ".xml") {
             inputYrtDoc = await validateXmlInput(inputFileName);
-        } else if (ext === ".yrt") {
+        } else if (ext.toLowerCase() === ".yrt") {
             inputYrtDoc = await validateYrtInput(inputFileName);
         } else {
             console.error("非対応のファイル形式です");
@@ -212,8 +198,6 @@ async function main() {
                 migratedYrtDoc.style = formatXmlPretty(migratedYrtDoc.style);
             }
         }
-        const migratedYrtBinary = documentToYrtBinary(migratedYrtDoc);
-        const outputFile = msgpack.encode(migratedYrtBinary);
 
         if (args.values["dry-run"]) {
             migratedYrtDoc.layouts.forEach((layout, idx) => {
@@ -225,11 +209,23 @@ async function main() {
                 console.log(migratedYrtDoc.style);
             }
         } else {
-            // 入力が .yrt で出力ファイル名が同じ場合のみバックアップを作成
-            if (ext === ".yrt" && outputFileName === inputFileName) {
-                await fs.copyFile(inputFileName, backupFileName);
+            try {
+                await fs.mkdir(outputDir, { recursive: true });
+            } catch (dirError) {
+                console.error(dirError);
+                process.exitCode = 1;
+                return;
             }
-            await fs.writeFile(outputFileName, outputFile);
+            const writeOperations = [];
+            migratedYrtDoc.layouts.forEach((layout, idx) => {
+                const targetPath = path.join(outputDir, `layout-${idx + 1}.xml`);
+                writeOperations.push(fs.writeFile(targetPath, `${layout.xml}\n`, "utf8"));
+            });
+            if (migratedYrtDoc.style) {
+                const stylePath = path.join(outputDir, "style.xml");
+                writeOperations.push(fs.writeFile(stylePath, `${migratedYrtDoc.style}\n`, "utf8"));
+            }
+            await Promise.all(writeOperations);
         }
     } catch (error) {
         console.error(error);

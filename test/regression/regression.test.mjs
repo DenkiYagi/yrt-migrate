@@ -20,7 +20,8 @@ import {
     setupTestOutputDir,
     createTestCaseDir,
     prepareInputFile,
-    readAndValidateNewFormatYrtFile
+    readMigratedLayoutXmls,
+    readMigratedStyleXml
 } from "../test-utils.mjs";
 
 /**
@@ -130,13 +131,13 @@ describe("リグレッションテスト", async () => {
                 const datasetDir = join(testDataRootDir, datasetName);
                 const testCaseDir = await createTestCaseDir(testOutRootDir, datasetName);
                 const inputFile = await prepareInputFile(join(datasetDir, "input.xml"), testCaseDir, "input.xml");
-                const outputFile = join(testCaseDir, "output.yrt");
+                const outputDir = join(testCaseDir, "output");
                 const diagnosticsFile = join(testCaseDir, "diagnostics.log");
                 const { exitCode, stderr } = await runYrtMigrate([
                     "--input",
                     inputFile,
                     "--output",
-                    outputFile,
+                    outputDir,
                     "--diagnostics",
                     diagnosticsFile
                 ]);
@@ -147,40 +148,34 @@ describe("リグレッションテスト", async () => {
                     `yrt-migrate exited with ${exitCode}. stderr: ${stderr}`
                 );
 
-                const yrt = await readAndValidateNewFormatYrtFile(outputFile);
-                const body = yrt[2];
-
                 const expectedLayouts = await loadExpectedLayouts(datasetDir);
                 assert(expectedLayouts.length > 0, `No expected-*.xml files found in ${datasetDir}`);
-                assert.strictEqual(
-                    body.l.length,
-                    expectedLayouts.length,
-                    `Layout count mismatch for dataset "${datasetName}"`
-                );
+                const actualLayouts = await readMigratedLayoutXmls(outputDir);
+                assert.strictEqual(actualLayouts.length, expectedLayouts.length, `Layout count mismatch for dataset "${datasetName}"`);
 
                 for (let i = 0; i < expectedLayouts.length; i += 1) {
-                    const [, actualXml] = body.l[i];
                     const expectedXml = expectedLayouts[i];
                     assert.strictEqual(
-                        normalizeXml(actualXml),
+                        normalizeXml(actualLayouts[i]),
                         normalizeXml(expectedXml),
                         `Layout ${i} does not match for dataset "${datasetName}"`
                     );
                 }
 
                 const expectedStyle = await loadExpectedStyle(datasetDir);
+                const actualStyle = await readMigratedStyleXml(outputDir);
                 if (expectedStyle === null) {
                     assert(
-                        body.s == null,
+                        actualStyle == null,
                         `StyleXML was not expected but was generated for dataset "${datasetName}"`
                     );
                 } else {
                     assert(
-                        typeof body.s === "string",
+                        typeof actualStyle === "string",
                         `StyleXML expected but not generated for dataset "${datasetName}"`
                     );
                     assert.strictEqual(
-                        normalizeXml(body.s),
+                        normalizeXml(actualStyle),
                         normalizeXml(expectedStyle),
                         `StyleXML does not match for dataset "${datasetName}"`
                     );

@@ -9,10 +9,11 @@ The previous version of "yagisan-reports" is v1.0.0-alpha.13 and the latest vers
 
 ## About this Project
 
-This project is a migration tool for YRT data, from Legacy YRT format to the new format.
+This project is a migration tool for YRT data, from Legacy YRT format to XML files in the new format.
 
 The migration tool is a CLI command `yrt-migrate`.
 It receives either a binary data of Legacy YRT, or just a single LayoutXML file in the legacy format (with the root element `<LayoutXml>`).
+(It is planned to omit the support for YRT binary data input.)
 
 Supported environment: Node.js v20+
 
@@ -40,12 +41,6 @@ It containts:
 ### New YRT
 
 YRT for yagisan-reports v1.0 containts:
-
-- doctype (must be "YRT")
-- version (must be `1`)
-- body
-
-And the body contains:
 
 - LayoutXML (one or multiple), with a new syntax where the root element is not `<LayoutXml>` any more
 - StyleXML (zero or one), newly created with the root element `<Style>`
