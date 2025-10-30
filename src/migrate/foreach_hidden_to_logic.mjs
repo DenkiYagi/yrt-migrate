@@ -53,28 +53,31 @@ function migrateElement(el) {
 }
 
 /**
- * YrtDocument型: 全レイアウトXMLに対してforeach/hidden→logic変換を適用
- * @param {import('../yrt_format.js').YrtDocument} yrtDocument
- * @returns {import('../yrt_format.js').YrtDocument} 変換後のYrtDocument
+ * レイアウト・スタイルにforeach/hidden→logic変換を適用する
+ * @param {import('../yrt_format.js').MigratedXmlCollection} yrtDocument
+ * @returns {import('../yrt_format.js').MigratedXmlCollection} 変換後のコレクション
  */
 export function migrate(yrtDocument) {
-    const newDoc = structuredClone(yrtDocument);
-    for (let i = 0; i < newDoc.layouts.length; i++) {
-        const entry = newDoc.layouts[i];
-        const doc = new DOMParser().parseFromString(entry.xml, "text/xml");
+    const newLayouts = yrtDocument.layouts.map(xml => {
+        const doc = new DOMParser().parseFromString(xml, "text/xml");
         if (doc && doc.documentElement) {
             migrateElement(doc.documentElement);
         }
-        entry.xml = new XMLSerializer().serializeToString(doc.documentElement);
-    }
+        return new XMLSerializer().serializeToString(doc.documentElement);
+    });
 
     // Style XMLにも同様の変換を適用
-    if (typeof newDoc.style === "string" && newDoc.style.trim().length > 0) {
-        const styleDoc = new DOMParser().parseFromString(newDoc.style, "text/xml");
+    let newStyle = yrtDocument.style ?? null;
+    if (typeof newStyle === "string" && newStyle.trim().length > 0) {
+        const styleDoc = new DOMParser().parseFromString(newStyle, "text/xml");
         if (styleDoc && styleDoc.documentElement) {
             migrateElement(styleDoc.documentElement);
         }
-        newDoc.style = new XMLSerializer().serializeToString(styleDoc.documentElement);
+        newStyle = new XMLSerializer().serializeToString(styleDoc.documentElement);
     }
-    return newDoc;
+
+    return {
+        layouts: newLayouts,
+        style: newStyle,
+    };
 }

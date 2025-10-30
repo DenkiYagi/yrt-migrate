@@ -232,21 +232,21 @@ export function normalizeDirectionalAttrsUnderscore(xmlString) {
 
 /**
  * レイアウトXMLに方向系属性の正規化・継承・伝播処理を適用する
- * @param {import('../yrt_format.js').YrtDocument} yrtDocument
- * @returns {import('../yrt_format.js').YrtDocument}
+ * @param {import('../yrt_format.js').MigratedXmlCollection} yrtDocument
+ * @returns {import('../yrt_format.js').MigratedXmlCollection}
  */
 export function migrate(yrtDocument) {
     if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) return yrtDocument;
-    const nextLayouts = yrtDocument.layouts.map(entry => {
-        if (!entry || typeof entry.xml !== 'string') return entry;
-        let xml = entry.xml;
-        xml = normalizeDirectionalAttrsUnderscore(xml);
-        return { ...entry, xml };
+    const nextLayouts = yrtDocument.layouts.map(xml => {
+        if (typeof xml !== 'string') return xml;
+        return normalizeDirectionalAttrsUnderscore(xml);
     });
-    // Style XMLにも同様の処理を適用
-    let nextStyle = yrtDocument.style;
+    let nextStyle = yrtDocument.style ?? null;
     if (typeof nextStyle === 'string' && nextStyle.trim().length > 0) {
         nextStyle = normalizeDirectionalAttrsUnderscore(nextStyle);
     }
-    return { ...yrtDocument, layouts: nextLayouts, style: nextStyle };
+    return {
+        layouts: nextLayouts,
+        style: nextStyle,
+    };
 }

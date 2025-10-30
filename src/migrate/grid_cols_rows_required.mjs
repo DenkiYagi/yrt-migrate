@@ -25,17 +25,17 @@ function addGridColsRowsIfMissing(xml) {
 
 /**
  * <Grid> の cols, rows 属性省略不可警告マイグレーション
- * @param {import("../yrt_format.js").YrtDocument} yrtDocument - 変換対象のYrtDocument
- * @returns {import("../yrt_format.js").YrtDocument} 変換後のYrtDocument
+ * @param {import("../yrt_format.js").MigratedXmlCollection} yrtDocument 変換対象のコレクション
+ * @returns {import("../yrt_format.js").MigratedXmlCollection} 変換後のコレクション
  */
 export function migrate(yrtDocument) {
     if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) return yrtDocument;
-    const migratedLayouts = yrtDocument.layouts.map(layoutEntry => {
-        if (!layoutEntry || typeof layoutEntry.xml !== "string") return layoutEntry;
-        return {
-            ...layoutEntry,
-            xml: addGridColsRowsIfMissing(layoutEntry.xml)
-        };
+    const migratedLayouts = yrtDocument.layouts.map(layoutXml => {
+        if (typeof layoutXml !== "string") return layoutXml;
+        return addGridColsRowsIfMissing(layoutXml);
     });
-    return { ...yrtDocument, layouts: migratedLayouts };
+    return {
+        layouts: migratedLayouts,
+        style: yrtDocument.style ?? null,
+    };
 }

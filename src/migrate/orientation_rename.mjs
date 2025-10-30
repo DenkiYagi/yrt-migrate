@@ -7,12 +7,12 @@ import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
  * - horizontal → landscape
  * - vertical → portrait
  *
- * @param {import('../yrt_format.js').YrtDocument} doc
- * @returns {import('../yrt_format.js').YrtDocument}
+ * @param {import('../yrt_format.js').MigratedXmlCollection} doc
+ * @returns {import('../yrt_format.js').MigratedXmlCollection}
  */
 export function migrate(doc) {
     return {
-        layouts: doc.layouts.map(({ name, xml }) => {
+        layouts: doc.layouts.map((xml) => {
             const dom = new DOMParser().parseFromString(xml, "text/xml");
             const allElems = dom.getElementsByTagName("*");
             for (let i = 0; i < allElems.length; i++) {
@@ -26,12 +26,8 @@ export function migrate(doc) {
                     }
                 }
             }
-            return {
-                name,
-                xml: new XMLSerializer().serializeToString(dom.documentElement)
-            };
+            return new XMLSerializer().serializeToString(dom.documentElement);
         }),
-        style: doc.style,
-        assets: doc.assets,
+        style: doc.style ?? null,
     };
 }

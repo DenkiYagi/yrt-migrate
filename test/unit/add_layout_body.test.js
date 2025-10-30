@@ -13,18 +13,18 @@ describe("add_layout_body", () => {
     const input = "<LinearLayout></LinearLayout>";
     const expected = "<LinearLayout><LayoutBody></LayoutBody></LinearLayout>";
     const inputXml = [input].join('\n');
-    const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
+    const yrtDocument = { layouts: [inputXml], style: null };
     const migrated = migrate(yrtDocument);
-    const migratedXml = migrated.layouts[0].xml;
+    const migratedXml = migrated.layouts[0];
     expect(normalize(migratedXml)).toBe(normalize(expected));
   });
 
   it("自己終了タグの <LinearLayout/> にも <LayoutBody> を追加する", () => {
     const input = "<LinearLayout/>";
     const expected = "<LinearLayout><LayoutBody></LayoutBody></LinearLayout>";
-    const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+    const yrtDocument = { layouts: [input], style: null };
     const migrated = migrate(yrtDocument);
-    expect(normalize(migrated.layouts[0].xml)).toBe(normalize(expected));
+    expect(normalize(migrated.layouts[0])).toBe(normalize(expected));
   });
 
   it("<LinearLayout> 直下に <LayoutBody> が既にある場合は何もしない", () => {
@@ -35,11 +35,10 @@ describe("add_layout_body", () => {
       '    <Text>body</Text>',
       '  </LayoutBody>',
       '  <LayoutFooter>footer</LayoutFooter>',
-      '</LinearLayout>'
-    ].join('\n');
-    const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+      '</LinearLayout>'].join('\n');
+    const yrtDocument = { layouts: [input], style: null };
     const migrated = migrate(yrtDocument);
-    const migratedXml = migrated.layouts[0].xml;
+    const migratedXml = migrated.layouts[0];
     expect(normalize(migratedXml)).toBe(normalize(input));
   });
 
@@ -48,18 +47,16 @@ describe("add_layout_body", () => {
       '<LinearLayout>',
       '  <LayoutHeader>header</LayoutHeader>',
       '  <LayoutFooter>footer</LayoutFooter>',
-      '</LinearLayout>'
-    ].join('\n');
+      '</LinearLayout>'].join('\n');
     const expected = [
       '<LinearLayout>',
       '    <LayoutHeader>header</LayoutHeader>',
       '    <LayoutBody></LayoutBody>',
       '    <LayoutFooter>footer</LayoutFooter>',
-      '</LinearLayout>'
-    ].join('\n');
-    const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+      '</LinearLayout>'].join('\n');
+    const yrtDocument = { layouts: [input], style: null };
     const migrated = migrate(yrtDocument);
-    const migratedXml = migrated.layouts[0].xml;
+    const migratedXml = migrated.layouts[0];
     expect(normalize(migratedXml)).toBe(normalize(expected));
   });
 
@@ -69,9 +66,8 @@ describe("add_layout_body", () => {
       '  <LayoutHeader>header</LayoutHeader>',
       '  <Text>body</Text>',
       '  <LayoutFooter>footer</LayoutFooter>',
-      '</LinearLayout>'
-    ].join('\n');
-    const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+      '</LinearLayout>'].join('\n');
+    const yrtDocument = { layouts: [input], style: null };
     expect(() => migrate(yrtDocument)).toThrow(/unexpected child element/i);
   });
 
@@ -90,12 +86,11 @@ describe("add_layout_body", () => {
       '',
       '  </LayoutBody>',
       '',
-      '</LinearLayout>'
-    ].join('\n');
+      '</LinearLayout>'].join('\n');
     const input = xml;
     const expected = xml;
-    const yrtDocument = { layouts: [{ name: null, xml: input }], style: null, assets: null };
+    const yrtDocument = { layouts: [input], style: null };
     const migrated = migrate(yrtDocument);
-    expect(migrated.layouts[0].xml).toBe(expected);
+    expect(migrated.layouts[0]).toBe(expected);
   })
 });

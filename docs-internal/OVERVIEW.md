@@ -12,8 +12,7 @@ The previous version of "yagisan-reports" is v1.0.0-alpha.13 and the latest vers
 This project is a migration tool for YRT data, from Legacy YRT format to XML files in the new format.
 
 The migration tool is a CLI command `yrt-migrate`.
-It receives either a binary data of Legacy YRT, or just a single LayoutXML file in the legacy format (with the root element `<LayoutXml>`).
-(It is planned to omit the support for YRT binary data input.)
+It receives a legacy LayoutXML file (with the root element `<LayoutXml>`) and outputs XML files in the new format.
 
 Supported environment: Node.js v20+
 
@@ -23,25 +22,12 @@ Supported environment: Node.js v20+
 - `npm run test:unit` - Run unit tests
 - `npm run test:ai:integration` - Run integration tests
 - `npm run test:ai:regression` - Run regression tests
-- `npm run test:generate-fixtures` - Update YRT fixtures for integration tests. Only needed when modified the existing XML fixtures.
-
 
 ## Understanding the YRT format
 
-YRT data consists of XML files and other asset files, and is encoded to a binary format by `msgpack`.
+Legacy YRT data consists primarily of a single Layout XML whose root element is `<LayoutXml>`.
 
-### Legacy YRT
+The migrated output for yagisan-reports v1.0 contains:
 
-YRT for yagisan-reports v1.0.0-alpha.13 is called "Legacy YRT".
-It containts:
-
-- Layout XML (just one), where the root element is always `<LayoutXml>`
-- Assets (optional), which is a mapping object from asset names to binary data
-
-### New YRT
-
-YRT for yagisan-reports v1.0 containts:
-
-- LayoutXML (one or multiple), with a new syntax where the root element is not `<LayoutXml>` any more
-- StyleXML (zero or one), newly created with the root element `<Style>`
-- Assets (optional), unchanged from legacy
+- Layout XMLs (one or more) in the new schema
+- Style XML (zero or one) with the root element `<Style>`

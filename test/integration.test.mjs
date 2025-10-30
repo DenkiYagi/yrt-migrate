@@ -94,23 +94,6 @@ describe("yrt-migrate 統合テスト", () => {
             });
         });
 
-        describe("マイグレート後のアセットの検証", () => {
-            test("YRT入力の場合でもレイアウトは生成される（アセットは無視される）", async () => {
-                const testCaseDir = await createTestCaseDir(TEST_OUT_DIR, "minimal-yrt-assets");
-                const inputFile = await prepareInputFile(fixturePath("legacy_minimal.yrt"), testCaseDir, "input.yrt");
-                const outputDir = join(testCaseDir, "output");
-
-                const result = await runYrtMigrate([
-                    "--input", inputFile,
-                    "--output", outputDir
-                ]);
-
-                assert.strictEqual(result.exitCode, 0);
-
-                const layouts = await readMigratedLayoutXmls(outputDir);
-                assert.strictEqual(layouts.length, 1, "レイアウトXMLが生成されること");
-            });
-        });
     });
 
     describe("例: 複雑な構成のYRT/XML", () => {
@@ -181,48 +164,5 @@ describe("yrt-migrate 統合テスト", () => {
             });
         });
 
-        describe("異なる入力形式に対するXML生成の一貫性の検証", () => {
-            test("入力がYRT形式の場合も、入力がXML形式の場合と同じXMLとStyleを生成する", async () => {
-                const testCaseDir = await createTestCaseDir(TEST_OUT_DIR, "complex-xml-yrt-compare");
-
-                const inputFileLegacyXml = await prepareInputFile(fixturePath("legacy_complex.xml"), testCaseDir, "input.xml");
-                const inputFileLegacyYrt = await prepareInputFile(fixturePath("legacy_complex.yrt"), testCaseDir, "input.yrt");
-
-                const outputDirFromXml = join(testCaseDir, "from-xml");
-                const outputDirFromYrt = join(testCaseDir, "from-yrt");
-
-                const xmlResult = await runYrtMigrate([
-                    "--input", inputFileLegacyXml,
-                    "--output", outputDirFromXml
-                ]);
-                assert.strictEqual(xmlResult.exitCode, 0);
-
-                const yrtResult = await runYrtMigrate([
-                    "--input", inputFileLegacyYrt,
-                    "--output", outputDirFromYrt
-                ]);
-                assert.strictEqual(yrtResult.exitCode, 0);
-
-                const layoutsFromXml = await readMigratedLayoutXmls(outputDirFromXml);
-                const layoutsFromYrt = await readMigratedLayoutXmls(outputDirFromYrt);
-
-                assert.strictEqual(layoutsFromXml.length, layoutsFromYrt.length, "LayoutXML数が一致すること");
-                for (let i = 0; i < layoutsFromXml.length; i += 1) {
-                    assert.strictEqual(
-                        normalizeXml(layoutsFromXml[i]),
-                        normalizeXml(layoutsFromYrt[i]),
-                        `Layout ${i} が一致すること`
-                    );
-                }
-
-                const styleFromXml = await readMigratedStyleXml(outputDirFromXml);
-                const styleFromYrt = await readMigratedStyleXml(outputDirFromYrt);
-                assert.strictEqual(
-                    styleFromXml && normalizeXml(styleFromXml),
-                    styleFromYrt && normalizeXml(styleFromYrt),
-                    "StyleXMLが一致すること"
-                );
-            });
-        });
     });
 });

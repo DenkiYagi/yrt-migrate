@@ -47,30 +47,26 @@ function removeContentElements(node) {
 }
 
 /**
- * マイグレーション本体（YrtDocument型のみ対応）
- * @param {import('../yrt_format.js').YrtDocument} yrtDocument
- * @returns {import('../yrt_format.js').YrtDocument} 新しいYrtDocument
+ * マイグレーション本体（レイアウト・スタイル配列を対象）
+ * @param {import('../yrt_format.js').MigratedXmlCollection} yrtDocument
+ * @returns {import('../yrt_format.js').MigratedXmlCollection} 新しいXMLコレクション
  */
 export function migrate(yrtDocument) {
-    const newLayouts = yrtDocument.layouts.map(({ name, xml }) => {
+    const newLayouts = yrtDocument.layouts.map((xml) => {
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         removeContentElements(doc.documentElement);
         const newXml = new XMLSerializer().serializeToString(doc.documentElement);
-        return { name, xml: newXml };
+        return newXml;
     });
-    const newStyle = (() => {
-        const styleXml = yrtDocument.style ?? null;
-        if (typeof styleXml === "string" && styleXml.trim().length > 0) {
-            const styleDoc = new DOMParser().parseFromString(styleXml, "text/xml");
-            removeContentElements(styleDoc.documentElement);
-            return new XMLSerializer().serializeToString(styleDoc.documentElement);
-        }
-        return styleXml;
-    })();
+    let newStyle = yrtDocument.style ?? null;
+    if (typeof newStyle === "string" && newStyle.trim().length > 0) {
+        const styleDoc = new DOMParser().parseFromString(newStyle, "text/xml");
+        removeContentElements(styleDoc.documentElement);
+        newStyle = new XMLSerializer().serializeToString(styleDoc.documentElement);
+    }
 
     return {
         layouts: newLayouts,
         style: newStyle,
-        assets: yrtDocument.assets ?? null
     };
 }

@@ -1,8 +1,8 @@
 /**
  * `test/regression/test-data` 以下のすべてのデータセットに対してリグレッションテストを実行します。
  *
- * 各ディレクトリから `input.xml` をコピーし、CLI (`yrt-migrate`) を実行して `.yrt` を生成します。
- * 生成された YRT をデコードし、各 LayoutXML（および必要なら StyleXML）を対応する `expected-*.xml` と比較。
+ * 各ディレクトリから `input.xml` をコピーし、CLI (`yrt-migrate`) を実行して変換後の LayoutXML / StyleXML を取得します。
+ * 生成されたファイルを対応する `expected-*.xml` と比較します。
  * さらに CLI の警告出力を `expected-warnings.txt` と照合します。
  * データセット名はハードコーディングせず、実行時にディレクトリ一覧を取得するため、
  * ローカルで未コミットのフィクスチャにも自動対応します。

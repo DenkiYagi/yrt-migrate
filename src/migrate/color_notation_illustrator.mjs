@@ -84,24 +84,27 @@ function migrateNode(node) {
 }
 
 /**
- * YrtDocument型の各layouts[].xmlにIllustrator寄りのカラー記法変換を適用する
- * @param {import("../yrt_format.js").YrtDocument} yrtDocument - 変換対象のYrtDocument
- * @returns {import("../yrt_format.js").YrtDocument} 変換後のYrtDocument
+ * レイアウトとスタイルにIllustrator寄りのカラー記法変換を適用する
+ * @param {import("../yrt_format.js").MigratedXmlCollection} yrtDocument 変換対象のコレクション
+ * @returns {import("../yrt_format.js").MigratedXmlCollection} 変換後のコレクション
  */
 export function migrate(yrtDocument) {
     if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) return yrtDocument;
-    const migratedLayouts = yrtDocument.layouts.map(layoutEntry => {
-        if (!layoutEntry || typeof layoutEntry.xml !== "string") return layoutEntry;
-        const doc = new DOMParser().parseFromString(layoutEntry.xml, "text/xml");
+    const migratedLayouts = yrtDocument.layouts.map(layoutXml => {
+        if (typeof layoutXml !== "string") return layoutXml;
+        const doc = new DOMParser().parseFromString(layoutXml, "text/xml");
         migrateNode(doc.documentElement);
-        return { ...layoutEntry, xml: new XMLSerializer().serializeToString(doc) };
+        return new XMLSerializer().serializeToString(doc);
     });
     // Style XMLにも同様の処理を適用
-    let migratedStyle = yrtDocument.style;
+    let migratedStyle = yrtDocument.style ?? null;
     if (typeof migratedStyle === "string" && migratedStyle.trim().length > 0) {
         const styleDoc = new DOMParser().parseFromString(migratedStyle, "text/xml");
         migrateNode(styleDoc.documentElement);
         migratedStyle = new XMLSerializer().serializeToString(styleDoc);
     }
-    return { ...yrtDocument, layouts: migratedLayouts, style: migratedStyle };
+    return {
+        layouts: migratedLayouts,
+        style: migratedStyle,
+    };
 }

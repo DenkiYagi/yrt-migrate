@@ -3,11 +3,11 @@
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
 /**
- * @param {import('../yrt_format.js').YrtDocument} doc
+ * @param {import('../yrt_format.js').MigratedXmlCollection} doc
  */
 export function migrate(doc) {
     return {
-        layouts: doc.layouts.map(({ name, xml }) => {
+        layouts: doc.layouts.map((xml) => {
             const dom = new DOMParser().parseFromString(xml, "text/xml");
             /**
              * @param {Element} node
@@ -27,12 +27,8 @@ export function migrate(doc) {
                 }
             }
             removeUnspecifiedAttrs(dom.documentElement);
-            return {
-                name,
-                xml: new XMLSerializer().serializeToString(dom.documentElement)
-            };
+            return new XMLSerializer().serializeToString(dom.documentElement);
         }),
-        style: doc.style,
-        assets: doc.assets,
+        style: doc.style ?? null,
     };
 }

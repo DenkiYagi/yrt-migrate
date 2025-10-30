@@ -10,16 +10,14 @@ describe('remove_content_elements マイグレーション', () => {
         '    <Text>',
         '    </Text>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ],
+        '</LinearLayout>'],
       expected: [
         '<LinearLayout>',
         '  <LayoutBody>',
         '    <Text>',
         '    </Text>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ]
+        '</LinearLayout>']
     },
     {
       name: "TextContentがなければ何もしない",
@@ -30,8 +28,7 @@ describe('remove_content_elements マイグレーション', () => {
         '      foo',
         '    </Text>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ],
+        '</LinearLayout>'],
       expected: [
         '<LinearLayout>',
         '  <LayoutBody>',
@@ -39,8 +36,7 @@ describe('remove_content_elements マイグレーション', () => {
         '      foo',
         '    </Text>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ]
+        '</LinearLayout>']
     },
     {
       name: "TextContentが空だった場合はそのまま削除される",
@@ -51,15 +47,13 @@ describe('remove_content_elements マイグレーション', () => {
         '      <TextContent></TextContent>',
         '    </Text>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ],
+        '</LinearLayout>'],
       expected: [
         '<LinearLayout>',
         '  <LayoutBody>',
         '    <Text/>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ]
+        '</LinearLayout>']
     },
     {
       name: "TextContentの前後に空白があっても、中身が空ならそのまま削除される",
@@ -68,15 +62,13 @@ describe('remove_content_elements マイグレーション', () => {
         '  <LayoutBody>',
         '    <Text>  <TextContent></TextContent>  </Text>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ],
+        '</LinearLayout>'],
       expected: [
         '<LinearLayout>',
         '  <LayoutBody>',
         '    <Text/>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ]
+        '</LinearLayout>']
     },
     {
       name: "TextContentの中身がそのままText要素の子ノードになる",
@@ -87,15 +79,13 @@ describe('remove_content_elements マイグレーション', () => {
         '      <TextContent>foo</TextContent>',
         '    </Text>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ],
+        '</LinearLayout>'],
       expected: [
         '<LinearLayout>',
         '  <LayoutBody>',
         '    <Text>foo</Text>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ]
+        '</LinearLayout>']
     },
     {
       name: "VTextContentの中身がそのままVText要素の子ノードになる",
@@ -106,15 +96,13 @@ describe('remove_content_elements マイグレーション', () => {
         '      <VTextContent>foo</VTextContent>',
         '    </VText>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ],
+        '</LinearLayout>'],
       expected: [
         '<LinearLayout>',
         '  <LayoutBody>',
         '    <VText>foo</VText>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ]
+        '</LinearLayout>']
     },
     {
       name: "LinkContentの中身がそのままLink要素の子ノードになる",
@@ -125,15 +113,13 @@ describe('remove_content_elements マイグレーション', () => {
         '      <LinkContent>foo</LinkContent>',
         '    </Link>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ],
+        '</LinearLayout>'],
       expected: [
         '<LinearLayout>',
         '  <LayoutBody>',
         '    <Link to="https://example.com">foo</Link>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ]
+        '</LinearLayout>']
     },
     {
       name: "RichTextContentの中身がそのままRichText要素の子ノードになる",
@@ -144,15 +130,13 @@ describe('remove_content_elements マイグレーション', () => {
         '      <RichTextContent>foo</RichTextContent>',
         '    </RichText>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ],
+        '</LinearLayout>'],
       expected: [
         '<LinearLayout>',
         '  <LayoutBody>',
         '    <RichText>foo</RichText>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ]
+        '</LinearLayout>']
     },
     {
       name: "ColumnTextContentの中身がそのままColumnText要素の子ノードになる",
@@ -163,15 +147,13 @@ describe('remove_content_elements マイグレーション', () => {
         '      <ColumnTextContent>foo</ColumnTextContent>',
         '    </ColumnText>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ],
+        '</LinearLayout>'],
       expected: [
         '<LinearLayout>',
         '  <LayoutBody>',
         '    <ColumnText>foo</ColumnText>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ]
+        '</LinearLayout>']
     },
     {
       name: "複数ある場合(1)",
@@ -183,15 +165,13 @@ describe('remove_content_elements マイグレーション', () => {
         '      <TextContent>bar</TextContent>',
         '    </Text>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ],
+        '</LinearLayout>'],
       expected: [
         '<LinearLayout>',
         '  <LayoutBody>',
         '    <Text>foobar</Text>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ]
+        '</LinearLayout>']
     },
     {
       name: "複数ある場合(2)",
@@ -203,15 +183,13 @@ describe('remove_content_elements マイグレーション', () => {
         '      <Span>bar</Span>',
         '    </RichText>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ],
+        '</LinearLayout>'],
       expected: [
         '<LinearLayout>',
         '  <LayoutBody>',
         '    <RichText>foo<Span>bar</Span></RichText>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ]
+        '</LinearLayout>']
     },
     {
       name: "XxxContent内の前後ホワイトスペースはトリミングされない",
@@ -222,15 +200,13 @@ describe('remove_content_elements マイグレーション', () => {
         '      <TextContent>  ABC  </TextContent>',
         '    </Text>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ],
+        '</LinearLayout>'],
       expected: [
         '<LinearLayout>',
         '  <LayoutBody>',
         '    <Text>  ABC  </Text>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ]
+        '</LinearLayout>']
     },
     {
       name: "TextContent内の前後ホワイトスペースはトリミングされない（改行・インデントあり）",
@@ -242,23 +218,21 @@ describe('remove_content_elements マイグレーション', () => {
         '      DEF  </TextContent>',
         '    </Text>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ],
+        '</LinearLayout>'],
       expected: [
         '<LinearLayout>',
         '  <LayoutBody>',
         '    <Text>  ABC',
         '      DEF  </Text>',
         '  </LayoutBody>',
-        '</LinearLayout>'
-      ]
+        '</LinearLayout>']
     },
   ])('$name', ({ input, expected }) => {
     const inputXml = Array.isArray(input) ? input.join('\n') : input;
     const expectedXml = Array.isArray(expected) ? expected.join('\n') : expected;
-    const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
+    const yrtDocument = { layouts: [inputXml], style: null };
     const migrated = migrate(yrtDocument);
-    const migratedXml = migrated.layouts[0].xml;
+    const migratedXml = migrated.layouts[0];
     expect(migratedXml).toBe(expectedXml);
   });
 });

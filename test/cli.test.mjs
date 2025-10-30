@@ -77,163 +77,83 @@ describe("yrt-migrate CLIテスト", () => {
         });
     });
 
-    describe("各種コマンドオプション（入力がXMLの場合）", () => {
-        test("位置引数でXMLファイルを指定すると、同じディレクトリに出力ディレクトリが作成される", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "xml-positional-only");
-            const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir);
-            const result = await runYrtMigrate([inputFile]);
+    test("位置引数でXMLファイルを指定すると、同じディレクトリに出力ディレクトリが作成される", async () => {
+        const testCaseDir = await createTestCaseDir(testOutDir, "xml-positional-only");
+        const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir);
+        const result = await runYrtMigrate([inputFile]);
 
-            assert.strictEqual(result.exitCode, 0);
+        assert.strictEqual(result.exitCode, 0);
 
-            const expectedOutputDir = defaultOutputDirFor(inputFile);
-            assert.strictEqual(await fileExists(expectedOutputDir), true, "出力ディレクトリが作成されること");
+        const expectedOutputDir = defaultOutputDirFor(inputFile);
+        assert.strictEqual(await fileExists(expectedOutputDir), true, "出力ディレクトリが作成されること");
 
-            const layouts = await readMigratedLayoutXmls(expectedOutputDir);
-            assert.strictEqual(layouts.length, 1, "レイアウトXMLが1つ生成されること");
-            assert(layouts[0].includes("<StackLayout"), "変換後のLayoutXMLが生成されること");
-            assert(!layouts[0].includes("<LayoutXml>"), "<LayoutXml>要素は出力されないこと");
+        const layouts = await readMigratedLayoutXmls(expectedOutputDir);
+        assert.strictEqual(layouts.length, 1, "レイアウトXMLが1つ生成されること");
+        assert(layouts[0].includes("<StackLayout"), "変換後のLayoutXMLが生成されること");
+        assert(!layouts[0].includes("<LayoutXml>"), "<LayoutXml>要素は出力されないこと");
 
-            const style = await readMigratedStyleXml(expectedOutputDir);
-            assert(style === null || style.includes("<Style"), "StyleXMLが存在しないか正しい形式であること");
-        });
-
-        test("位置引数でXMLファイルと--outputを指定すると、指定したディレクトリに出力される", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "xml-positional-with-output");
-            const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir);
-            const outputDir = join(testCaseDir, "custom-output");
-
-            const result = await runYrtMigrate([
-                inputFile,
-                "--output", outputDir
-            ]);
-
-            assert.strictEqual(result.exitCode, 0);
-            assert.strictEqual(await fileExists(outputDir), true, "指定したディレクトリが作成されること");
-
-            const layouts = await readMigratedLayoutXmls(outputDir);
-            assert.strictEqual(layouts.length, 1);
-        });
-
-        test("-i と -o オプションでXMLファイルを指定すると、指定先に出力される", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "xml-input-output-options");
-            const inputFile = await prepareInputFile("test/fixtures/legacy_complex.xml", testCaseDir);
-            const outputDir = join(testCaseDir, "converted");
-
-            const result = await runYrtMigrate([
-                "--input", inputFile,
-                "--output", outputDir
-            ]);
-
-            assert.strictEqual(result.exitCode, 0);
-            assert.strictEqual(await fileExists(outputDir), true, "指定した出力ディレクトリが作成されること");
-
-            const layouts = await readMigratedLayoutXmls(outputDir);
-            assert(layouts.length > 0, "レイアウトXMLが生成されること");
-        });
-
-        test("--dry-runオプションでXMLファイルを指定すると、ファイル出力せずに標準出力に変換結果が表示される", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "xml-dry-run");
-            const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir);
-            const inputDataBeforeRun = await readFile(inputFile);
-            const result = await runYrtMigrate([
-                "--dry-run",
-                inputFile
-            ]);
-
-            assert.strictEqual(result.exitCode, 0);
-            assert(result.stdout.includes("=== Layout 0 ==="), "Layout情報がヘッダーと共に出力されること");
-            assert(result.stdout.includes("<StackLayout"), "変換後のLayoutXMLが出力されること");
-            assert(!result.stdout.includes("<LayoutXml>"), "<LayoutXml>要素は出力されないこと");
-
-            const inputDataAfterRun = await readFile(inputFile);
-            assert.deepStrictEqual(inputDataAfterRun, inputDataBeforeRun, "--dry-runでは入力ファイルが変更されないこと");
-
-            const files = await readdir(testCaseDir);
-            assert.deepStrictEqual(files, [basename(inputFile)], "--dry-runでは新たなファイルが出力されないこと");
-        });
+        const style = await readMigratedStyleXml(expectedOutputDir);
+        assert(style === null || style.includes("<Style"), "StyleXMLが存在しないか正しい形式であること");
     });
 
-    describe("各種コマンドオプション（入力がYRTの場合）", () => {
-        test("位置引数でYRTファイルを指定すると、同じディレクトリに出力ディレクトリが作成され元ファイルは変更されない", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "yrt-positional-only");
-            const inputFile = await prepareInputFile("test/fixtures/legacy_complex.yrt", testCaseDir);
-            const originalData = await readFile(inputFile);
+    test("位置引数でXMLファイルと--outputを指定すると、指定したディレクトリに出力される", async () => {
+        const testCaseDir = await createTestCaseDir(testOutDir, "xml-positional-with-output");
+        const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir);
+        const outputDir = join(testCaseDir, "custom-output");
 
-            const result = await runYrtMigrate([inputFile]);
+        const result = await runYrtMigrate([
+            inputFile,
+            "--output", outputDir
+        ]);
 
-            assert.strictEqual(result.exitCode, 0);
+        assert.strictEqual(result.exitCode, 0);
+        assert.strictEqual(await fileExists(outputDir), true, "指定したディレクトリが作成されること");
 
-            const expectedOutputDir = defaultOutputDirFor(inputFile);
-            assert.strictEqual(await fileExists(expectedOutputDir), true, "出力ディレクトリが作成されること");
-
-            const layouts = await readMigratedLayoutXmls(expectedOutputDir);
-            assert(layouts.length > 0, "レイアウトXMLが生成されること");
-
-            const inputDataAfterRun = await readFile(inputFile);
-            assert.deepStrictEqual(inputDataAfterRun, originalData, "入力ファイルは変更されないこと");
-
-            const backupFile = `${inputFile}.old`;
-            assert.strictEqual(await fileExists(backupFile), false, "バックアップファイルは作成されないこと");
-        });
-
-        test("位置引数でYRTファイルを指定し--outputを利用すると、指定先ディレクトリに出力される", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "yrt-positional-with-output");
-            const inputFile = await prepareInputFile("test/fixtures/legacy_complex.yrt", testCaseDir);
-            const originalData = await readFile(inputFile);
-            const outputDir = join(testCaseDir, "converted");
-
-            const result = await runYrtMigrate([
-                inputFile,
-                "--output", outputDir
-            ]);
-
-            assert.strictEqual(result.exitCode, 0);
-            assert.strictEqual(await fileExists(outputDir), true, "指定したディレクトリが作成されること");
-
-            const layouts = await readMigratedLayoutXmls(outputDir);
-            assert(layouts.length > 0, "レイアウトXMLが生成されること");
-
-            const inputDataAfterRun = await readFile(inputFile);
-            assert.deepStrictEqual(inputDataAfterRun, originalData, "入力ファイルは変更されないこと");
-        });
-
-        test("-iオプションでYRTファイルを指定し出力先を省略してもディレクトリが作成される", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "yrt-input-only");
-            const inputFile = await prepareInputFile("test/fixtures/legacy_complex.yrt", testCaseDir);
-
-            const result = await runYrtMigrate([
-                "--input", inputFile
-            ]);
-
-            assert.strictEqual(result.exitCode, 0);
-            const expectedOutputDir = defaultOutputDirFor(inputFile);
-            assert.strictEqual(await fileExists(expectedOutputDir), true, "出力ディレクトリが作成されること");
-        });
-
-        test("--dry-runオプションでYRTファイルを指定すると、ファイル出力せずに標準出力に変換結果が表示される", async () => {
-            // Temporarily skip this block When run by Codex, because of Codex sandbox stdout/stderr logging limitations
-
-            const testCaseDir = await createTestCaseDir(testOutDir, "yrt-dry-run");
-            const inputFile = await prepareInputFile("test/fixtures/legacy_complex.yrt", testCaseDir);
-            const inputDataBeforeRun = await readFile(inputFile);
-            const result = await runYrtMigrate([
-                "--input", inputFile,
-                "--dry-run"
-            ]);
-
-            assert.strictEqual(result.exitCode, 0);
-            assert(result.stdout.includes("=== Layout 0 ==="), "Layout情報がヘッダーと共に出力されること");
-            assert(!result.stdout.includes("<LayoutXml>"), "<LayoutXml>要素は出力されないこと");
-
-            const inputDataAfterRun = await readFile(inputFile);
-            assert.deepStrictEqual(inputDataAfterRun, inputDataBeforeRun, "--dry-runでは入力ファイルが変更されないこと");
-
-            const files = await readdir(testCaseDir);
-            assert.deepStrictEqual(files, [basename(inputFile)], "--dry-runでは新たなファイルが出力されないこと");
-        });
+        const layouts = await readMigratedLayoutXmls(outputDir);
+        assert.strictEqual(layouts.length, 1);
     });
 
-    describe("異常ケース（要 stderr 確認）", () => {
+    test("-i と -o オプションでXMLファイルを指定すると、指定先に出力される", async () => {
+        const testCaseDir = await createTestCaseDir(testOutDir, "xml-input-output-options");
+        const inputFile = await prepareInputFile("test/fixtures/legacy_complex.xml", testCaseDir);
+        const outputDir = join(testCaseDir, "converted");
+
+        const result = await runYrtMigrate([
+            "--input", inputFile,
+            "--output", outputDir
+        ]);
+
+        assert.strictEqual(result.exitCode, 0);
+        assert.strictEqual(await fileExists(outputDir), true, "指定した出力ディレクトリが作成されること");
+
+        const layouts = await readMigratedLayoutXmls(outputDir);
+        assert(layouts.length > 0, "レイアウトXMLが生成されること");
+    });
+
+    test("--dry-runオプションでXMLファイルを指定すると、ファイル出力せずに標準出力に変換結果が表示される", async () => {
+        // Temporarily skip this block When run by Codex, because of Codex sandbox stdout/stderr logging limitations
+
+        const testCaseDir = await createTestCaseDir(testOutDir, "xml-dry-run");
+        const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir);
+        const inputDataBeforeRun = await readFile(inputFile);
+        const result = await runYrtMigrate([
+            "--dry-run",
+            inputFile
+        ]);
+
+        assert.strictEqual(result.exitCode, 0);
+        assert(result.stdout.includes("=== Layout 0 ==="), "Layout情報がヘッダーと共に出力されること");
+        assert(result.stdout.includes("<StackLayout"), "変換後のLayoutXMLが出力されること");
+        assert(!result.stdout.includes("<LayoutXml>"), "<LayoutXml>要素は出力されないこと");
+
+        const inputDataAfterRun = await readFile(inputFile);
+        assert.deepStrictEqual(inputDataAfterRun, inputDataBeforeRun, "--dry-runでは入力ファイルが変更されないこと");
+
+        const files = await readdir(testCaseDir);
+        assert.deepStrictEqual(files, [basename(inputFile)], "--dry-runでは新たなファイルが出力されないこと");
+    });
+
+    describe("異常ケース（要 stderr）", () => {
         // Temporarily skip this block When run by Codex, because of Codex sandbox stdout/stderr logging limitations
 
         test("入力として存在しないファイルを指定すると、生のENOENTエラーが出力される", async () => {
@@ -259,28 +179,12 @@ describe("yrt-migrate CLIテスト", () => {
             assert(result.stderr.includes("XMLファイル形式が不正です"), "不正なXML形式のエラーメッセージが出力されること");
         });
 
-        test("旧形式でないYRTファイル（空のオブジェクトなど）が入力されたとき、エラーメッセージが出力される", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "invalid-yrt-object");
-            const invalidYrtFile = await prepareInputFile("test/fixtures/invalid_yrt_object.yrt", testCaseDir);
-            const result = await runYrtMigrate([invalidYrtFile]);
+        test("YRTファイルは非対応の形式として扱われる", async () => {
+            const testCaseDir = await createTestCaseDir(testOutDir, "reject-yrt");
+            const yrtFile = await prepareInputFile("test/fixtures/legacy_complex.yrt", testCaseDir);
+            const result = await runYrtMigrate([yrtFile]);
             assert.strictEqual(result.exitCode, 1);
-            assert(result.stderr.includes("YRTファイル形式が不正です"), "不正なYRT形式のエラーメッセージが出力されること");
-        });
-
-        test("入力が旧形式のYRTだが、それに含まれるXMLが旧形式でない（ルート要素が LayoutXml ではない）場合、エラーメッセージが出力される", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "invalid-yrt-xml-root");
-            const invalidYrtFile = await prepareInputFile("test/fixtures/invalid_yrt_xml_root.yrt", testCaseDir);
-            const result = await runYrtMigrate([invalidYrtFile]);
-            assert.strictEqual(result.exitCode, 1);
-            assert(result.stderr.includes("YRTファイル形式が不正です"), "不正なYRT形式のエラーメッセージが出力されること");
-        });
-
-        test("入力が旧形式のYRTだが、アセットが無効な型の場合、エラーメッセージが出力される", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "invalid-yrt-assets");
-            const invalidYrtFile = await prepareInputFile("test/fixtures/invalid_yrt_assets.yrt", testCaseDir);
-            const result = await runYrtMigrate([invalidYrtFile]);
-            assert.strictEqual(result.exitCode, 1);
-            assert(result.stderr.includes("YRTファイル形式が不正です"), "不正なアセット形式のエラーメッセージが出力されること");
+            assert(result.stderr.includes("非対応のファイル形式です"), "YRT入力は非対応であること");
         });
     });
 });

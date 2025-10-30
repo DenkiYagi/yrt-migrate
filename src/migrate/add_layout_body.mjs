@@ -1,21 +1,20 @@
 // @ts-check
 
 /**
- * YrtDocument型: 全レイアウトXMLに対してLayoutBody追加変換を適用
- * @param {import('../yrt_format.js').YrtDocument} yrtDocument
- * @returns {import('../yrt_format.js').YrtDocument}
+ * 全レイアウトXMLに対してLayoutBody追加変換を適用
+ * @param {import('../yrt_format.js').MigratedXmlCollection} yrtDocument
+ * @returns {import('../yrt_format.js').MigratedXmlCollection}
  */
 export function migrate(yrtDocument) {
-    const newDoc = structuredClone(yrtDocument);
-    for (let i = 0; i < newDoc.layouts.length; i++) {
-        const entry = newDoc.layouts[i];
-        entry.xml = extractLayoutBody(entry.xml);
+    const layouts = yrtDocument.layouts.map(xml => extractLayoutBody(xml));
+    let style = yrtDocument.style ?? null;
+    if (typeof style === "string" && style.trim().length > 0) {
+        style = extractLayoutBody(style);
     }
-    // Style XMLにも同じ処理を適用
-    if (typeof newDoc.style === "string" && newDoc.style.trim().length > 0) {
-        newDoc.style = extractLayoutBody(newDoc.style);
-    }
-    return newDoc;
+    return {
+        layouts,
+        style,
+    };
 }
 
 /**

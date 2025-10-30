@@ -4,13 +4,13 @@ import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
 
 /**
- * YrtDocument型のみを受け取り、layouts配列のxmlを変換し、styleプロパティにStyle XMLを格納して返す
- * @param {import('../yrt_format.js').YrtDocument} yrtDocument
- * @returns {import('../yrt_format.js').YrtDocument} 変換後のYrtDocument
+ * レイアウトXMLを変換し、必要に応じてStyle XMLを抽出する
+ * @param {import('../yrt_format.js').MigratedXmlCollection} yrtDocument
+ * @returns {import('../yrt_format.js').MigratedXmlCollection} 変換後のコレクション
  */
 export function migrate(yrtDocument) {
     if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) {
-        throw new Error("style_element.mjs: 入力がYRT構造ではありません");
+        throw new Error("style_element.mjs: 入力が期待したレイアウト配列ではありません");
     }
     const STYLE_TARGETS = [
         { tag: "Grid", styleTag: "GridStyle" },
@@ -19,15 +19,24 @@ export function migrate(yrtDocument) {
     ];
     let styleIndex = 1;
     let styleAdded = false;
-    const styleDoc = new DOMParser().parseFromString(
-        '<?xml version="1.0" encoding="UTF-8"?><Style></Style>',
-        "text/xml"
-    );
-    const styleRoot = styleDoc.documentElement;
+    let styleDoc;
+    let styleRoot;
+    if (typeof yrtDocument.style === "string" && yrtDocument.style.trim().length > 0) {
+        styleDoc = new DOMParser().parseFromString(yrtDocument.style, "text/xml");
+        styleRoot = styleDoc.documentElement;
+        if (!styleRoot || styleRoot.tagName === "parsererror") {
+            throw new Error("style_element.mjs: 既存のStyle XMLが不正です");
+        }
+    } else {
+        styleDoc = new DOMParser().parseFromString(
+            '<?xml version="1.0" encoding="UTF-8"?><Style></Style>',
+            "text/xml"
+        );
+        styleRoot = styleDoc.documentElement;
+    }
 
     const newLayouts = [];
-    for (const layoutEntry of yrtDocument.layouts) {
-        const { name, xml } = layoutEntry;
+    for (const xml of yrtDocument.layouts) {
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         for (const { tag, styleTag } of STYLE_TARGETS) {
             const targets = Array.from(doc.getElementsByTagName(tag));
@@ -66,12 +75,12 @@ export function migrate(yrtDocument) {
             }
         }
         // 変換後のXMLをlayouts配列にpush
-        newLayouts.push({ name, xml: new XMLSerializer().serializeToString(doc.documentElement) });
+        newLayouts.push(new XMLSerializer().serializeToString(doc.documentElement));
     }
+    let nextStyle = yrtDocument.style ?? null;
     return {
         layouts: newLayouts,
-        style: styleAdded ? new XMLSerializer().serializeToString(styleRoot) : null,
-        assets: yrtDocument.assets ?? null
+        style: styleAdded ? new XMLSerializer().serializeToString(styleRoot) : nextStyle
     };
 }
 

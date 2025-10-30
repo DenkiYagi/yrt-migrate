@@ -4,11 +4,10 @@ import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
 /**
  * 属性名のリネームマイグレーション
- * @param {import('../yrt_format.js').YrtDocument} yrtDocument
- * @returns {import('../yrt_format.js').YrtDocument}
+ * @param {import('../yrt_format.js').MigratedXmlCollection} yrtDocument
+ * @returns {import('../yrt_format.js').MigratedXmlCollection}
  */
 export function migrate(yrtDocument) {
-    const newDoc = structuredClone(yrtDocument);
     /**
      * @param {Document} doc
      */
@@ -34,18 +33,20 @@ export function migrate(yrtDocument) {
             }
         }
     }
-    for (let i = 0; i < newDoc.layouts.length; i++) {
-        const entry = newDoc.layouts[i];
-        if (!entry.xml) continue;
-        const doc = new DOMParser().parseFromString(entry.xml, "text/xml");
+    const layouts = yrtDocument.layouts.map(xml => {
+        if (!xml) return xml;
+        const doc = new DOMParser().parseFromString(xml, "text/xml");
         renameAttrs(doc);
-        entry.xml = new XMLSerializer().serializeToString(doc.documentElement);
-    }
-    // Style XMLにも同様の処理を適用
-    if (typeof newDoc.style === "string" && newDoc.style.trim().length > 0) {
-        const styleDoc = new DOMParser().parseFromString(newDoc.style, "text/xml");
+        return new XMLSerializer().serializeToString(doc.documentElement);
+    });
+    let style = yrtDocument.style ?? null;
+    if (typeof style === "string" && style.trim().length > 0) {
+        const styleDoc = new DOMParser().parseFromString(style, "text/xml");
         renameAttrs(styleDoc);
-        newDoc.style = new XMLSerializer().serializeToString(styleDoc.documentElement);
+        style = new XMLSerializer().serializeToString(styleDoc.documentElement);
     }
-    return newDoc;
+    return {
+        layouts,
+        style,
+    };
 }

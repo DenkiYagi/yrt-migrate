@@ -49,19 +49,19 @@ import { migrate as sizeCommaToSpace } from "./migrate/size_comma_to_space.mjs";
 import { migrate as borderstyleDasharrayToColon } from "./migrate/borderstyle_dasharray_to_colon.mjs";
 import { migrate as warnLinearLayoutChildrenBorder } from "./migrate/warn_linear_layout_children_border.mjs";
 import { migrate as applySchema } from "./migrate/apply_schema.mjs";
-import { validateXmlInput, validateYrtInput } from "./input_file_validator.mjs";
+import { validateXmlInput } from "./input_file_validator.mjs";
 import { createDiagnosticsBuffer, flushDiagnostics, formatDiagnostic } from "./diagnostics.mjs";
 
 // XML整形出力を制御
 const DO_FORMAT_XML = true;
 
 /**
- * @param {import('./yrt_format.js').YrtOldDocument} yrtOldDocument
+ * @param {import('./yrt_format.js').LegacyLayoutDocument} legacyDocument
  * @param {import('./diagnostics.mjs').Diagnostic[]} diagnostics
- * @returns {import('./yrt_format.js').YrtDocument}
+ * @returns {import('./yrt_format.js').MigratedXmlCollection}
  */
-function migrate(yrtOldDocument, diagnostics) {
-    const originalXml = yrtOldDocument.xml;
+function migrate(legacyDocument, diagnostics) {
+    const originalXml = legacyDocument.xml;
     const originalDocument = new DOMParser().parseFromString(originalXml, "text/xml");
 
     // 警告系
@@ -78,7 +78,7 @@ function migrate(yrtOldDocument, diagnostics) {
     warnLinearLayoutChildrenBorder(diagnostics, originalDocument, originalXml);
 
     // 変換系
-    let doc = multipleXmls(yrtOldDocument);
+    let doc = multipleXmls(legacyDocument);
     doc = orientationRename(doc);
     doc = removeUnspecifiedAttr(doc);
     doc = styleElementMigrate(doc);
@@ -169,20 +169,17 @@ async function main() {
     }
 
     try {
-        let inputYrtDoc;
-        if (ext.toLowerCase() === ".xml") {
-            inputYrtDoc = await validateXmlInput(inputFileName);
-        } else if (ext.toLowerCase() === ".yrt") {
-            inputYrtDoc = await validateYrtInput(inputFileName);
-        } else {
-            console.error("非対応のファイル形式です");
+        if (ext.toLowerCase() !== ".xml") {
+            console.error("非対応のファイル形式です（.xml のみ対応しています）");
             process.exitCode = 1;
             return;
         }
 
+        const inputLegacyDoc = await validateXmlInput(inputFileName);
+
         const diagnosticsOutput = args.values.diagnostics;
         const diagnostics = createDiagnosticsBuffer();
-        const migratedYrtDoc = migrate(inputYrtDoc, diagnostics);
+        let migratedDoc = migrate(inputLegacyDoc, diagnostics);
         if (diagnosticsOutput) {
             const formatted = diagnostics.map(formatDiagnostic).join("\n");
             await fs.writeFile(diagnosticsOutput, formatted.length > 0 ? `${formatted}\n` : "");
@@ -190,23 +187,25 @@ async function main() {
             flushDiagnostics(diagnostics);
         }
         if (DO_FORMAT_XML) {
-            migratedYrtDoc.layouts = migratedYrtDoc.layouts.map(layout => ({
-                ...layout,
-                xml: removeIndents(layout.xml)
-            }));
-            if (migratedYrtDoc.style) {
-                migratedYrtDoc.style = formatXmlPretty(migratedYrtDoc.style);
+            const formattedLayouts = migratedDoc.layouts.map(layoutXml => removeIndents(layoutXml));
+            let formattedStyle = migratedDoc.style ?? null;
+            if (typeof formattedStyle === "string" && formattedStyle.trim().length > 0) {
+                formattedStyle = formatXmlPretty(formattedStyle);
             }
+            migratedDoc = {
+                layouts: formattedLayouts,
+                style: formattedStyle,
+            };
         }
 
         if (args.values["dry-run"]) {
-            migratedYrtDoc.layouts.forEach((layout, idx) => {
+            migratedDoc.layouts.forEach((layoutXml, idx) => {
                 console.log(`=== Layout ${idx} ===`);
-                console.log(layout.xml);
+                console.log(layoutXml);
             });
-            if (migratedYrtDoc.style) {
+            if (typeof migratedDoc.style === "string" && migratedDoc.style.trim().length > 0) {
                 console.log("=== Style ===");
-                console.log(migratedYrtDoc.style);
+                console.log(migratedDoc.style);
             }
         } else {
             try {
@@ -217,13 +216,13 @@ async function main() {
                 return;
             }
             const writeOperations = [];
-            migratedYrtDoc.layouts.forEach((layout, idx) => {
+            migratedDoc.layouts.forEach((layoutXml, idx) => {
                 const targetPath = path.join(outputDir, `layout-${idx + 1}.xml`);
-                writeOperations.push(fs.writeFile(targetPath, `${layout.xml}\n`, "utf8"));
+                writeOperations.push(fs.writeFile(targetPath, `${layoutXml}\n`, "utf8"));
             });
-            if (migratedYrtDoc.style) {
+            if (typeof migratedDoc.style === "string" && migratedDoc.style.trim().length > 0) {
                 const stylePath = path.join(outputDir, "style.xml");
-                writeOperations.push(fs.writeFile(stylePath, `${migratedYrtDoc.style}\n`, "utf8"));
+                writeOperations.push(fs.writeFile(stylePath, `${migratedDoc.style}\n`, "utf8"));
             }
             await Promise.all(writeOperations);
         }
