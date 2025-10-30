@@ -4,19 +4,21 @@ import { warnWithLocation } from "../warn_with_location.mjs";
 
 /**
  * width系属性のauto/range廃止マイグレーション: 警告のみ出力
+ * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
  * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
  * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）
  * @returns {void} 警告のみ、値は返さない
  */
-export function migrate(originalDocument, originalXml) {
-    checkWidthAutoRange(originalDocument.documentElement, originalXml);
+export function migrate(diagnostics, originalDocument, originalXml) {
+    checkWidthAutoRange(diagnostics, originalDocument.documentElement, originalXml);
 }
 
 /**
+ * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
  * @param {Element} root
  * @param {string} originalXml
  */
-function checkWidthAutoRange(root, originalXml) {
+function checkWidthAutoRange(diagnostics, root, originalXml) {
     /** @param {any} node */
     function checkGridCols(node) {
         if (node.nodeType === 1 && node.tagName === 'Grid' && node.hasAttribute('cols')) {
@@ -24,7 +26,7 @@ function checkWidthAutoRange(root, originalXml) {
             if (typeof val === 'string') {
                 const parts = val.split(/\s+/);
                 if (parts.some(v => v.trim().toLowerCase() === 'auto' || v.includes(":"))) {
-                    warnWithLocation(originalXml, node, `<Grid> の cols 属性で auto/range 指定はサポートされなくなりました。手動で幅調整を行う必要があります。`);
+                    warnWithLocation(diagnostics, originalXml, node, `<Grid> の cols 属性で auto/range 指定はサポートされなくなりました。手動で幅調整を行う必要があります。`);
                 }
             }
         }
@@ -40,7 +42,7 @@ function checkWidthAutoRange(root, originalXml) {
             const val = node.getAttribute('width')?.trim();
             if (typeof val === 'string') {
                 if (val.trim().toLowerCase() === 'auto' || val.includes(":")) {
-                    warnWithLocation(originalXml, node, `<TableColumn> の width 属性で auto/range 指定はサポートされなくなりました。手動で幅調整を行う必要があります。`);
+                    warnWithLocation(diagnostics, originalXml, node, `<TableColumn> の width 属性で auto/range 指定はサポートされなくなりました。手動で幅調整を行う必要があります。`);
                 }
             }
         }

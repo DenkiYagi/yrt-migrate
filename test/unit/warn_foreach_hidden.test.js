@@ -14,7 +14,7 @@ describe("warn_foreach_hidden", () => {
     it("foreachとhiddenが同時指定された場合に警告する", () => {
         const inputXml = '<Grid foreach="${items}" hidden="flag"/>';
         const doc = new DOMParser().parseFromString(inputXml, "text/xml");
-        migrate(doc, inputXml);
+        migrate(warningSpy.diagnostics, doc, inputXml);
 
         const warnings = warningSpy.messages();
         expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining("foreach属性とhidden属性が同時に指定されている")]));
@@ -23,7 +23,7 @@ describe("warn_foreach_hidden", () => {
     it("foreachがバインド変数でなければ警告する", () => {
         const inputXml = '<Grid foreach="items"/>';
         const doc = new DOMParser().parseFromString(inputXml, "text/xml");
-        migrate(doc, inputXml);
+        migrate(warningSpy.diagnostics, doc, inputXml);
 
         const warnings = warningSpy.messages();
         expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining('foreach属性の値 "items" はバインド変数ではありません')]));
@@ -32,7 +32,7 @@ describe("warn_foreach_hidden", () => {
     it("hiddenがバインド変数でなければ警告する", () => {
         const inputXml = '<Text hidden="true"/>';
         const doc = new DOMParser().parseFromString(inputXml, "text/xml");
-        migrate(doc, inputXml);
+        migrate(warningSpy.diagnostics, doc, inputXml);
 
         const warnings = warningSpy.messages();
         expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining('hidden属性の値 "true" はバインド変数ではありません')]));
@@ -41,7 +41,7 @@ describe("warn_foreach_hidden", () => {
     it("バインド変数のforeach/hiddenのみの場合は警告しない", () => {
         const inputXml = '<Grid foreach="${items}"><Text hidden="${flag}"/></Grid>';
         const doc = new DOMParser().parseFromString(inputXml, "text/xml");
-        migrate(doc, inputXml);
+        migrate(warningSpy.diagnostics, doc, inputXml);
 
         expect(warningSpy.messages()).toHaveLength(0);
     });
@@ -49,7 +49,7 @@ describe("warn_foreach_hidden", () => {
     it("属性値が空文字の場合は警告しない", () => {
         const inputXml = '<Grid foreach=""><Text hidden=" "/></Grid>';
         const doc = new DOMParser().parseFromString(inputXml, "text/xml");
-        migrate(doc, inputXml);
+        migrate(warningSpy.diagnostics, doc, inputXml);
 
         expect(warningSpy.messages()).toHaveLength(0);
     });

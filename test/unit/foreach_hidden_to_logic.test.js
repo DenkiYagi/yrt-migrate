@@ -8,7 +8,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
             '<Grid foreach="${items}"/>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
-        const { warnings, result: migrated } = withWarningSpy(() => migrate(yrtDocument, inputXml));
+        const { warnings, result: migrated } = withWarningSpy(diagnostics => migrate(yrtDocument, inputXml));
         const xml = migrated.layouts[0].xml;
         expect(xml).toContain('logic="foreach:${items}"');
         expect(xml).not.toContain("foreach=");
@@ -21,7 +21,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
             '<Text hidden="${isHidden}"/>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
-        const { warnings, result: migrated } = withWarningSpy(() => migrate(yrtDocument, inputXml));
+        const { warnings, result: migrated } = withWarningSpy(diagnostics => migrate(yrtDocument, inputXml));
         const xml = migrated.layouts[0].xml;
         expect(xml).toContain('logic="if:${!isHidden}"');
         expect(xml).not.toContain("hidden=");
@@ -31,7 +31,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
     it("foreach/hidden属性値に前後空白があっても同時指定なら変換しない", () => {
         const inputXml = '<Grid foreach="  ${items}  " hidden="  ${isHidden}  "/>';
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
-        const { warnings, result: migrated } = withWarningSpy(() => migrate(yrtDocument, inputXml));
+        const { warnings, result: migrated } = withWarningSpy(diagnostics => migrate(yrtDocument, inputXml));
         const xml = migrated.layouts[0].xml;
         expect(xml).toContain('foreach="  ${items}  "');
         expect(xml).toContain('hidden="  ${isHidden}  "');
@@ -44,7 +44,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
             '<Grid foreach="   " hidden="   "/>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
-        const { warnings, result: migrated } = withWarningSpy(() => migrate(yrtDocument, inputXml));
+        const { warnings, result: migrated } = withWarningSpy(diagnostics => migrate(yrtDocument, inputXml));
         const xml = migrated.layouts[0].xml;
         expect(xml).not.toContain("logic=");
         expect(xml).not.toContain("foreach=");
@@ -58,7 +58,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
             '<Grid foreach="${items}" hidden="isHidden"/>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
-        const { warnings, result: migrated } = withWarningSpy(() => migrate(yrtDocument, inputXml));
+        const { warnings, result: migrated } = withWarningSpy(diagnostics => migrate(yrtDocument, inputXml));
         const xml = migrated.layouts[0].xml;
         expect(xml).toContain('foreach="${items}"');
         expect(xml).toContain('hidden="isHidden"');
@@ -72,7 +72,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
             '<Grid foreach="[]"/>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
-        const { warnings, result: migrated } = withWarningSpy(() => migrate(yrtDocument, inputXml));
+        const { warnings, result: migrated } = withWarningSpy(diagnostics => migrate(yrtDocument, inputXml));
         const xml = migrated.layouts[0].xml;
         expect(xml).toContain('foreach="[]"');
         expect(xml).not.toContain('logic=');
@@ -85,7 +85,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
             '<Text hidden="true"/>'
         ].join('\n');
         const yrtDocument = { layouts: [{ name: null, xml: inputXml }], style: null, assets: null };
-        const { warnings, result: migrated } = withWarningSpy(() => migrate(yrtDocument, inputXml));
+        const { warnings, result: migrated } = withWarningSpy(diagnostics => migrate(yrtDocument, inputXml));
         const xml = migrated.layouts[0].xml;
         expect(xml).toContain('hidden="true"');
         expect(xml).not.toContain("logic='");

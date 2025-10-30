@@ -24,7 +24,7 @@ describe('warn_grid_like_style_element_border_conflict', () => {
             '</StackLayout>'
         ].join('\n');
         const doc = new DOMParser().parseFromString(xml, "text/xml");
-        migrate(doc, xml);
+        migrate(warningSpy.diagnostics, doc, xml);
         const warnings = warningSpy.messages();
         expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining('Grid')]));
     });
@@ -39,7 +39,7 @@ describe('warn_grid_like_style_element_border_conflict', () => {
             '</StackLayout>'
         ].join('\n');
         const doc = new DOMParser().parseFromString(xml, "text/xml");
-        migrate(doc, xml);
+        migrate(warningSpy.diagnostics, doc, xml);
         expect(warningSpy.messages()).toHaveLength(0);
     });
 
@@ -53,7 +53,7 @@ describe('warn_grid_like_style_element_border_conflict', () => {
             '</StackLayout>'
         ].join('\n');
         const doc = new DOMParser().parseFromString(xml, "text/xml");
-        migrate(doc, xml);
+        migrate(warningSpy.diagnostics, doc, xml);
         const warnings = warningSpy.messages();
         expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining('Table')]));
     });
@@ -68,7 +68,7 @@ describe('warn_grid_like_style_element_border_conflict', () => {
             '</StackLayout>'
         ].join('\n');
         const doc = new DOMParser().parseFromString(xml, "text/xml");
-        migrate(doc, xml);
+        migrate(warningSpy.diagnostics, doc, xml);
         expect(warningSpy.messages()).toHaveLength(0);
     });
 });

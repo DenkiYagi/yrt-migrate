@@ -6,7 +6,7 @@ import { warnWithLocation } from "../warn_with_location.mjs";
  * @param {Document} document
  * @param {string} originalXml
  */
-function checkRectangleBorderRadiusMultiWarn(document, originalXml) {
+function checkRectangleBorderRadiusMultiWarn(diagnostics, document, originalXml) {
     const rects = document.getElementsByTagName("Rectangle");
     for (let i = 0; i < rects.length; i++) {
         const rect = rects[i];
@@ -15,18 +15,19 @@ function checkRectangleBorderRadiusMultiWarn(document, originalXml) {
         const trimmed = borderRadius.trim();
         // スペース区切りで複数値の場合は警告
         if (trimmed.split(/\s+/).length > 1) {
-            warnWithLocation(originalXml, rect, `<Rectangle>のborderRadius属性は単一値のみ許可されています`);
+            warnWithLocation(diagnostics, originalXml, rect, `<Rectangle>のborderRadius属性は単一値のみ許可されています`);
         }
     }
 }
 
 /**
  * <Rectangle> の borderRadius 属性で複数方向指定や空文字があれば警告を出すマイグレーション
+ * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
  * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
  * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）
  * @returns {void} 警告のみ、値は返さない
  */
-export function migrate(originalDocument, originalXml) {
+export function migrate(diagnostics, originalDocument, originalXml) {
     if (!originalDocument) return;
-    checkRectangleBorderRadiusMultiWarn(originalDocument, originalXml);
+    checkRectangleBorderRadiusMultiWarn(diagnostics, originalDocument, originalXml);
 }

@@ -8,7 +8,7 @@ describe("warn_deprecated_layout_attrs", () => {
         const inputXml = '<LinearLayout borderThickness="1" borderColor="#000" borderStyle="solid"/>';
         const doc = new DOMParser().parseFromString(inputXml, "text/xml");
 
-        migrate(doc, inputXml);
+        migrate(warningSpy.diagnostics, doc, inputXml);
 
         expect(warningSpy.messages()).not.toHaveLength(0);
         warningSpy.restore();
@@ -19,7 +19,7 @@ describe("warn_deprecated_layout_attrs", () => {
         const inputXml = '<StackLayout borderThickness="2" borderColor="#111" borderStyle="dashed" padding="4"/>';
         const doc = new DOMParser().parseFromString(inputXml, "text/xml");
 
-        migrate(doc, inputXml);
+        migrate(warningSpy.diagnostics, doc, inputXml);
 
         expect(warningSpy.messages()).not.toHaveLength(0);
         warningSpy.restore();
@@ -30,7 +30,7 @@ describe("warn_deprecated_layout_attrs", () => {
         const inputXml = '<StackBlock padding="8"/>';
         const doc = new DOMParser().parseFromString(inputXml, "text/xml");
 
-        migrate(doc, inputXml);
+        migrate(warningSpy.diagnostics, doc, inputXml);
 
         expect(warningSpy.messages()).not.toHaveLength(0);
         warningSpy.restore();
@@ -45,7 +45,7 @@ describe("warn_deprecated_layout_attrs", () => {
         ].join('\n');
         const doc = new DOMParser().parseFromString(inputXml, "text/xml");
 
-        migrate(doc, inputXml);
+        migrate(warningSpy.diagnostics, doc, inputXml);
 
         expect(warningSpy.messages()).toHaveLength(0);
         warningSpy.restore();

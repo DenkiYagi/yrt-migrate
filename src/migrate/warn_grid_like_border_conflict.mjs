@@ -42,10 +42,11 @@ function normalizeThickness(value) {
 }
 
 /**
+ * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
  * @param {Element} node
  * @param {string} originalXml
  */
-function checkGridNode(node, originalXml) {
+function checkGridNode(diagnostics, node, originalXml) {
     const cols = (node.getAttribute("cols") || "").trim().split(/\s+/);
     const rows = (node.getAttribute("rows") || "").trim().split(/\s+/);
     const nCols = cols.length, nRows = rows.length;
@@ -116,15 +117,16 @@ function checkGridNode(node, originalXml) {
         }
     }
     if (warn) {
-        warnWithLocation(originalXml, node, "隣接セルの罫線挙動が変わる可能性があります。必要に応じて手動で直してください。");
+        warnWithLocation(diagnostics, originalXml, node, "隣接セルの罫線挙動が変わる可能性があります。必要に応じて手動で直してください。");
     }
 }
 
 /**
+ * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
  * @param {Element} node
  * @param {string} originalXml
  */
-function checkTableNode(node, originalXml) {
+function checkTableNode(diagnostics, node, originalXml) {
     const columns = [];
     for (let i = 0; i < node.childNodes.length; i++) {
         const colNode = node.childNodes[i];
@@ -215,25 +217,26 @@ function checkTableNode(node, originalXml) {
         }
     }
     if (warn) {
-        warnWithLocation(originalXml, node, "隣接セルの罫線挙動が変わる可能性があります。必要に応じて手動で直してください。");
+        warnWithLocation(diagnostics, originalXml, node, "隣接セルの罫線挙動が変わる可能性があります。必要に応じて手動で直してください。");
     }
 }
 
 /**
+ * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
  * @param {Element} node
  * @param {string} originalXml
  */
-function traverse(node, originalXml) {
+function traverse(diagnostics, node, originalXml) {
     if (node.tagName === "Grid") {
-        checkGridNode(node, originalXml);
+        checkGridNode(diagnostics, node, originalXml);
     } else if (node.tagName === "Table") {
-        checkTableNode(node, originalXml);
+        checkTableNode(diagnostics, node, originalXml);
     }
     if (node.childNodes) {
         for (let i = 0; i < node.childNodes.length; i++) {
             const child = node.childNodes[i];
             if (child?.nodeType === 1) {
-                traverse(/** @type {Element} */(child), originalXml);
+                traverse(diagnostics, /** @type {Element} */(child), originalXml);
             }
         }
     }
@@ -241,11 +244,12 @@ function traverse(node, originalXml) {
 
 /**
  * Grid/Table の隣接セル罫線の競合を検出し警告を出す
+ * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
  * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
  * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）
  * @returns {void}
  */
-export function migrate(originalDocument, originalXml) {
+export function migrate(diagnostics, originalDocument, originalXml) {
     if (!originalDocument?.documentElement) return;
-    traverse(originalDocument.documentElement, originalXml);
+    traverse(diagnostics, originalDocument.documentElement, originalXml);
 }

@@ -52,30 +52,32 @@ import { migrate as borderstyleDasharrayToColon } from "./migrate/borderstyle_da
 import { migrate as warnLinearLayoutChildrenBorder } from "./migrate/warn_linear_layout_children_border.mjs";
 import { migrate as applySchema } from "./migrate/apply_schema.mjs";
 import { validateXmlInput, validateYrtInput } from "./input_file_validator.mjs";
+import { createDiagnosticsBuffer, flushDiagnostics } from "./diagnostics.mjs";
 
 // XML整形出力を制御
 const DO_FORMAT_XML = true;
 
 /**
  * @param {import('./yrt_format.js').YrtOldDocument} yrtOldDocument
+ * @param {import('./diagnostics.mjs').Diagnostic[]} diagnostics
  * @returns {import('./yrt_format.js').YrtDocument}
  */
-function migrate(yrtOldDocument) {
+function migrate(yrtOldDocument, diagnostics) {
     const originalXml = yrtOldDocument.xml;
     const originalDocument = new DOMParser().parseFromString(originalXml, "text/xml");
 
     // 警告系
-    warnStyleElementBinding(originalDocument, originalXml);
-    warnForeachHidden(originalDocument, originalXml);
-    warnDeprecatedLayoutAttrs(originalDocument, originalXml);
-    warnImageWidthRequired(originalDocument, originalXml);
-    warnGridLikeBorderConflict(originalDocument, originalXml);
-    warnGridLikeStyleElementBorderConflict(originalDocument, originalXml);
-    warnWidthAutoRange(originalDocument, originalXml);
-    warnBindingRequired(originalDocument, originalXml);
-    warnSpanColorBinding(originalDocument, originalXml);
-    warnRectangleBorderRadiusMulti(originalDocument, originalXml);
-    warnLinearLayoutChildrenBorder(originalDocument, originalXml);
+    warnStyleElementBinding(diagnostics, originalDocument, originalXml);
+    warnForeachHidden(diagnostics, originalDocument, originalXml);
+    warnDeprecatedLayoutAttrs(diagnostics, originalDocument, originalXml);
+    warnImageWidthRequired(diagnostics, originalDocument, originalXml);
+    warnGridLikeBorderConflict(diagnostics, originalDocument, originalXml);
+    warnGridLikeStyleElementBorderConflict(diagnostics, originalDocument, originalXml);
+    warnWidthAutoRange(diagnostics, originalDocument, originalXml);
+    warnBindingRequired(diagnostics, originalDocument, originalXml);
+    warnSpanColorBinding(diagnostics, originalDocument, originalXml);
+    warnRectangleBorderRadiusMulti(diagnostics, originalDocument, originalXml);
+    warnLinearLayoutChildrenBorder(diagnostics, originalDocument, originalXml);
 
     // 変換系
     let doc = multipleXmls(yrtOldDocument);
@@ -188,7 +190,9 @@ async function main() {
             return;
         }
 
-        const migratedYrtDoc = migrate(inputYrtDoc);
+        const diagnostics = createDiagnosticsBuffer();
+        const migratedYrtDoc = migrate(inputYrtDoc, diagnostics);
+        flushDiagnostics(diagnostics);
         if (DO_FORMAT_XML) {
             migratedYrtDoc.layouts = migratedYrtDoc.layouts.map(layout => ({
                 ...layout,

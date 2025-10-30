@@ -16,7 +16,7 @@ describe("<Rectangle> borderRadius属性 複数方向指定警告マイグレー
     it("複数値なら警告が出る", () => {
         const xml = '<LinearLayout><Rectangle borderRadius="1 2 3 4"/></LinearLayout>';
         const doc = new DOMParser().parseFromString(xml, "text/xml");
-        migrate(doc, xml);
+        migrate(warningSpy.diagnostics, doc, xml);
         const warnings = warningSpy.messages();
         expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining("<Rectangle>のborderRadius属性は単一値のみ許可されています")]));
     });
@@ -24,14 +24,14 @@ describe("<Rectangle> borderRadius属性 複数方向指定警告マイグレー
     it("複数の<Rectangle>で複数方向指定があれば全て警告", () => {
         const xml = '<LinearLayout><Rectangle borderRadius="1 2"/><Rectangle borderRadius="3 4 5"/></LinearLayout>';
         const doc = new DOMParser().parseFromString(xml, "text/xml");
-        migrate(doc, xml);
+        migrate(warningSpy.diagnostics, doc, xml);
         expect(warningSpy.messages()).toHaveLength(2);
     });
 
     it("単一値なら警告が出ない", () => {
         const xml = '<LinearLayout><Rectangle borderRadius="5"/></LinearLayout>';
         const doc = new DOMParser().parseFromString(xml, "text/xml");
-        migrate(doc, xml);
+        migrate(warningSpy.diagnostics, doc, xml);
         expect(warningSpy.messages()).toHaveLength(0);
     });
 });

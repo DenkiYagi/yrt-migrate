@@ -5,16 +5,18 @@ import { warnWithLocation } from "../warn_with_location.mjs";
 const STYLE_TAGS = ["GridStyle", "TableStyle", "ColumnTextStyle"];
 
 /**
+ * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
  * @param {Element} node
  * @param {string} originalXml
  */
-function checkNode(node, originalXml) {
+function checkNode(diagnostics, node, originalXml) {
     if (node.nodeType !== 1) return;
     if (STYLE_TAGS.includes(node.tagName)) {
         for (let i = 0; i < node.attributes.length; i++) {
             const attr = node.attributes[i];
             if (/^\$\{[^}]+\}$/.test(attr.value)) {
                 warnWithLocation(
+                    diagnostics,
                     originalXml,
                     node,
                     `${node.tagName} の ${attr.name} 属性値にバインド変数 (${attr.value}) が含まれています`
@@ -26,7 +28,7 @@ function checkNode(node, originalXml) {
         for (let i = 0; i < node.childNodes.length; i++) {
             const child = node.childNodes[i];
             if (child?.nodeType === 1) {
-                checkNode(/** @type {Element} */(child), originalXml);
+                checkNode(diagnostics, /** @type {Element} */(child), originalXml);
             }
         }
     }
@@ -34,11 +36,12 @@ function checkNode(node, originalXml) {
 
 /**
  * 旧スタイル要素（`GridStyle` 等）に含まれるバインド変数を警告する
+ * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
  * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
  * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）
  * @returns {void}
  */
-export function migrate(originalDocument, originalXml) {
+export function migrate(diagnostics, originalDocument, originalXml) {
     if (!originalDocument?.documentElement) return;
-    checkNode(originalDocument.documentElement, originalXml);
+    checkNode(diagnostics, originalDocument.documentElement, originalXml);
 }

@@ -15,7 +15,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  </Grid>',
             '</StackBlock>'
         ].join('\n');
-        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
+        const { warnings } = withWarningSpy(diagnostics => migrate(diagnostics, parse(xml), xml));
         expect(warnings).not.toHaveLength(0);
         expect(warnings[0]).toContain('@2:3');
     });
@@ -27,7 +27,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  <GridCell col="2" row="0" borderLeftThickness="2"/>',
             '</Grid>'
         ].join('\n');
-        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
+        const { warnings } = withWarningSpy(diagnostics => migrate(diagnostics, parse(xml), xml));
         expect(warnings).not.toHaveLength(0);
     });
 
@@ -38,7 +38,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  <GridCell col="1" row="0" borderTopStyle="double"/>',
             '</Grid>'
         ].join('\n');
-        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
+        const { warnings } = withWarningSpy(diagnostics => migrate(diagnostics, parse(xml), xml));
         expect(warnings).toHaveLength(0);
     });
 
@@ -49,7 +49,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  <GridCell col="2" row="1" borderLeftThickness="3"/>',
             '</Grid>'
         ].join('\n');
-        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
+        const { warnings } = withWarningSpy(diagnostics => migrate(diagnostics, parse(xml), xml));
         expect(warnings).toHaveLength(0);
     });
 
@@ -60,7 +60,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  <GridCell col="0" row="1" borderTopThickness="2pt"/>',
             '</Grid>'
         ].join('\n');
-        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
+        const { warnings } = withWarningSpy(diagnostics => migrate(diagnostics, parse(xml), xml));
         expect(warnings).not.toHaveLength(0);
     });
 
@@ -71,7 +71,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  <GridCell col="1" row="0" borderLeftThickness="thick"/>',
             '</Grid>'
         ].join('\n');
-        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
+        const { warnings } = withWarningSpy(diagnostics => migrate(diagnostics, parse(xml), xml));
         expect(warnings).toHaveLength(0);
     });
 
@@ -82,7 +82,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  <GridCell col="0" row="1" borderTopThickness="_"/>',
             '</Grid>'
         ].join('\n');
-        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
+        const { warnings } = withWarningSpy(diagnostics => migrate(diagnostics, parse(xml), xml));
         expect(warnings).toHaveLength(0);
     });
 
@@ -101,7 +101,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  </TableColumn>',
             '</Table>'
         ].join('');
-        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
+        const { warnings } = withWarningSpy(diagnostics => migrate(diagnostics, parse(xml), xml));
         expect(warnings).not.toHaveLength(0);
     });
 
@@ -120,7 +120,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  </TableColumn>',
             '</Table>'
         ].join('');
-        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
+        const { warnings } = withWarningSpy(diagnostics => migrate(diagnostics, parse(xml), xml));
         expect(warnings).toHaveLength(0);
     });
 
@@ -134,7 +134,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  </TableColumn>',
             '</Table>'
         ].join('');
-        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
+        const { warnings } = withWarningSpy(diagnostics => migrate(diagnostics, parse(xml), xml));
         expect(warnings).not.toHaveLength(0);
     });
 
@@ -148,7 +148,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  </TableColumn>',
             '</Table>'
         ].join('');
-        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
+        const { warnings } = withWarningSpy(diagnostics => migrate(diagnostics, parse(xml), xml));
         expect(warnings).not.toHaveLength(0);
     });
 
@@ -162,7 +162,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  </TableColumn>',
         '</Table>'
         ].join('');
-        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
+        const { warnings } = withWarningSpy(diagnostics => migrate(diagnostics, parse(xml), xml));
         expect(warnings).not.toHaveLength(0);
     });
 
@@ -176,7 +176,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  </TableColumn>',
         '</Table>'
         ].join('');
-        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
+        const { warnings } = withWarningSpy(diagnostics => migrate(diagnostics, parse(xml), xml));
         expect(warnings).toHaveLength(0);
     });
 });

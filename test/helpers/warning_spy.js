@@ -1,43 +1,34 @@
-import { setWarningHandler, clearWarningHandler } from "../../src/warn_with_location.mjs";
+import { createDiagnosticsBuffer, formatDiagnostic } from "../../src/diagnostics.mjs";
 
-function createCollector() {
-    const messages = [];
-    return {
-        collect(message) {
-            const text = typeof message === "string" ? message : message.toString();
-            messages.push(text);
-            return true;
-        },
-        messages() {
-            return messages.filter(message => message.startsWith("[WARNING]"));
-        },
-        clear() {
-            messages.length = 0;
-        }
-    };
-}
-
+/**
+ * Collects warning diagnostics for assertions.
+ * Retained for backward compatibility with existing tests that expect a spy object.
+ */
 export function setupWarningSpy() {
-    const collector = createCollector();
-    const previous = setWarningHandler(collector.collect);
+    const diagnostics = createDiagnosticsBuffer();
     return {
-        messages: () => collector.messages(),
+        diagnostics,
+        messages: () =>
+            diagnostics
+                .filter(diagnostic => diagnostic.type === "warning")
+                .map(formatDiagnostic),
         restore() {
-            clearWarningHandler(previous);
-            collector.clear();
-        }
+            diagnostics.length = 0;
+        },
     };
 }
 
+/**
+ * Utility to run a function with an isolated diagnostics buffer.
+ * @template T
+ * @param {(diagnostics: import("../../src/diagnostics.mjs").Diagnostic[]) => T} callback
+ * @returns {{ warnings: string[], diagnostics: import("../../src/diagnostics.mjs").Diagnostic[], result: T }}
+ */
 export function withWarningSpy(callback) {
-    const spy = setupWarningSpy();
-    try {
-        const result = callback(spy);
-        const warnings = spy.messages();
-        spy.restore();
-        return { warnings, result };
-    } catch (error) {
-        spy.restore();
-        throw error;
-    }
+    const diagnostics = createDiagnosticsBuffer();
+    const result = callback(diagnostics);
+    const warnings = diagnostics
+        .filter(diagnostic => diagnostic.type === "warning")
+        .map(formatDiagnostic);
+    return { warnings, diagnostics, result };
 }

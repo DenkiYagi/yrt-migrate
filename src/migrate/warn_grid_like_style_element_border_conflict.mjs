@@ -58,10 +58,11 @@ function collectThicknessValues(styleNode) {
 }
 
 /**
+ * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
  * @param {Element} node
  * @param {string} originalXml
  */
-function checkNode(node, originalXml) {
+function checkNode(diagnostics, node, originalXml) {
     const styleTagName = STYLE_PARENT_CHILD_MAP[node.tagName];
     if (styleTagName) {
         let elementsWithThickness = 0;
@@ -83,6 +84,7 @@ function checkNode(node, originalXml) {
         }
         if (elementsWithThickness >= 2 && thicknessValues.size > 1) {
             warnWithLocation(
+                diagnostics,
                 originalXml,
                 node,
                 `${node.tagName} 直下に ${styleTagName} 要素が複数存在し、罫線の太さが均一ではありません。帳票エンジンの挙動変更に伴い、描画結果が変化している可能性があるため、実際のPDF出力を目視で確認し、必要に応じてレイアウトXMLを手動で調整してください。`
@@ -93,7 +95,7 @@ function checkNode(node, originalXml) {
         for (let i = 0; i < node.childNodes.length; i++) {
             const child = node.childNodes[i];
             if (child?.nodeType === 1) {
-                checkNode(/** @type {Element} */ (child), originalXml);
+                checkNode(diagnostics, /** @type {Element} */ (child), originalXml);
             }
         }
     }
@@ -101,11 +103,12 @@ function checkNode(node, originalXml) {
 
 /**
  * Grid/Table/ColumnText スタイル要素間の罫線太さの競合を警告する
+ * @param {import("../diagnostics.mjs").Diagnostic[]} diagnostics
  * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
  * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）
  * @returns {void}
  */
-export function migrate(originalDocument, originalXml) {
+export function migrate(diagnostics, originalDocument, originalXml) {
     if (!originalDocument?.documentElement) return;
-    checkNode(originalDocument.documentElement, originalXml);
+    checkNode(diagnostics, originalDocument.documentElement, originalXml);
 }
