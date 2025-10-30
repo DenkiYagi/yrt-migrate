@@ -15,7 +15,11 @@ export function migrate(diagnostics, originalDocument, originalXml) {
     for (let j = 0; j < images.length; j++) {
         const image = images[j];
         if (!image.hasAttribute("width")) {
-            warnWithLocation(diagnostics, originalXml, image, ["Image要素にwidth属性がありません"]);
+            warnWithLocation(diagnostics, originalXml, image, [
+                "Image要素にwidth属性が導入されました。",
+                "必須属性であり、自動処理では値を設定できません。",
+                "レイアウトXMLを手動で修正し、width属性を追加してください。"
+            ]);
         }
     }
 }

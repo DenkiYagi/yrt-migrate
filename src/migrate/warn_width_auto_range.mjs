@@ -26,7 +26,10 @@ function checkWidthAutoRange(diagnostics, root, originalXml) {
             if (typeof val === 'string') {
                 const parts = val.split(/\s+/);
                 if (parts.some(v => v.trim().toLowerCase() === 'auto' || v.includes(":"))) {
-                    warnWithLocation(diagnostics, originalXml, node, [`<Grid> の cols 属性で auto/range 指定はサポートされなくなりました。手動で幅調整を行う必要があります。`]);
+                    warnWithLocation(diagnostics, originalXml, node, [
+                        "Grid要素のcols属性で auto/range 指定はできなくなりました。",
+                        "レイアウトXMLを手動で修正し、固定値を直接指定してください。"
+                    ]);
                 }
             }
         }
@@ -42,7 +45,10 @@ function checkWidthAutoRange(diagnostics, root, originalXml) {
             const val = node.getAttribute('width')?.trim();
             if (typeof val === 'string') {
                 if (val.trim().toLowerCase() === 'auto' || val.includes(":")) {
-                    warnWithLocation(diagnostics, originalXml, node, [`<TableColumn> の width 属性で auto/range 指定はサポートされなくなりました。手動で幅調整を行う必要があります。`]);
+                    warnWithLocation(diagnostics, originalXml, node, [
+                        "TableColumn要素のwidth属性で auto/range 指定はできなくなりました。",
+                        "レイアウトXMLを手動で修正し、固定値を直接指定してください。"
+                    ]);
                 }
             }
         }

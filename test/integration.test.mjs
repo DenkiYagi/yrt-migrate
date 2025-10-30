@@ -160,7 +160,7 @@ describe("yrt-migrate 統合テスト", () => {
                 assert.strictEqual(result.exitCode, 0);
                 assert.strictEqual(result.stderr, "");
                 const diagnosticsContent = await readFile(diagnosticsFile, "utf8");
-                assert(diagnosticsContent.includes("Image要素にwidth属性がありません"), "警告が diagnostics ファイルに出力されること");
+                assert(diagnosticsContent.includes("Image要素にwidth属性が導入されました"), "警告が diagnostics ファイルに出力されること");
             });
         });
 

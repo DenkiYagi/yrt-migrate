@@ -15,7 +15,11 @@ function checkBorderAdjacentLineWarn(diagnostics, document, originalXml) {
         for (const node of nodes) {
             for (const attr of attrs) {
                 if (node.hasAttribute(attr)) {
-                    warnWithLocation(diagnostics, originalXml, node, [`${tag} 要素に${attr}属性が含まれています。罫線のレイアウトが変わる可能性があります。`]);
+                    warnWithLocation(diagnostics, originalXml, node, [
+                        `${tag}要素に${attr}属性が指定されています。`,
+                        "帳票エンジンの挙動変更に伴い、描画結果が変化している可能性があります。",
+                        "実際のPDF出力を目視で確認し、必要に応じてレイアウトXMLを手動で調整してください。"
+                    ]);
                 }
             }
         }

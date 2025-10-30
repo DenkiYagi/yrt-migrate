@@ -117,7 +117,11 @@ function checkGridNode(diagnostics, node, originalXml) {
         }
     }
     if (warn) {
-        warnWithLocation(diagnostics, originalXml, node, ["隣接セルの罫線挙動が変わる可能性があります。必要に応じて手動で直してください。"]);
+        warnWithLocation(diagnostics, originalXml, node, [
+            "隣接セル間の罫線について、太さの設定が衝突している箇所があります。",
+            "帳票エンジンの挙動変更に伴い、描画結果が変化している可能性があります。",
+            "実際のPDF出力を目視で確認し、必要に応じてレイアウトXMLを手動で調整してください。"
+        ]);
     }
 }
 
@@ -217,7 +221,11 @@ function checkTableNode(diagnostics, node, originalXml) {
         }
     }
     if (warn) {
-        warnWithLocation(diagnostics, originalXml, node, ["隣接セルの罫線挙動が変わる可能性があります。必要に応じて手動で直してください。"]);
+        warnWithLocation(diagnostics, originalXml, node, [
+            "隣接セル間の罫線について、太さの設定が衝突している箇所があります。",
+            "帳票エンジンの挙動変更に伴い、描画結果が変化している可能性があります。",
+            "実際のPDF出力を目視で確認し、必要に応じてレイアウトXMLを手動で調整してください。"
+        ]);
     }
 }
 

@@ -16,7 +16,7 @@ describe("バインド変数必須化マイグレーション (bindingRequiredWa
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         migrate(warningSpy.diagnostics, doc, xml);
         const warnings = warningSpy.messages();
-        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining("items属性はバインド変数で指定してください")]));
+        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining("items属性では固定値を指定できなくなりました")]));
     });
 
     it("breakConditionがリテラル値なら警告", () => {
@@ -24,7 +24,7 @@ describe("バインド変数必須化マイグレーション (bindingRequiredWa
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         migrate(warningSpy.diagnostics, doc, xml);
         const warnings = warningSpy.messages();
-        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining("breakCondition属性はバインド変数で指定してください")]));
+        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining("breakCondition属性では固定値を指定できなくなりました")]));
     });
 
     it("items, breakCondition両方リテラルなら両方警告", () => {
@@ -56,7 +56,7 @@ describe("バインド変数必須化マイグレーション (bindingRequiredWa
         // itemsはバインド変数なので警告なし、breakConditionはリテラルなので警告
         const warnings = warningSpy.messages();
         expect(warnings).toHaveLength(1);
-        expect(warnings[0]).toContain("breakCondition属性はバインド変数で指定してください");
+        expect(warnings[0]).toContain("breakCondition属性では固定値を指定できなくなりました");
     });
 
     it("items属性値が空白のみの場合は警告しない", () => {

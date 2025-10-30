@@ -16,7 +16,7 @@ describe("border_adjacent_line_warning（レイアウト隣接罫線警告）", 
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         migrate(warningSpy.diagnostics, doc, xml);
         expect(warningSpy.messages()).toEqual(expect.arrayContaining([
-            expect.stringContaining("LayoutHeader 要素")
+            expect.stringContaining("LayoutHeader要素に")
         ]));
     });
 
@@ -25,7 +25,7 @@ describe("border_adjacent_line_warning（レイアウト隣接罫線警告）", 
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         migrate(warningSpy.diagnostics, doc, xml);
         expect(warningSpy.messages()).toEqual(expect.arrayContaining([
-            expect.stringContaining("LayoutBody 要素")
+            expect.stringContaining("LayoutBody要素に")
         ]));
     });
 
@@ -34,7 +34,7 @@ describe("border_adjacent_line_warning（レイアウト隣接罫線警告）", 
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         migrate(warningSpy.diagnostics, doc, xml);
         expect(warningSpy.messages()).toEqual(expect.arrayContaining([
-            expect.stringContaining("LayoutFooter 要素")
+            expect.stringContaining("LayoutFooter要素に")
         ]));
     });
 

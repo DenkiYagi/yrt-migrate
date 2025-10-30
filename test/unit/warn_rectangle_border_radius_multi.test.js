@@ -18,7 +18,7 @@ describe("<Rectangle> borderRadius属性 複数方向指定警告マイグレー
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         migrate(warningSpy.diagnostics, doc, xml);
         const warnings = warningSpy.messages();
-        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining("<Rectangle>のborderRadius属性は単一値のみ許可されています")]));
+        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining("Rectangle要素のborderRadius属性では、四隅に異なる値を指定することができなくなりました")]));
     });
 
     it("複数の<Rectangle>で複数方向指定があれば全て警告", () => {

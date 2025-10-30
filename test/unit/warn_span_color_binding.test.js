@@ -16,7 +16,7 @@ describe("<Span> color属性バインド変数警告マイグレーション", (
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         migrate(warningSpy.diagnostics, doc, xml);
         const warnings = warningSpy.messages();
-        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining("<Span>のcolor属性にバインド変数は指定できません")]));
+        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining("Span要素のcolor属性にバインド変数を指定することはできなくなりました")]));
     });
 
     it("color属性値に前後空白があってもバインド変数なら警告が出る", () => {
@@ -24,7 +24,7 @@ describe("<Span> color属性バインド変数警告マイグレーション", (
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         migrate(warningSpy.diagnostics, doc, xml);
         const warnings = warningSpy.messages();
-        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining("<Span>のcolor属性にバインド変数は指定できません")]));
+        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining("Span要素のcolor属性にバインド変数を指定することはできなくなりました")]));
     });
 
     it("color属性が静的値の場合は警告が出ない", () => {
@@ -55,7 +55,7 @@ describe("<Span> color属性バインド変数警告マイグレーション", (
         migrate(warningSpy.diagnostics, doc, xml);
         const warnings = warningSpy.messages();
         expect(warnings).toHaveLength(1);
-        expect(warnings[0]).toContain("<Span>のcolor属性にバインド変数は指定できません");
+        expect(warnings[0]).toContain("Span要素のcolor属性にバインド変数を指定することはできなくなりました");
     });
 
     it("複数XMLでそれぞれのcolor属性バインド変数に警告が出る", () => {
@@ -64,6 +64,6 @@ describe("<Span> color属性バインド変数警告マイグレーション", (
         migrate(warningSpy.diagnostics, doc, xml);
         const warnings = warningSpy.messages();
         expect(warnings).toHaveLength(2);
-        expect(warnings.every(msg => msg.includes("<Span>のcolor属性にバインド変数は指定できません"))).toBe(true);
+        expect(warnings.every(msg => msg.includes("Span要素のcolor属性にバインド変数を指定することはできなくなりました"))).toBe(true);
     });
 });

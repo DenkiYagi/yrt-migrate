@@ -17,7 +17,7 @@ describe("warn_foreach_hidden", () => {
         migrate(warningSpy.diagnostics, doc, inputXml);
 
         const warnings = warningSpy.messages();
-        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining("foreach属性とhidden属性が同時に指定されている")]));
+        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining("foreach属性とhidden属性が同時に指定されている場合は自動変換できません")]));
     });
 
     it("foreachがバインド変数でなければ警告する", () => {
@@ -26,7 +26,7 @@ describe("warn_foreach_hidden", () => {
         migrate(warningSpy.diagnostics, doc, inputXml);
 
         const warnings = warningSpy.messages();
-        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining('foreach属性の値 "items" はバインド変数ではありません')]));
+        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining('logic属性が導入されました')]));
     });
 
     it("hiddenがバインド変数でなければ警告する", () => {
@@ -35,7 +35,7 @@ describe("warn_foreach_hidden", () => {
         migrate(warningSpy.diagnostics, doc, inputXml);
 
         const warnings = warningSpy.messages();
-        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining('hidden属性の値 "true" はバインド変数ではありません')]));
+        expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining('logic属性が導入されました')]));
     });
 
     it("バインド変数のforeach/hiddenのみの場合は警告しない", () => {
