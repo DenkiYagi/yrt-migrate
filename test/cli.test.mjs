@@ -10,7 +10,7 @@ import {
     readAndValidateNewFormatYrtFile,
     prepareInputFile
 } from "./test-utils.mjs";
-import { readdir, readFile } from "node:fs/promises";
+import { readdir, readFile, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 
 describe("yrt-migrate CLIテスト", () => {
@@ -43,6 +43,37 @@ describe("yrt-migrate CLIテスト", () => {
             assert(result.stdout.includes("Usage: npx yrt-migrate"));
             assert(result.stdout.includes("--input"));
             assert(result.stdout.includes("--output"));
+        });
+    });
+
+    describe("--diagnostics オプション", () => {
+        test("警告をファイルに書き出す", async () => {
+            const testCaseDir = await createTestCaseDir(testOutDir, "diagnostics-output");
+            const inputFile = join(testCaseDir, "warning.xml");
+            const diagnosticsFile = join(testCaseDir, "warnings.log");
+            const xmlSource = [
+                '<?xml version="1.0" encoding="UTF-8"?>',
+                '<LayoutXml>',
+                '  <Grid foreach="${items}" hidden="flag">',
+                '    <GridCell col="0" row="0"/>',
+                '  </Grid>',
+                '</LayoutXml>'
+            ].join("\n");
+            await writeFile(inputFile, xmlSource, "utf8");
+
+            const result = await runYrtMigrate([
+                "--input", inputFile,
+                "--dry-run",
+                "--diagnostics", diagnosticsFile
+            ]);
+
+            assert.strictEqual(result.exitCode, 0);
+            assert.strictEqual(await fileExists(diagnosticsFile), true, "指定した警告ファイルが作成されませんでした。");
+            assert.strictEqual(result.stderr.includes("[WARNING]"), false, "期待に反して、警告が標準エラー出力に書き出されています。");
+
+            const diagnosticsContent = await readFile(diagnosticsFile, "utf8");
+            assert(diagnosticsContent.includes("[WARNING]"), "警告ファイルに警告プレフィックスが含まれていません。");
+            assert(diagnosticsContent.includes("foreach属性とhidden属性が同時に指定されている"), "期待する警告メッセージがファイルに記録されませんでした。");
         });
     });
 

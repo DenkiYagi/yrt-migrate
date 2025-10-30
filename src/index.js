@@ -52,7 +52,7 @@ import { migrate as borderstyleDasharrayToColon } from "./migrate/borderstyle_da
 import { migrate as warnLinearLayoutChildrenBorder } from "./migrate/warn_linear_layout_children_border.mjs";
 import { migrate as applySchema } from "./migrate/apply_schema.mjs";
 import { validateXmlInput, validateYrtInput } from "./input_file_validator.mjs";
-import { createDiagnosticsBuffer, flushDiagnostics } from "./diagnostics.mjs";
+import { createDiagnosticsBuffer, flushDiagnostics, formatDiagnostic } from "./diagnostics.mjs";
 
 // XML整形出力を制御
 const DO_FORMAT_XML = true;
@@ -103,8 +103,9 @@ function printHelp() {
     console.log(`Usage: npx yrt-migrate [options...] [input_file]
     -i, --input <input_file>   入力ファイル名を指定します。このオプションを使用した場合は末尾のファイル名は省略できます
     -o, --output <output_file> 出力ファイル名を指定します。省略した場合は入力ファイルを上書きします
-    -b, --backup <backpu_file> バックアップファイル名を指定します。省略した場合は {input_file}.old を使用します
+    -b, --backup <backup_file> バックアップファイル名を指定します。省略した場合は {input_file}.old を使用します
     -d, --dry-run              変換結果を表示します。ファイルへは出力されません
+    --diagnostics <file>       警告メッセージを標準エラー出力ではなく指定したファイルへ書き出します
     -h, --help                 このメッセージを表示します`);
 }
 
@@ -132,6 +133,9 @@ async function main() {
                 help: {
                     type: "boolean",
                     short: "h",
+                },
+                diagnostics: {
+                    type: "string",
                 },
             },
             allowPositionals: true,
@@ -190,9 +194,15 @@ async function main() {
             return;
         }
 
+        const diagnosticsOutput = args.values.diagnostics;
         const diagnostics = createDiagnosticsBuffer();
         const migratedYrtDoc = migrate(inputYrtDoc, diagnostics);
-        flushDiagnostics(diagnostics);
+        if (diagnosticsOutput) {
+            const formatted = diagnostics.map(formatDiagnostic).join("\n");
+            await fs.writeFile(diagnosticsOutput, formatted.length > 0 ? `${formatted}\n` : "");
+        } else {
+            flushDiagnostics(diagnostics);
+        }
         if (DO_FORMAT_XML) {
             migratedYrtDoc.layouts = migratedYrtDoc.layouts.map(layout => ({
                 ...layout,
