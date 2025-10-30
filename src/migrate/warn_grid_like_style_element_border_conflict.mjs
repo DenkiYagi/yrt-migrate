@@ -5,7 +5,6 @@
  * 実際には問題がないケースでも警告が出る（偽陽性がある）点に注意。
  */
 
-import { DOMParser } from "@xmldom/xmldom";
 import { warnWithLocation } from "../warn_with_location.mjs";
 
 /**
@@ -101,25 +100,12 @@ function checkNode(node, originalXml) {
 }
 
 /**
- * @param {string} xmlString
- * @param {string} originalXml
- */
-function warnForStyleBorderConflict(xmlString, originalXml) {
-    const doc = new DOMParser().parseFromString(xmlString, "text/xml");
-    checkNode(doc.documentElement, originalXml);
-}
-
-/**
  * Grid/Table/ColumnText スタイル要素間の罫線太さの競合を警告する
- * @param {import("../yrt_format.js").YrtDocument} yrtDocument
- * @param {string} originalXml
+ * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
+ * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）
  * @returns {void}
  */
-export function migrate(yrtDocument, originalXml) {
-    for (const entry of yrtDocument.layouts) {
-        warnForStyleBorderConflict(entry.xml, originalXml);
-    }
-    if (typeof yrtDocument.style === "string" && yrtDocument.style.trim().length > 0) {
-        warnForStyleBorderConflict(yrtDocument.style, originalXml);
-    }
+export function migrate(originalDocument, originalXml) {
+    if (!originalDocument?.documentElement) return;
+    checkNode(originalDocument.documentElement, originalXml);
 }

@@ -1,6 +1,5 @@
 // @ts-check
 
-import { DOMParser } from "@xmldom/xmldom";
 import { warnWithLocation } from "../warn_with_location.mjs";
 
 const STYLE_TAGS = ["GridStyle", "TableStyle", "ColumnTextStyle"];
@@ -35,17 +34,11 @@ function checkNode(node, originalXml) {
 
 /**
  * 旧スタイル要素（`GridStyle` 等）に含まれるバインド変数を警告する
- * @param {import('../yrt_format.js').YrtDocument} yrtDocument
- * @param {string} originalXml
+ * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
+ * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）
  * @returns {void}
  */
-export function migrate(yrtDocument, originalXml) {
-    for (const entry of yrtDocument.layouts) {
-        const doc = new DOMParser().parseFromString(entry.xml, "text/xml");
-        checkNode(doc.documentElement, originalXml);
-    }
-    if (typeof yrtDocument.style === "string" && yrtDocument.style.trim().length > 0) {
-        const styleDoc = new DOMParser().parseFromString(yrtDocument.style, "text/xml");
-        checkNode(styleDoc.documentElement, originalXml);
-    }
+export function migrate(originalDocument, originalXml) {
+    if (!originalDocument?.documentElement) return;
+    checkNode(originalDocument.documentElement, originalXml);
 }

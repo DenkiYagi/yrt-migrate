@@ -1,6 +1,5 @@
 // @ts-check
 
-import { DOMParser } from "@xmldom/xmldom";
 import { warnWithLocation } from "../warn_with_location.mjs";
 
 const BORDER_THICKNESS_SIDE_SPECIFIC_KEYS = [
@@ -241,27 +240,12 @@ function traverse(node, originalXml) {
 }
 
 /**
- * @param {string} xmlString
- * @param {string} originalXml
- */
-function warnForBorderConflict(xmlString, originalXml) {
-    const doc = new DOMParser().parseFromString(xmlString, "text/xml");
-    if (doc.documentElement) {
-        traverse(doc.documentElement, originalXml);
-    }
-}
-
-/**
  * Grid/Table の隣接セル罫線の競合を検出し警告を出す
- * @param {import('../yrt_format.js').YrtDocument} yrtDocument
- * @param {string} originalXml
+ * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
+ * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）
  * @returns {void}
  */
-export function migrate(yrtDocument, originalXml) {
-    for (const entry of yrtDocument.layouts) {
-        warnForBorderConflict(entry.xml, originalXml);
-    }
-    if (typeof yrtDocument.style === "string" && yrtDocument.style.trim().length > 0) {
-        warnForBorderConflict(yrtDocument.style, originalXml);
-    }
+export function migrate(originalDocument, originalXml) {
+    if (!originalDocument?.documentElement) return;
+    traverse(originalDocument.documentElement, originalXml);
 }

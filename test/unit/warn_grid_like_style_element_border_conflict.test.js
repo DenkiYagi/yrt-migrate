@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { DOMParser } from "@xmldom/xmldom";
 import { migrate } from '../../src/migrate/warn_grid_like_style_element_border_conflict.mjs';
 import { setupWarningSpy } from '../helpers/warning_spy.js';
 
@@ -22,7 +23,7 @@ describe('warn_grid_like_style_element_border_conflict', () => {
             '  </Grid>',
             '</StackLayout>'
         ].join('\n');
-        const doc = { layouts: [{ name: null, xml }], style: null, assets: null };
+        const doc = new DOMParser().parseFromString(xml, "text/xml");
         migrate(doc, xml);
         const warnings = warningSpy.messages();
         expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining('Grid')]));
@@ -37,7 +38,7 @@ describe('warn_grid_like_style_element_border_conflict', () => {
             '  </Grid>',
             '</StackLayout>'
         ].join('\n');
-        const doc = { layouts: [{ name: null, xml }], style: null, assets: null };
+        const doc = new DOMParser().parseFromString(xml, "text/xml");
         migrate(doc, xml);
         expect(warningSpy.messages()).toHaveLength(0);
     });
@@ -51,7 +52,7 @@ describe('warn_grid_like_style_element_border_conflict', () => {
             '  </Table>',
             '</StackLayout>'
         ].join('\n');
-        const doc = { layouts: [{ name: null, xml }], style: null, assets: null };
+        const doc = new DOMParser().parseFromString(xml, "text/xml");
         migrate(doc, xml);
         const warnings = warningSpy.messages();
         expect(warnings).toEqual(expect.arrayContaining([expect.stringContaining('Table')]));
@@ -66,7 +67,7 @@ describe('warn_grid_like_style_element_border_conflict', () => {
             '  </ColumnText>',
             '</StackLayout>'
         ].join('\n');
-        const doc = { layouts: [{ name: null, xml }], style: null, assets: null };
+        const doc = new DOMParser().parseFromString(xml, "text/xml");
         migrate(doc, xml);
         expect(warningSpy.messages()).toHaveLength(0);
     });

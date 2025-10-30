@@ -1,3 +1,4 @@
+import { DOMParser } from "@xmldom/xmldom";
 import { migrate } from '../../src/migrate/warn_grid_like_style_element_binding.mjs';
 import { setupWarningSpy } from '../helpers/warning_spy.js';
 
@@ -21,7 +22,7 @@ describe('warn_grid_like_style_element_binding', () => {
             '  </Grid>',
             '</StackLayout>'
         ].join('\n');
-        const doc = { layouts: [{ name: null, xml }], style: null, assets: null };
+        const doc = new DOMParser().parseFromString(xml, "text/xml");
         migrate(doc, xml);
         expect(warningSpy.messages()).toEqual(expect.arrayContaining([expect.stringContaining('GridStyle')]));
     });
@@ -34,7 +35,7 @@ describe('warn_grid_like_style_element_binding', () => {
             '  </Table>',
             '</StackLayout>'
         ].join('\n');
-        const doc = { layouts: [{ name: null, xml }], style: null, assets: null };
+        const doc = new DOMParser().parseFromString(xml, "text/xml");
         migrate(doc, xml);
         expect(warningSpy.messages()).toEqual(expect.arrayContaining([expect.stringContaining('TableStyle')]));
     });
@@ -47,20 +48,15 @@ describe('warn_grid_like_style_element_binding', () => {
             '  </ColumnText>',
             '</StackLayout>'
         ].join('\n');
-        const doc = { layouts: [{ name: null, xml }], style: null, assets: null };
+        const doc = new DOMParser().parseFromString(xml, "text/xml");
         migrate(doc, xml);
         expect(warningSpy.messages()).toEqual(expect.arrayContaining([expect.stringContaining('ColumnTextStyle')]));
     });
 
     it('Style XML も同様に警告する', () => {
-        const xml = '<StackLayout></StackLayout>';
-        const style = [
-            '<Style>',
-            '  <GridStyle borderColor="${color}" />',
-            '</Style>'
-        ].join('\n');
-        const doc = { layouts: [{ name: null, xml }], style, assets: null };
-        migrate(doc, style);
+        const xml = '<LayoutXml><Style><GridStyle borderColor="${color}" /></Style></LayoutXml>';
+        const doc = new DOMParser().parseFromString(xml, "text/xml");
+        migrate(doc, xml);
         expect(warningSpy.messages()).not.toHaveLength(0);
     });
 
@@ -72,7 +68,7 @@ describe('warn_grid_like_style_element_binding', () => {
             '  </Grid>',
             '</StackLayout>'
         ].join('\n');
-        const doc = { layouts: [{ name: null, xml }], style: null, assets: null };
+        const doc = new DOMParser().parseFromString(xml, "text/xml");
         migrate(doc, xml);
         expect(warningSpy.messages()).toHaveLength(0);
     });

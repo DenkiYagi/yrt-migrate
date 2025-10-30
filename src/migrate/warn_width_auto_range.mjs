@@ -1,28 +1,22 @@
 // @ts-check
 
-import { DOMParser } from "@xmldom/xmldom";
 import { warnWithLocation } from "../warn_with_location.mjs";
 
 /**
  * width系属性のauto/range廃止マイグレーション: 警告のみ出力
- * @param {import('../yrt_format.js').YrtDocument} yrtDocument
- * @param {string} originalXml - 元のYRT XML文字列（警告メッセージ用）
+ * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
+ * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）
  * @returns {void} 警告のみ、値は返さない
  */
-export function migrate(yrtDocument, originalXml) {
-    if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) return;
-    for (const entry of yrtDocument.layouts) {
-        if (!entry || typeof entry.xml !== 'string') continue;
-        checkWidthAutoRange(entry.xml, originalXml);
-    }
+export function migrate(originalDocument, originalXml) {
+    checkWidthAutoRange(originalDocument.documentElement, originalXml);
 }
 
 /**
- * @param {string} xml
+ * @param {Element} root
  * @param {string} originalXml
  */
-function checkWidthAutoRange(xml, originalXml) {
-    const doc = new DOMParser().parseFromString(xml, "text/xml");
+function checkWidthAutoRange(root, originalXml) {
     /** @param {any} node */
     function checkGridCols(node) {
         if (node.nodeType === 1 && node.tagName === 'Grid' && node.hasAttribute('cols')) {
@@ -56,8 +50,6 @@ function checkWidthAutoRange(xml, originalXml) {
             }
         }
     }
-    if (doc.documentElement) {
-        checkGridCols(doc.documentElement);
-        checkTableColumnWidth(doc.documentElement);
-    }
+    checkGridCols(root);
+    checkTableColumnWidth(root);
 }

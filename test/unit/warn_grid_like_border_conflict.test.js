@@ -1,6 +1,9 @@
 import { describe, it, expect } from '@jest/globals';
+import { DOMParser } from "@xmldom/xmldom";
 import { migrate } from '../../src/migrate/warn_grid_like_border_conflict.mjs';
 import { withWarningSpy } from '../helpers/warning_spy.js';
+
+const parse = (xml) => new DOMParser().parseFromString(xml, "text/xml");
 
 describe('warn_grid_like_border_conflict', () => {
     it('Grid: 隣接セルがある場合に警告を出す', () => {
@@ -12,8 +15,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  </Grid>',
             '</StackBlock>'
         ].join('\n');
-        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
         expect(warnings).not.toHaveLength(0);
         expect(warnings[0]).toContain('@2:3');
     });
@@ -25,8 +27,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  <GridCell col="2" row="0" borderLeftThickness="2"/>',
             '</Grid>'
         ].join('\n');
-        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
         expect(warnings).not.toHaveLength(0);
     });
 
@@ -37,8 +38,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  <GridCell col="1" row="0" borderTopStyle="double"/>',
             '</Grid>'
         ].join('\n');
-        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
         expect(warnings).toHaveLength(0);
     });
 
@@ -49,8 +49,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  <GridCell col="2" row="1" borderLeftThickness="3"/>',
             '</Grid>'
         ].join('\n');
-        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
         expect(warnings).toHaveLength(0);
     });
 
@@ -61,8 +60,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  <GridCell col="0" row="1" borderTopThickness="2pt"/>',
             '</Grid>'
         ].join('\n');
-        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
         expect(warnings).not.toHaveLength(0);
     });
 
@@ -73,8 +71,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  <GridCell col="1" row="0" borderLeftThickness="thick"/>',
             '</Grid>'
         ].join('\n');
-        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
         expect(warnings).toHaveLength(0);
     });
 
@@ -85,8 +82,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  <GridCell col="0" row="1" borderTopThickness="_"/>',
             '</Grid>'
         ].join('\n');
-        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
         expect(warnings).toHaveLength(0);
     });
 
@@ -105,8 +101,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  </TableColumn>',
             '</Table>'
         ].join('');
-        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
         expect(warnings).not.toHaveLength(0);
     });
 
@@ -125,8 +120,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  </TableColumn>',
             '</Table>'
         ].join('');
-        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
         expect(warnings).toHaveLength(0);
     });
 
@@ -140,8 +134,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  </TableColumn>',
             '</Table>'
         ].join('');
-        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
         expect(warnings).not.toHaveLength(0);
     });
 
@@ -155,8 +148,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  </TableColumn>',
             '</Table>'
         ].join('');
-        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
         expect(warnings).not.toHaveLength(0);
     });
 
@@ -170,8 +162,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  </TableColumn>',
         '</Table>'
         ].join('');
-        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
         expect(warnings).not.toHaveLength(0);
     });
 
@@ -185,8 +176,7 @@ describe('warn_grid_like_border_conflict', () => {
             '  </TableColumn>',
         '</Table>'
         ].join('');
-        const yrtDocument = { layouts: [{ name: null, xml }], style: null, assets: null };
-        const { warnings } = withWarningSpy(() => migrate(yrtDocument, xml));
+        const { warnings } = withWarningSpy(() => migrate(parse(xml), xml));
         expect(warnings).toHaveLength(0);
-});
+    });
 });

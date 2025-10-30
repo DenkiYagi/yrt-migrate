@@ -1,6 +1,5 @@
 // @ts-check
 
-import { DOMParser } from "@xmldom/xmldom";
 import { warnWithLocation } from "../warn_with_location.mjs";
 
 /**
@@ -17,7 +16,7 @@ function isBindingVariable(val) {
  * @returns {void}
  */
 function warnElement(el, originalXml) {
-    if (!el || !el.getAttribute) return;
+    if (!el.getAttribute) return;
     let foreach = el.getAttribute("foreach")?.trim();
     let hidden = el.getAttribute("hidden")?.trim();
 
@@ -42,24 +41,11 @@ function warnElement(el, originalXml) {
 }
 
 /**
- * foreach/hidden 属性に関する警告のみを実行
- * @param {import('../yrt_format.js').YrtDocument} yrtDocument
- * @param {string} originalXml
+ * foreach/hidden 属性に関する警告を実行
+ * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
+ * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）
  * @returns {void}
  */
-export function migrate(yrtDocument, originalXml) {
-    if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) return;
-    for (const entry of yrtDocument.layouts) {
-        if (!entry || typeof entry.xml !== "string") continue;
-        const doc = new DOMParser().parseFromString(entry.xml, "text/xml");
-        if (doc?.documentElement) {
-            warnElement(doc.documentElement, originalXml);
-        }
-    }
-    if (typeof yrtDocument.style === "string" && yrtDocument.style.trim().length > 0) {
-        const styleDoc = new DOMParser().parseFromString(yrtDocument.style, "text/xml");
-        if (styleDoc?.documentElement) {
-            warnElement(styleDoc.documentElement, originalXml);
-        }
-    }
+export function migrate(originalDocument, originalXml) {
+    warnElement(originalDocument.documentElement, originalXml);
 }

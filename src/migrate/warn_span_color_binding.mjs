@@ -1,6 +1,5 @@
 // @ts-check
 
-import { DOMParser } from "@xmldom/xmldom";
 import { warnWithLocation } from "../warn_with_location.mjs";
 
 /**
@@ -35,24 +34,11 @@ function checkSpan(node, originalXml) {
 
 /**
  * <Span>要素のcolor属性がバインド変数なら警告を出す
- * @param {import("../yrt_format.js").YrtDocument} yrtDocument - 変換対象のYrtDocument
- * @param {string} originalXml - 元のYRT XML文字列（警告メッセージ用）
+ * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
+ * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）
  * @returns {void} 警告のみ、値は返さない
  */
-export function migrate(yrtDocument, originalXml) {
-    if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) return;
-    yrtDocument.layouts.forEach(layoutEntry => {
-        if (!layoutEntry || typeof layoutEntry.xml !== "string") return;
-        const doc = new DOMParser().parseFromString(layoutEntry.xml, "text/xml");
-        if (doc.documentElement) {
-            checkSpan(doc.documentElement, originalXml);
-        }
-    });
-    // Style XMLにも同様の警告処理を適用
-    if (typeof yrtDocument.style === "string" && yrtDocument.style.trim().length > 0) {
-        const styleDoc = new DOMParser().parseFromString(yrtDocument.style, "text/xml");
-        if (styleDoc.documentElement) {
-            checkSpan(styleDoc.documentElement, originalXml);
-        }
-    }
+export function migrate(originalDocument, originalXml) {
+    if (!originalDocument?.documentElement) return;
+    checkSpan(originalDocument.documentElement, originalXml);
 }

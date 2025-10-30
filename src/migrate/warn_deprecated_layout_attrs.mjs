@@ -1,29 +1,15 @@
 // @ts-check
 
-import { DOMParser } from "@xmldom/xmldom";
 import { warnWithLocation } from "../warn_with_location.mjs";
 
 /**
  * 旧仕様のレイアウト属性に関する警告を出力する
- * @param {import('../yrt_format.js').YrtDocument} yrtDocument
- * @param {string} originalXml 元のXML文字列
+ * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
+ * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）
  * @returns {void}
  */
-export function migrate(yrtDocument, originalXml) {
-    if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) return;
-    for (const entry of yrtDocument.layouts) {
-        if (!entry || typeof entry.xml !== "string") continue;
-        const doc = new DOMParser().parseFromString(entry.xml, "text/xml");
-        if (doc?.documentElement) {
-            warnDeprecatedAttrs(doc.documentElement, originalXml);
-        }
-    }
-    if (typeof yrtDocument.style === "string" && yrtDocument.style.trim().length > 0) {
-        const styleDoc = new DOMParser().parseFromString(yrtDocument.style, "text/xml");
-        if (styleDoc?.documentElement) {
-            warnDeprecatedAttrs(styleDoc.documentElement, originalXml);
-        }
-    }
+export function migrate(originalDocument, originalXml) {
+    warnDeprecatedAttrs(originalDocument.documentElement, originalXml);
 }
 
 /**

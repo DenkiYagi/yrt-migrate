@@ -22,6 +22,7 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import * as msgpack from "@msgpack/msgpack";
 import * as util from "util";
+import { DOMParser } from "@xmldom/xmldom";
 import { documentToYrtBinary } from "./yrt_format.js";
 import { formatXmlPretty, removeIndents } from "./formatter.mjs";
 import { migrate as multipleXmls } from "./migrate/multiple_xmls.mjs";
@@ -61,22 +62,23 @@ const DO_FORMAT_XML = true;
  */
 function migrate(yrtOldDocument) {
     const originalXml = yrtOldDocument.xml;
-    let doc = multipleXmls(yrtOldDocument);
+    const originalDocument = new DOMParser().parseFromString(originalXml, "text/xml");
 
     // 警告系
-    warnStyleElementBinding(doc, originalXml);
-    warnForeachHidden(doc, originalXml);
-    warnDeprecatedLayoutAttrs(doc, originalXml);
-    warnImageWidthRequired(doc, originalXml);
-    warnGridLikeBorderConflict(doc, originalXml);
-    warnGridLikeStyleElementBorderConflict(doc, originalXml);
-    warnWidthAutoRange(doc, originalXml);
-    warnBindingRequired(doc, originalXml);
-    warnSpanColorBinding(doc, originalXml);
-    warnRectangleBorderRadiusMulti(doc, originalXml);
-    warnLinearLayoutChildrenBorder(doc, originalXml);
+    warnStyleElementBinding(originalDocument, originalXml);
+    warnForeachHidden(originalDocument, originalXml);
+    warnDeprecatedLayoutAttrs(originalDocument, originalXml);
+    warnImageWidthRequired(originalDocument, originalXml);
+    warnGridLikeBorderConflict(originalDocument, originalXml);
+    warnGridLikeStyleElementBorderConflict(originalDocument, originalXml);
+    warnWidthAutoRange(originalDocument, originalXml);
+    warnBindingRequired(originalDocument, originalXml);
+    warnSpanColorBinding(originalDocument, originalXml);
+    warnRectangleBorderRadiusMulti(originalDocument, originalXml);
+    warnLinearLayoutChildrenBorder(originalDocument, originalXml);
 
     // 変換系
+    let doc = multipleXmls(yrtOldDocument);
     doc = orientationRename(doc);
     doc = removeUnspecifiedAttr(doc);
     doc = styleElementMigrate(doc);
@@ -90,9 +92,8 @@ function migrate(yrtOldDocument) {
     doc = gridColsRowsRequired(doc);
     doc = sizeCommaToSpace(doc);
     doc = borderstyleDasharrayToColon(doc);
-
-    // 最後にスキーマ指定用の属性追加
     doc = applySchema(doc);
+
     return doc;
 }
 
