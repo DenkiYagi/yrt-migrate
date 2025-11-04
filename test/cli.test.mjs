@@ -203,7 +203,7 @@ describe("yrt-migrate CLIテスト", () => {
         ]);
 
         assert.strictEqual(result.exitCode, 0);
-        assert(result.stdout.includes("=== Layout 0 ==="), "Layout情報がヘッダーと共に出力されること");
+        assert(result.stdout.includes("=== Layout 1 ==="), "Layout情報がヘッダーと共に出力されること");
         assert(result.stdout.includes("<StackLayout"), "変換後のLayoutXMLが出力されること");
         assert(!result.stdout.includes("<LayoutXml>"), "<LayoutXml>要素は出力されないこと");
 

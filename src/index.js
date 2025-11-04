@@ -200,7 +200,7 @@ async function main() {
 
         if (args.values["dry-run"]) {
             migratedDoc.layouts.forEach((layoutXml, idx) => {
-                console.log(`=== Layout ${idx} ===`);
+                console.log(`=== Layout ${idx + 1} ===`);
                 console.log(layoutXml);
             });
             if (typeof migratedDoc.style === "string" && migratedDoc.style.trim().length > 0) {
