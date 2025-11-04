@@ -36,7 +36,7 @@ function normalizeXml(xml) {
  * @param {string} warnings
  */
 function normalizeWarnings(warnings) {
-    return warnings.replace(/\r\n/g, "\n").trim();
+    return warnings.replace(/\r\n/g, "\n").replace(/\\/g, "/").trim();
 }
 
 /**

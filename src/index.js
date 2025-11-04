@@ -156,6 +156,7 @@ async function main() {
         process.exitCode = 1;
         return;
     }
+    inputFileName = path.normalize(inputFileName);
 
     const ext = path.extname(inputFileName);
 
