@@ -176,7 +176,16 @@ async function main() {
             return;
         }
 
-        const inputLegacyDoc = await validateXmlInput(inputFileName);
+        let inputLegacyDoc;
+        try {
+            inputLegacyDoc = await validateXmlInput(inputFileName);
+        } catch (validationError) {
+            console.error("入力ファイルの検証に失敗しました:");
+            if (validationError instanceof Error) console.error(validationError.message);
+            else console.error(validationError);
+            process.exitCode = 1;
+            return;
+        }
 
         const diagnosticsOutput = args.values.diagnostics;
         const diagnostics = createDiagnosticsBuffer(inputFileName);
