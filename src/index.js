@@ -215,6 +215,17 @@ async function main() {
                 process.exitCode = 1;
                 return;
             }
+            try {
+                const existingEntries = await fs.readdir(outputDir, { withFileTypes: true });
+                const cleanupTargets = existingEntries
+                    .filter(entry => entry.isFile() && (/^layout-\d+\.xml$/u.test(entry.name) || entry.name === "style.xml"))
+                    .map(entry => path.join(outputDir, entry.name));
+                await Promise.all(cleanupTargets.map(targetPath => fs.rm(targetPath, { force: true })));
+            } catch (cleanupError) {
+                console.error(cleanupError);
+                process.exitCode = 1;
+                return;
+            }
             const writeOperations = [];
             migratedDoc.layouts.forEach((layoutXml, idx) => {
                 const targetPath = path.join(outputDir, `layout-${idx + 1}.xml`);

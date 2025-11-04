@@ -11,7 +11,7 @@ import {
     readMigratedStyleXml,
     prepareInputFile
 } from "./test-utils.mjs";
-import { readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { basename, join, parse } from "node:path";
 
 /**
@@ -128,6 +128,40 @@ describe("yrt-migrate CLIテスト", () => {
 
         const layouts = await readMigratedLayoutXmls(outputDir);
         assert(layouts.length > 0, "レイアウトXMLが生成されること");
+    });
+
+    test("既存の layout/style ファイルは出力前に削除される", async () => {
+        const testCaseDir = await createTestCaseDir(testOutDir, "cleanup-existing-output");
+        const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir);
+        const outputDir = join(testCaseDir, "out");
+
+        await mkdir(outputDir, { recursive: true });
+        await writeFile(join(outputDir, "layout-99.xml"), "<LinearLayout id=\"stale\"/>", "utf8");
+        await writeFile(join(outputDir, "style.xml"), "<Style id=\"stale\"/>", "utf8");
+        const keepFilePath = join(outputDir, "keep.txt");
+        await writeFile(keepFilePath, "keep me", "utf8");
+
+        const result = await runYrtMigrate([
+            inputFile,
+            "--output", outputDir
+        ]);
+
+        assert.strictEqual(result.exitCode, 0);
+
+        const entries = await readdir(outputDir);
+        assert(entries.includes("keep.txt"), "出力ディレクトリ内のその他ファイルは保持されること");
+        assert(!entries.includes("layout-99.xml"), "既存の layout-*.xml は削除されること");
+        assert(!entries.includes("style.xml"), "既存の style.xml は削除されること");
+
+        const layouts = await readMigratedLayoutXmls(outputDir);
+        assert(layouts.length >= 1, "レイアウトXMLが再生成されること");
+        assert(layouts.some(layout => layout.includes("<StackLayout")), "生成し直したレイアウトXMLが期待する形式であること");
+
+        const style = await readMigratedStyleXml(outputDir);
+        assert(style === null || style.includes("<Style"), "新しい style.xml が存在する場合は期待する内容であること");
+
+        const keepContent = await readFile(keepFilePath, "utf8");
+        assert.strictEqual(keepContent, "keep me", "対象外のファイルは内容が保持されること");
     });
 
     test("--dry-runオプションでXMLファイルを指定すると、ファイル出力せずに標準出力に変換結果が表示される", async () => {
