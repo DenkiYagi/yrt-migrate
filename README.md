@@ -13,16 +13,8 @@ yagisan-reports のレイアウトXMLを最新の仕様にマイグレートす�
 
 ## 使い方
 
-### インストール
-
 ```sh
-npm install git+https://github.com/DenkiYagi/yrt-migrate.git --save-dev
-```
-
-### 実行
-
-```sh
-npx yrt-migrate path/to/input.xml
+npx github:DenkiYagi/yrt-migrate path/to/input.xml
 ```
 
 - 出力先を明示指定しない場合、入力ファイルと同じディレクトリーの下に、新規ディレクトリー `<入力ファイル名>-v1.0` が生成されます。
