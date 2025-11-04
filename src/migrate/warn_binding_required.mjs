@@ -15,7 +15,7 @@ function checkTableBindingWarn(diagnostics, document, originalXml) {
         if (items && !/^\$\{[^}]+\}$/.test(items)) {
             warnWithLocation(diagnostics, originalXml, table, [
                 "items属性では固定値を指定できなくなりました。",
-                "バインド変数を指定してください。"
+                "テンプレート変数を指定してください。"
             ]);
         }
         // breakCondition属性
@@ -23,14 +23,14 @@ function checkTableBindingWarn(diagnostics, document, originalXml) {
         if (breakCond && !/^\$\{[^}]+\}$/.test(breakCond)) {
             warnWithLocation(diagnostics, originalXml, table, [
                 "breakCondition属性では固定値を指定できなくなりました。",
-                "バインド変数で指定してください。"
+                "テンプレート変数で指定してください。"
             ]);
         }
     }
 }
 
 /**
- * <Table>要素のitems/breakCondition属性がバインド変数でなければ警告を出す
+ * <Table>要素のitems/breakCondition属性がテンプレート変数でなければ警告を出す
  * @param {import("../diagnostics.mjs").DiagnosticsBuffer} diagnostics
  * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
  * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）

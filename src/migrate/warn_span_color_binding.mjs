@@ -20,7 +20,7 @@ function checkSpan(diagnostics, node, originalXml) {
         const color = node.getAttribute("color")?.trim();
         if (isBinding(color)) {
             warnWithLocation(diagnostics, originalXml, node, [
-                "Span要素のcolor属性にバインド変数を指定することはできなくなりました。",
+                "Span要素のcolor属性にテンプレート変数を指定することはできなくなりました。",
                 "固定値を直接指定してください。"
             ]);
         }
@@ -37,7 +37,7 @@ function checkSpan(diagnostics, node, originalXml) {
 }
 
 /**
- * <Span>要素のcolor属性がバインド変数なら警告を出す
+ * <Span>要素のcolor属性がテンプレート変数なら警告を出す
  * @param {import("../diagnostics.mjs").DiagnosticsBuffer} diagnostics
  * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
  * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）

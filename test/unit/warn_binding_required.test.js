@@ -2,7 +2,7 @@ import { DOMParser } from "@xmldom/xmldom";
 import { migrate } from "../../src/migrate/warn_binding_required.mjs";
 import { setupWarningSpy } from "../helpers/warning_spy.js";
 
-describe("バインド変数必須化マイグレーション (bindingRequiredWarn)", () => {
+describe("テンプレート変数必須化マイグレーション (bindingRequiredWarn)", () => {
     let warningSpy;
     beforeEach(() => {
         warningSpy = setupWarningSpy();
@@ -35,7 +35,7 @@ describe("バインド変数必須化マイグレーション (bindingRequiredWa
         expect(warnings).toHaveLength(2);
     });
 
-    it("items/breakConditionがバインド変数なら警告しない", () => {
+    it("items/breakConditionがテンプレート変数なら警告しない", () => {
         const xml = '<Table items="${foo.bar}" breakCondition="${baz[0]}" />';
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         migrate(warningSpy.diagnostics, doc, xml);
@@ -53,7 +53,7 @@ describe("バインド変数必須化マイグレーション (bindingRequiredWa
         const xml = '<Table items="  ${foo}  " breakCondition="  true  " />';
         const doc = new DOMParser().parseFromString(xml, "text/xml");
         migrate(warningSpy.diagnostics, doc, xml);
-        // itemsはバインド変数なので警告なし、breakConditionはリテラルなので警告
+        // itemsはテンプレート変数なので警告なし、breakConditionはリテラルなので警告
         const warnings = warningSpy.messages();
         expect(warnings).toHaveLength(1);
         expect(warnings[0]).toContain("breakCondition属性では固定値を指定できなくなりました");

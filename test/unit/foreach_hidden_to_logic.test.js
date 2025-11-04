@@ -62,7 +62,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
         expect(warnings).toHaveLength(0);
     });
 
-    it("foreach値がバインド変数でない場合は変換されない", () => {
+    it("foreach値がテンプレート変数でない場合は変換されない", () => {
         const inputXml = [
             '<?xml version="1.0" encoding="UTF-8"?>',
             '<Grid foreach="[]"/>'
@@ -75,7 +75,7 @@ describe("foreach/hidden属性→logic属性マイグレーション", () => {
         expect(warnings).toHaveLength(0);
     });
 
-    it("hidden値がバインド変数でない場合は変換されない", () => {
+    it("hidden値がテンプレート変数でない場合は変換されない", () => {
         const inputXml = [
             '<?xml version="1.0" encoding="UTF-8"?>',
             '<Text hidden="true"/>'].join('\n');

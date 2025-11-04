@@ -21,8 +21,8 @@ function checkNode(diagnostics, node, originalXml) {
                     node,
                     [
                         `${node.tagName} 要素は廃止され、新たな指定方法としてスタイルXMLが導入されました。`,
-                        "スタイルXMLではバインド変数を使用できません。",
-                        `${node.tagName} の ${attr.name} 属性値にバインド変数 (${attr.value}) が指定されているため、自動変換できません。`,
+                        "スタイルXMLではテンプレート変数を使用できません。",
+                        `${node.tagName} の ${attr.name} 属性値にテンプレート変数 (${attr.value}) が指定されているため、自動変換できません。`,
                         "固定値を直接指定してください。"
                     ]
                 );
@@ -40,7 +40,7 @@ function checkNode(diagnostics, node, originalXml) {
 }
 
 /**
- * 旧スタイル要素（`GridStyle` 等）に含まれるバインド変数を警告する
+ * 旧スタイル要素（`GridStyle` 等）に含まれるテンプレート変数を警告する
  * @param {import("../diagnostics.mjs").DiagnosticsBuffer} diagnostics
  * @param {Document} originalDocument - 変換前のXMLをパースしたドキュメント（検査用）
  * @param {string} originalXml - 変換前のXML文字列（警告メッセージ用）

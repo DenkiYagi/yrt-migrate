@@ -31,17 +31,17 @@ function warnElement(diagnostics, el, originalXml) {
     if (foreach && !isBindingVariable(foreach)) {
         warnWithLocation(diagnostics, originalXml, el, [
             "foreach属性は廃止され、新たにlogic属性が導入されました。",
-            "logic属性ではバインド変数を指定する必要があり、固定値は指定できません。",
-            `foreach属性の値 "${foreach}" がバインド変数ではないため、自動変換できません。`,
-            "バインド変数を指定してください。"
+            "logic属性ではテンプレート変数を指定する必要があり、固定値は指定できません。",
+            `foreach属性の値 "${foreach}" がテンプレート変数ではないため、自動変換できません。`,
+            "テンプレート変数を指定してください。"
         ]);
     }
     if (hidden && !isBindingVariable(hidden)) {
         warnWithLocation(diagnostics, originalXml, el, [
             "hidden属性は廃止され、新たにlogic属性が導入されました。",
-            "logic属性ではバインド変数を指定する必要があり、固定値は指定できません。",
-            `hidden属性の値 "${hidden}" がバインド変数ではないため、自動変換できません。`,
-            "バインド変数を指定してください。"
+            "logic属性ではテンプレート変数を指定する必要があり、固定値は指定できません。",
+            `hidden属性の値 "${hidden}" がテンプレート変数ではないため、自動変換できません。`,
+            "テンプレート変数を指定してください。"
         ]);
     }
 
