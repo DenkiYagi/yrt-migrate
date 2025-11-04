@@ -1,3 +1,10 @@
+# Testing
+/test-out/
+/test/regression/test-data/*
+/tmp/
+
+# --------------------------------
+
 # Logs
 logs
 *.log

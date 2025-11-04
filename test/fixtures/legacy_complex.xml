@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LayoutXml>
+  <StackLayout>
+    <Text x="0" y="0" width="100">First Layout</Text>
+  </StackLayout>
+  <LinearLayout>
+    <LayoutBody>
+      <Text color="rgb(1, 0, 0)">Second Layout</Text>
+      <Image src="@{image}" />
+      <Grid cols="*" rows="auto">
+        <GridStyle borderThickness="regular" />
+        <GridCell col="0" row="0">
+          <Text>Grid Cell 1</Text>
+        </GridCell>
+      </Grid>
+    </LayoutBody>
+  </LinearLayout>
+</LayoutXml>

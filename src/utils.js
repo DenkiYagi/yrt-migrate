@@ -1,0 +1,34 @@
+// @ts-check
+
+/**
+ * XMLノードのXPathを取得するユーティリティ
+ * @param {Node} node
+ * @returns {string}
+ */
+export function getXPath(node) {
+    let path = '';
+    /** @type {(Node | null)} */
+    let current = node;
+    while (current && current.nodeType === 1) {
+        let name = current.nodeName;
+
+        /** @type {(ParentNode | null)} */
+        let parent = current.parentNode;
+        if (parent) {
+            /**
+             * 同じタグ名の兄弟の中で何番目か
+             * @type {Node[]}
+             */
+            let sameTagSiblings = Array.from(parent.childNodes).filter(
+                n => n.nodeType === 1 && n.nodeName === name
+            );
+            if (sameTagSiblings.length > 1) {
+                let idx = sameTagSiblings.indexOf(current) + 1;
+                name += `[${idx}]`;
+            }
+        }
+        path = '/' + name + path;
+        current = parent && parent.nodeType === 1 ? parent : null;
+    }
+    return path;
+}

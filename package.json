@@ -1,20 +1,25 @@
 {
   "name": "yrt-migrate",
-  "version": "2023.1.0",
-  "description": "yagisan-reportsのレイアウトXMLを最新の仕様にマイグレーションするツールです。 破壊的変更により廃止や非推奨になったコンポーネントを最新の仕様で置き換えます。",
+  "version": "2025.1.0",
+  "description": "yagisan-reportsのレイアウトXMLを最新の仕様にマイグレートするツールです。破壊的変更により廃止や非推奨になったコンポーネントを最新の仕様で置き換えます。",
   "type": "module",
   "bin": {
-    "yrt-migrate": "index.js"
+    "yrt-migrate": "src/index.js"
   },
   "scripts": {
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    "test": "npm run test:unit && npm run test:integration && npm run test:regression",
+    "test:unit": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
+    "test:integration": "node --test test/cli.test.mjs test/integration.test.mjs",
+    "test:ai:integration": "node --test --test-reporter=junit test/cli.test.mjs test/integration.test.mjs",
+    "test:regression": "node --test test/regression/regression.test.mjs",
+    "test:ai:regression": "node --test --test-reporter=junit test/regression/regression.test.mjs"
   },
   "author": "DenkiYagi Inc.",
   "license": "Apache-2.0",
   "dependencies": {
-    "@msgpack/msgpack": "^2.8.0",
-    "@xmldom/xmldom": "^0.8.10",
-    "xpath": "^0.0.33"
+    "@xmldom/xmldom": "^0.8.11",
+    "xml-formatter": "^3.6.7",
+    "xpath": "^0.0.34"
   },
   "devDependencies": {
     "jest": "^29.7.0"
