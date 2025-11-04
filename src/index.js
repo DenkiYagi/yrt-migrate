@@ -170,7 +170,7 @@ async function main() {
 
     try {
         if (ext.toLowerCase() !== ".xml") {
-            console.error("非対応のファイル形式です（.xml のみ対応しています）");
+            console.error("非対応のファイル形式です（*.xml のみ対応しています）");
             process.exitCode = 1;
             return;
         }
@@ -211,6 +211,7 @@ async function main() {
             try {
                 await fs.mkdir(outputDir, { recursive: true });
             } catch (dirError) {
+                console.error("出力先ディレクトリーの作成に失敗しました");
                 console.error(dirError);
                 process.exitCode = 1;
                 return;
@@ -222,6 +223,7 @@ async function main() {
                     .map(entry => path.join(outputDir, entry.name));
                 await Promise.all(cleanupTargets.map(targetPath => fs.rm(targetPath, { force: true })));
             } catch (cleanupError) {
+                console.error("既存の出力ファイルの削除に失敗しました");
                 console.error(cleanupError);
                 process.exitCode = 1;
                 return;
@@ -238,6 +240,7 @@ async function main() {
             await Promise.all(writeOperations);
         }
     } catch (error) {
+        console.error("想定外のエラーが発生しました");
         console.error(error);
         process.exitCode = 1;
         return;
