@@ -34,7 +34,7 @@ function warnDeprecatedAttrs(diagnostics, node, originalXml) {
         const targets = ["borderThickness", "borderColor", "borderStyle", "padding"];
         if (targets.some(attr => node.hasAttribute(attr))) {
             warnWithLocation(diagnostics, originalXml, node, [
-                "StackLayoutのborder系属性・padding属性（borderThickness, borderColor, borderStyle, padding）は廃止されました。",
+                "StackLayoutのborder/padding系属性（borderThickness, borderColor, borderStyle, padding）は廃止されました。",
                 "レイアウトXMLを手動で修正してください。"
             ]);
         }

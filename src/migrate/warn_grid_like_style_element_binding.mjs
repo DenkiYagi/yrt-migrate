@@ -22,7 +22,7 @@ function checkNode(diagnostics, node, originalXml) {
                     [
                         `${node.tagName} 要素は廃止され、新たな指定方法としてスタイルXMLが導入されました。`,
                         "スタイルXMLではテンプレート変数を使用できません。",
-                        `${node.tagName} の ${attr.name} 属性値にテンプレート変数 (${attr.value}) が指定されているため、自動変換できません。`,
+                        `${node.tagName} の ${attr.name} 属性値にテンプレート変数 ${attr.value} が指定されているため、自動変換できません。`,
                         "固定値を直接指定してください。"
                     ]
                 );

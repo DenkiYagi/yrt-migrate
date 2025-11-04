@@ -40,7 +40,7 @@ function warnElement(diagnostics, el, originalXml) {
         warnWithLocation(diagnostics, originalXml, el, [
             "hidden属性は廃止され、新たにlogic属性が導入されました。",
             "logic属性ではテンプレート変数を指定する必要があり、固定値は指定できません。",
-            `hidden属性の値 "${hidden}" がテンプレート変数ではないため、自動変換できません。`,
+            `hidden属性の値 ${hidden} がテンプレート変数ではないため、自動変換できません。`,
             "テンプレート変数を指定してください。"
         ]);
     }
