@@ -208,6 +208,7 @@ async function main() {
                 console.log(migratedDoc.style);
             }
         } else {
+            const emittedFiles = [];
             try {
                 await fs.mkdir(outputDir, { recursive: true });
             } catch (dirError) {
@@ -232,12 +233,18 @@ async function main() {
             migratedDoc.layouts.forEach((layoutXml, idx) => {
                 const targetPath = path.join(outputDir, `layout-${idx + 1}.xml`);
                 writeOperations.push(fs.writeFile(targetPath, `${layoutXml}\n`, "utf8"));
+                emittedFiles.push(targetPath);
             });
             if (typeof migratedDoc.style === "string" && migratedDoc.style.trim().length > 0) {
                 const stylePath = path.join(outputDir, "style.xml");
                 writeOperations.push(fs.writeFile(stylePath, `${migratedDoc.style}\n`, "utf8"));
+                emittedFiles.push(stylePath);
             }
             await Promise.all(writeOperations);
+            console.log("\n変換結果を出力しました:");
+            emittedFiles.forEach(filePath => {
+                console.log("+", filePath);
+            });
         }
     } catch (error) {
         console.error("想定外のエラーが発生しました");

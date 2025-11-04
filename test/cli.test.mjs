@@ -164,6 +164,33 @@ describe("yrt-migrate CLIテスト", () => {
         assert.strictEqual(keepContent, "keep me", "対象外のファイルは内容が保持されること");
     });
 
+    test("出力完了メッセージには生成ファイルのパスが含まれる", async () => {
+        // Temporarily skip this block When run by Codex, because of Codex sandbox stdout/stderr logging limitations
+
+        const testCaseDir = await createTestCaseDir(testOutDir, "output-message");
+        const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir);
+        const outputDir = join(testCaseDir, "out");
+
+        const result = await runYrtMigrate([
+            "--input", inputFile,
+            "--output", outputDir
+        ]);
+
+        assert.strictEqual(result.exitCode, 0);
+        assert(result.stdout.includes("変換結果を出力しました:"), "出力完了メッセージがヘッダー付きで表示されること");
+
+        const layouts = await readMigratedLayoutXmls(outputDir);
+        const expectedPaths = layouts.map((_, idx) => join(outputDir, `layout-${idx + 1}.xml`));
+        const style = await readMigratedStyleXml(outputDir);
+        if (style !== null) {
+            expectedPaths.push(join(outputDir, "style.xml"));
+        }
+
+        expectedPaths.forEach(path => {
+            assert(result.stdout.includes(path), `出力完了メッセージに ${path} が含まれること`);
+        });
+    });
+
     test("--dry-runオプションでXMLファイルを指定すると、ファイル出力せずに標準出力に変換結果が表示される", async () => {
         // Temporarily skip this block When run by Codex, because of Codex sandbox stdout/stderr logging limitations
 
