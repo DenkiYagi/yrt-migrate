@@ -163,6 +163,7 @@ describe("リグレッションテスト", async () => {
                 const outputDir = join(testCaseDir, "output");
                 const diagnosticsFile = join(testCaseDir, "diagnostics.log");
                 const { exitCode, stderr } = await runYrtMigrate([
+                    "--from", "alpha13",
                     "--input",
                     inputFile,
                     "--output",

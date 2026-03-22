@@ -64,6 +64,7 @@ describe("yrt-migrate CLIテスト", () => {
             await writeFile(inputFile, xmlSource, "utf8");
 
             const result = await runYrtMigrate([
+                "--from", "alpha13",
                 "--input", inputFile,
                 "--dry-run",
                 "--diagnostics", diagnosticsFile
@@ -80,7 +81,7 @@ describe("yrt-migrate CLIテスト", () => {
     test("位置引数でXMLファイルを指定すると、同じディレクトリに出力ディレクトリが作成される", async () => {
         const testCaseDir = await createTestCaseDir(testOutDir, "xml-positional-only");
         const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir);
-        const result = await runYrtMigrate([inputFile]);
+        const result = await runYrtMigrate(["--from", "alpha13", inputFile]);
 
         assert.strictEqual(result.exitCode, 0);
 
@@ -102,6 +103,7 @@ describe("yrt-migrate CLIテスト", () => {
         const outputDir = join(testCaseDir, "custom-output");
 
         const result = await runYrtMigrate([
+            "--from", "alpha13",
             inputFile,
             "--output", outputDir
         ]);
@@ -119,6 +121,7 @@ describe("yrt-migrate CLIテスト", () => {
         const outputDir = join(testCaseDir, "converted");
 
         const result = await runYrtMigrate([
+            "--from", "alpha13",
             "--input", inputFile,
             "--output", outputDir
         ]);
@@ -142,6 +145,7 @@ describe("yrt-migrate CLIテスト", () => {
         await writeFile(keepFilePath, "keep me", "utf8");
 
         const result = await runYrtMigrate([
+            "--from", "alpha13",
             inputFile,
             "--output", outputDir
         ]);
@@ -172,6 +176,7 @@ describe("yrt-migrate CLIテスト", () => {
         const outputDir = join(testCaseDir, "out");
 
         const result = await runYrtMigrate([
+            "--from", "alpha13",
             "--input", inputFile,
             "--output", outputDir
         ]);
@@ -198,6 +203,7 @@ describe("yrt-migrate CLIテスト", () => {
         const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir);
         const inputDataBeforeRun = await readFile(inputFile);
         const result = await runYrtMigrate([
+            "--from", "alpha13",
             "--dry-run",
             inputFile
         ]);
@@ -218,7 +224,7 @@ describe("yrt-migrate CLIテスト", () => {
         // Temporarily skip this block When run by Codex, because of Codex sandbox stdout/stderr logging limitations
 
         test("入力として存在しないファイルを指定すると、生のENOENTエラーが出力される", async () => {
-            const result = await runYrtMigrate(["nonexistent.xml"]);
+            const result = await runYrtMigrate(["--from", "alpha13", "nonexistent.xml"]);
             assert.strictEqual(result.exitCode, 1);
             assert(result.stderr.includes("ENOENT"));
         });
@@ -227,7 +233,7 @@ describe("yrt-migrate CLIテスト", () => {
             const testCaseDir = await createTestCaseDir(testOutDir, "invalid-file");
             const invalidFile = await prepareInputFile("test/fixtures/invalid_extension.txt", testCaseDir);
 
-            const result = await runYrtMigrate([invalidFile]);
+            const result = await runYrtMigrate(["--from", "alpha13", invalidFile]);
             assert.strictEqual(result.exitCode, 1);
             assert(result.stderr.includes("非対応のファイル形式です"));
         });
@@ -235,7 +241,7 @@ describe("yrt-migrate CLIテスト", () => {
         test("旧形式でない（ルート要素が LayoutXml ではない）XMLファイルが入力されたとき、エラーメッセージが出力される", async () => {
             const testCaseDir = await createTestCaseDir(testOutDir, "invalid-xml-root");
             const invalidXmlFile = await prepareInputFile("test/fixtures/invalid_xml_root.xml", testCaseDir);
-            const result = await runYrtMigrate([invalidXmlFile]);
+            const result = await runYrtMigrate(["--from", "alpha13", invalidXmlFile]);
             assert.strictEqual(result.exitCode, 1);
             assert(result.stderr.includes("XMLファイル形式が不正です"), "不正なXML形式のエラーメッセージが出力されること");
         });
@@ -243,7 +249,7 @@ describe("yrt-migrate CLIテスト", () => {
         test("YRTファイルは非対応の形式として扱われる", async () => {
             const testCaseDir = await createTestCaseDir(testOutDir, "reject-yrt");
             const yrtFile = await prepareInputFile("test/fixtures/legacy_complex.yrt", testCaseDir);
-            const result = await runYrtMigrate([yrtFile]);
+            const result = await runYrtMigrate(["--from", "alpha13", yrtFile]);
             assert.strictEqual(result.exitCode, 1);
             assert(result.stderr.includes("非対応のファイル形式です"), "YRT入力は非対応であること");
         });

@@ -44,6 +44,7 @@ describe("yrt-migrate 統合テスト", () => {
                 const outputDir = join(testCaseDir, "output");
 
                 const result = await runYrtMigrate([
+                    "--from", "alpha13",
                     "--input", inputFile,
                     "--output", outputDir
                 ]);
@@ -66,6 +67,7 @@ describe("yrt-migrate 統合テスト", () => {
                 const inputFile = await prepareInputFile(fixturePath("legacy_minimal.xml"), testCaseDir);
                 const diagnosticsFile = join(testCaseDir, "warnings.log");
                 const result = await runYrtMigrate([
+                    "--from", "alpha13",
                     inputFile,
                     "--diagnostics", diagnosticsFile
                 ]);
@@ -83,6 +85,7 @@ describe("yrt-migrate 統合テスト", () => {
                 const outputDir = join(testCaseDir, "output");
 
                 const result = await runYrtMigrate([
+                    "--from", "alpha13",
                     "--input", inputFile,
                     "--output", outputDir
                 ]);
@@ -104,6 +107,7 @@ describe("yrt-migrate 統合テスト", () => {
                 const outputDir = join(testCaseDir, "output");
 
                 const result = await runYrtMigrate([
+                    "--from", "alpha13",
                     "--input", inputFile,
                     "--output", outputDir
                 ]);
@@ -134,6 +138,7 @@ describe("yrt-migrate 統合テスト", () => {
                 const outputDir = join(testCaseDir, "output");
 
                 const result = await runYrtMigrate([
+                    "--from", "alpha13",
                     "--input", inputFile,
                     "--output", outputDir
                 ]);
@@ -153,6 +158,7 @@ describe("yrt-migrate 統合テスト", () => {
                 const inputFile = await prepareInputFile(fixturePath("legacy_complex.xml"), testCaseDir);
                 const diagnosticsFile = join(testCaseDir, "warnings.log");
                 const result = await runYrtMigrate([
+                    "--from", "alpha13",
                     inputFile,
                     "--diagnostics", diagnosticsFile
                 ]);
