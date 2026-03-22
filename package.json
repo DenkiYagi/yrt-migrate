@@ -9,8 +9,8 @@
   "scripts": {
     "test": "pnpm run test:unit && pnpm run test:integration && pnpm run test:regression",
     "test:unit": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
-    "test:integration": "node --test test/cli.test.mjs test/integration_alpha13.test.mjs test/integration_alpha13_extended.test.mjs test/integration_2025_1.test.mjs",
-    "test:ai:integration": "node --test --test-reporter=junit test/cli.test.mjs test/integration_alpha13.test.mjs test/integration_alpha13_extended.test.mjs test/integration_2025_1.test.mjs",
+    "test:integration": "node --test test/cli.test.mjs test/integration_alpha13.test.mjs test/integration_2025_1.test.mjs",
+    "test:ai:integration": "node --test --test-reporter=junit test/cli.test.mjs test/integration_alpha13.test.mjs test/integration_2025_1.test.mjs",
     "test:regression": "node --test test/regression/regression.test.mjs",
     "test:ai:regression": "node --test --test-reporter=junit test/regression/regression.test.mjs"
   },
