@@ -4,8 +4,8 @@ import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
 /**
  * 属性名のリネームマイグレーション
- * @param {import('../yrt_format.js').MigratedXmlCollection} yrtDocument
- * @returns {import('../yrt_format.js').MigratedXmlCollection}
+ * @param {import('./yrt_format.js').MigratedXmlCollection} yrtDocument
+ * @returns {import('./yrt_format.js').MigratedXmlCollection}
  */
 export function migrate(yrtDocument) {
     /**

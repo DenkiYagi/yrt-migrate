@@ -5,8 +5,8 @@ import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
 /**
  * レイアウトXMLを変換し、必要に応じてStyle XMLを抽出する
- * @param {import('../yrt_format.js').MigratedXmlCollection} yrtDocument
- * @returns {import('../yrt_format.js').MigratedXmlCollection} 変換後のコレクション
+ * @param {import('./yrt_format.js').MigratedXmlCollection} yrtDocument
+ * @returns {import('./yrt_format.js').MigratedXmlCollection} 変換後のコレクション
  */
 export function migrate(yrtDocument) {
     if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) {

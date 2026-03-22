@@ -232,8 +232,8 @@ export function normalizeDirectionalAttrsUnderscore(xmlString) {
 
 /**
  * レイアウトXMLに方向系属性の正規化・継承・伝播処理を適用する
- * @param {import('../yrt_format.js').MigratedXmlCollection} yrtDocument
- * @returns {import('../yrt_format.js').MigratedXmlCollection}
+ * @param {import('./yrt_format.js').MigratedXmlCollection} yrtDocument
+ * @returns {import('./yrt_format.js').MigratedXmlCollection}
  */
 export function migrate(yrtDocument) {
     if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) return yrtDocument;

@@ -4,8 +4,8 @@ import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
 /**
  * <LinearLayout>/<StackLayout> size属性 カンマ→スペース変換マイグレーション
- * @param {import("../yrt_format.js").MigratedXmlCollection} yrtDocument 変換対象のコレクション
- * @returns {import("../yrt_format.js").MigratedXmlCollection} 変換後のコレクション
+ * @param {import("./yrt_format.js").MigratedXmlCollection} yrtDocument 変換対象のコレクション
+ * @returns {import("./yrt_format.js").MigratedXmlCollection} 変換後のコレクション
  */
 export function migrate(yrtDocument) {
     if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) return yrtDocument;

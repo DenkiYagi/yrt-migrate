@@ -3,18 +3,19 @@
 import { test, describe, before } from "node:test";
 import assert from "node:assert";
 import {
-    runYrtMigrate,
+    invokeMigration,
     createTestCaseDir,
     setupTestOutputDir,
     readMigratedLayoutXmls,
     readMigratedStyleXml,
     prepareInputFile
 } from "./test-utils.mjs";
-import { readFile } from "node:fs/promises";
+import { migrateFromAlpha13 } from "../src/migration_alpha13/index.js";
+import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const TEST_OUT_DIR = fileURLToPath(new URL("../test-out/integration", import.meta.url));
+const TEST_OUT_DIR = fileURLToPath(new URL("../test-out/integration-alpha13", import.meta.url));
 const FIXTURES_DIR = fileURLToPath(new URL("./fixtures", import.meta.url));
 
 /**
@@ -22,14 +23,6 @@ const FIXTURES_DIR = fileURLToPath(new URL("./fixtures", import.meta.url));
  * @returns {string} The joined fixture filepath
  */
 const fixturePath = (...segments) => join(FIXTURES_DIR, ...segments);
-
-/**
- * 正規化したXML文字列を返す。改行コードと末尾改行の差異を吸収する。
- * @param {string} xml
- */
-function normalizeXml(xml) {
-    return xml.replace(/\r\n/g, "\n").trim();
-}
 
 describe("yrt-migrate 統合テスト", () => {
     before(async () => {
@@ -43,13 +36,12 @@ describe("yrt-migrate 統合テスト", () => {
                 const inputFile = await prepareInputFile(fixturePath("legacy_minimal.xml"), testCaseDir);
                 const outputDir = join(testCaseDir, "output");
 
-                const result = await runYrtMigrate([
-                    "--from", "alpha13",
-                    "--input", inputFile,
-                    "--output", outputDir
-                ]);
+                const result = await invokeMigration(migrateFromAlpha13, {
+                    inputPath: inputFile,
+                    outputDir,
+                });
 
-                assert.strictEqual(result.exitCode, 0);
+                assert.strictEqual(result.error, null, result.error?.message);
 
                 const layouts = await readMigratedLayoutXmls(outputDir);
                 assert.strictEqual(layouts.length, 1, "1つのLayoutXMLを含むべき");
@@ -59,6 +51,7 @@ describe("yrt-migrate 統合テスト", () => {
                 assert(layoutXml.includes("<StackLayout"), "ルート要素は<StackLayout>であること");
                 assert(layoutXml.includes("Minimal Layout"), "入力されたテキスト内容を含むこと");
             });
+
         });
 
         describe("警告の検証", () => {
@@ -66,13 +59,12 @@ describe("yrt-migrate 統合テスト", () => {
                 const testCaseDir = await createTestCaseDir(TEST_OUT_DIR, "minimal-xml-warning");
                 const inputFile = await prepareInputFile(fixturePath("legacy_minimal.xml"), testCaseDir);
                 const diagnosticsFile = join(testCaseDir, "warnings.log");
-                const result = await runYrtMigrate([
-                    "--from", "alpha13",
-                    inputFile,
-                    "--diagnostics", diagnosticsFile
-                ]);
+                const result = await invokeMigration(migrateFromAlpha13, {
+                    inputPath: inputFile,
+                    diagnostics: diagnosticsFile,
+                });
 
-                assert.strictEqual(result.exitCode, 0);
+                assert.strictEqual(result.error, null, result.error?.message);
                 const diagnosticsContent = await readFile(diagnosticsFile, "utf8");
                 assert.strictEqual(diagnosticsContent, "", "警告は何も出力されないこと");
             });
@@ -84,19 +76,17 @@ describe("yrt-migrate 統合テスト", () => {
                 const inputFile = await prepareInputFile(fixturePath("legacy_minimal.xml"), testCaseDir);
                 const outputDir = join(testCaseDir, "output");
 
-                const result = await runYrtMigrate([
-                    "--from", "alpha13",
-                    "--input", inputFile,
-                    "--output", outputDir
-                ]);
+                const result = await invokeMigration(migrateFromAlpha13, {
+                    inputPath: inputFile,
+                    outputDir,
+                });
 
-                assert.strictEqual(result.exitCode, 0);
+                assert.strictEqual(result.error, null, result.error?.message);
 
                 const style = await readMigratedStyleXml(outputDir);
                 assert.strictEqual(style, null, "StyleXMLを含まないこと");
             });
         });
-
     });
 
     describe("例: 複雑な構成のYRT/XML", () => {
@@ -106,13 +96,12 @@ describe("yrt-migrate 統合テスト", () => {
                 const inputFile = await prepareInputFile(fixturePath("legacy_complex.xml"), testCaseDir);
                 const outputDir = join(testCaseDir, "output");
 
-                const result = await runYrtMigrate([
-                    "--from", "alpha13",
-                    "--input", inputFile,
-                    "--output", outputDir
-                ]);
+                const result = await invokeMigration(migrateFromAlpha13, {
+                    inputPath: inputFile,
+                    outputDir,
+                });
 
-                assert.strictEqual(result.exitCode, 0);
+                assert.strictEqual(result.error, null, result.error?.message);
 
                 const layouts = await readMigratedLayoutXmls(outputDir);
                 assert.strictEqual(layouts.length, 2, "2つのLayoutXMLを含むこと");
@@ -137,13 +126,12 @@ describe("yrt-migrate 統合テスト", () => {
                 const inputFile = await prepareInputFile(fixturePath("legacy_complex.xml"), testCaseDir);
                 const outputDir = join(testCaseDir, "output");
 
-                const result = await runYrtMigrate([
-                    "--from", "alpha13",
-                    "--input", inputFile,
-                    "--output", outputDir
-                ]);
+                const result = await invokeMigration(migrateFromAlpha13, {
+                    inputPath: inputFile,
+                    outputDir,
+                });
 
-                assert.strictEqual(result.exitCode, 0);
+                assert.strictEqual(result.error, null, result.error?.message);
 
                 const style = await readMigratedStyleXml(outputDir);
                 assert(style !== null, "StyleXMLを含むこと");
@@ -157,18 +145,16 @@ describe("yrt-migrate 統合テスト", () => {
                 const testCaseDir = await createTestCaseDir(TEST_OUT_DIR, "complex-xml-warning");
                 const inputFile = await prepareInputFile(fixturePath("legacy_complex.xml"), testCaseDir);
                 const diagnosticsFile = join(testCaseDir, "warnings.log");
-                const result = await runYrtMigrate([
-                    "--from", "alpha13",
-                    inputFile,
-                    "--diagnostics", diagnosticsFile
-                ]);
+                const result = await invokeMigration(migrateFromAlpha13, {
+                    inputPath: inputFile,
+                    diagnostics: diagnosticsFile,
+                });
 
-                assert.strictEqual(result.exitCode, 0);
-                assert.strictEqual(result.stderr, "");
+                assert.strictEqual(result.error, null, result.error?.message);
                 const diagnosticsContent = await readFile(diagnosticsFile, "utf8");
                 assert(diagnosticsContent.includes("Image要素にwidth属性が導入されました"), "警告が diagnostics ファイルに出力されること");
             });
         });
-
     });
+
 });

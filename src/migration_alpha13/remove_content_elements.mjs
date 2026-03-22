@@ -48,8 +48,8 @@ function removeContentElements(node) {
 
 /**
  * マイグレーション本体（レイアウト・スタイル配列を対象）
- * @param {import('../yrt_format.js').MigratedXmlCollection} yrtDocument
- * @returns {import('../yrt_format.js').MigratedXmlCollection} 新しいXMLコレクション
+ * @param {import('./yrt_format.js').MigratedXmlCollection} yrtDocument
+ * @returns {import('./yrt_format.js').MigratedXmlCollection} 新しいXMLコレクション
  */
 export function migrate(yrtDocument) {
     const newLayouts = yrtDocument.layouts.map((xml) => {

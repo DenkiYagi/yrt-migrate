@@ -1,4 +1,4 @@
-import { validateLegacyLayoutXml } from "../../src/yrt_format_validator.mjs";
+import { validateLegacyLayoutXml } from "../../../src/migration_alpha13/validate_legacy_layout_xml.mjs";
 
 describe("validateLegacyLayoutXml", () => {
     describe("基本的な動作", () => {

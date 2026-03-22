@@ -3,7 +3,7 @@
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
 /**
- * @param {import('../yrt_format.js').MigratedXmlCollection} doc
+ * @param {import('./yrt_format.js').MigratedXmlCollection} doc
  */
 export function migrate(doc) {
     return {

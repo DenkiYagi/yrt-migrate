@@ -5,8 +5,8 @@ import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
 
 /**
  * <LayoutXml>要素を削除し、1XML1レイアウト化するマイグレーション
- * @param {import('../yrt_format.js').LegacyLayoutDocument} oldDoc レガシーXML入力
- * @returns {import('../yrt_format.js').MigratedXmlCollection} 分割・抽出済みのXMLコレクション
+ * @param {import('./yrt_format.js').LegacyLayoutDocument} oldDoc レガシーXML入力
+ * @returns {import('./yrt_format.js').MigratedXmlCollection} 分割・抽出済みのXMLコレクション
  */
 export function migrate(oldDoc) {
     // 入力はLegacyLayoutDocument: { xml }

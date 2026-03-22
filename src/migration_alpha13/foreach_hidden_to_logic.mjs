@@ -54,8 +54,8 @@ function migrateElement(el) {
 
 /**
  * レイアウト・スタイルにforeach/hidden→logic変換を適用する
- * @param {import('../yrt_format.js').MigratedXmlCollection} yrtDocument
- * @returns {import('../yrt_format.js').MigratedXmlCollection} 変換後のコレクション
+ * @param {import('./yrt_format.js').MigratedXmlCollection} yrtDocument
+ * @returns {import('./yrt_format.js').MigratedXmlCollection} 変換後のコレクション
  */
 export function migrate(yrtDocument) {
     const newLayouts = yrtDocument.layouts.map(xml => {

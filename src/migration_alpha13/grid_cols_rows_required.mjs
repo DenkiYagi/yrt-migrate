@@ -25,8 +25,8 @@ function addGridColsRowsIfMissing(xml) {
 
 /**
  * <Grid> の cols, rows 属性省略不可警告マイグレーション
- * @param {import("../yrt_format.js").MigratedXmlCollection} yrtDocument 変換対象のコレクション
- * @returns {import("../yrt_format.js").MigratedXmlCollection} 変換後のコレクション
+ * @param {import("./yrt_format.js").MigratedXmlCollection} yrtDocument 変換対象のコレクション
+ * @returns {import("./yrt_format.js").MigratedXmlCollection} 変換後のコレクション
  */
 export function migrate(yrtDocument) {
     if (!yrtDocument || !Array.isArray(yrtDocument.layouts)) return yrtDocument;

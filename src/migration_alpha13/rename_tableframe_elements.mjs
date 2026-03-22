@@ -4,8 +4,8 @@ import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
 /**
  * <TableFrame>関連要素をFrame系要素にリネームする
- * @param {import('../yrt_format.js').MigratedXmlCollection} yrtDocument
- * @returns {import('../yrt_format.js').MigratedXmlCollection}
+ * @param {import('./yrt_format.js').MigratedXmlCollection} yrtDocument
+ * @returns {import('./yrt_format.js').MigratedXmlCollection}
  */
 export function migrate(yrtDocument) {
     /** @type {Record<string, string>} */

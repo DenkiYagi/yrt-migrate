@@ -2,8 +2,8 @@
 
 /**
  * 全レイアウトXMLに対してLayoutBody追加変換を適用
- * @param {import('../yrt_format.js').MigratedXmlCollection} yrtDocument
- * @returns {import('../yrt_format.js').MigratedXmlCollection}
+ * @param {import('./yrt_format.js').MigratedXmlCollection} yrtDocument
+ * @returns {import('./yrt_format.js').MigratedXmlCollection}
  */
 export function migrate(yrtDocument) {
     const layouts = yrtDocument.layouts.map(xml => extractLayoutBody(xml));

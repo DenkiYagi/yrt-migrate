@@ -3,7 +3,7 @@
 import * as fs from "fs/promises";
 import {
     validateLegacyLayoutXml
-} from "./yrt_format_validator.mjs";
+} from "./validate_legacy_layout_xml.mjs";
 
 /**
  * マイグレーションの準備として、入力されたXMLファイルを検証し、

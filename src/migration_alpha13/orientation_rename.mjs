@@ -7,8 +7,8 @@ import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
  * - horizontal → landscape
  * - vertical → portrait
  *
- * @param {import('../yrt_format.js').MigratedXmlCollection} doc
- * @returns {import('../yrt_format.js').MigratedXmlCollection}
+ * @param {import('./yrt_format.js').MigratedXmlCollection} doc
+ * @returns {import('./yrt_format.js').MigratedXmlCollection}
  */
 export function migrate(doc) {
     return {
