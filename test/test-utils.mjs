@@ -7,11 +7,11 @@ import * as path from "path";
 import assert from "node:assert";
 import { fileURLToPath } from "node:url";
 
-const CLI_ENTRY_POINT_FILE_PATH = "src/index.js";
 const execFileAsync = promisify(execFile);
 const TEST_DIR = fileURLToPath(new URL(".", import.meta.url));
 const PROJECT_ROOT = path.resolve(TEST_DIR, "..");
 const TEST_OUT_ROOT = path.join(PROJECT_ROOT, "test-out");
+const CLI_ENTRY_POINT_FILE_PATH = path.join(PROJECT_ROOT, "src/index.js");
 
 // テストケースごとに自動インクリメントするためのカウンタを保持
 const testCaseDirCounters = new Map();
@@ -23,7 +23,7 @@ const testCaseDirCounters = new Map();
  * @param {import("node:child_process").ExecFileOptionsWithStringEncoding} options - 実行オプション
  * @returns {Promise<{stdout: string, stderr: string, exitCode: number}>}
  */
-export async function runYrtMigrate(args = [], options = {}) {
+export async function runYrtMigrate(args = [], options) {
     try {
         const { stdout, stderr } = await execFileAsync("node", [CLI_ENTRY_POINT_FILE_PATH, ...args], {
             cwd: path.resolve(process.cwd()),
@@ -38,6 +38,65 @@ export async function runYrtMigrate(args = [], options = {}) {
             stderr: error.stderr || "",
             exitCode: error.code || 1
         };
+    }
+}
+
+/**
+ * migration エントリを直接実行し、console 出力を抑制しつつ結果を返す。
+ * @param {(args: { values: Record<string, any> }, inputPath: string, outputDir: string | null) => Promise<void>} migrationFn
+ * @param {{ inputPath: string, outputDir?: string | null, dryRun?: boolean, diagnostics?: string | null }} options
+ * @returns {Promise<{ error: Error | null, logs: string[], warnings: string[], errors: string[] }>}
+ */
+export async function invokeMigration(migrationFn, options) {
+    const {
+        inputPath,
+        outputDir = null,
+        dryRun = false,
+        diagnostics = null,
+    } = options;
+    /** @type {Record<string, any>} */
+    const values = {};
+    if (dryRun) {
+        values["dry-run"] = true;
+    }
+    if (diagnostics) {
+        values.diagnostics = diagnostics;
+    }
+
+    /** @type {string[]} */
+    const logs = [];
+    /** @type {string[]} */
+    const warnings = [];
+    /** @type {string[]} */
+    const errors = [];
+
+    const originalLog = console.log;
+    const originalWarn = console.warn;
+    const originalError = console.error;
+    console.log = (...args) => {
+        logs.push(args.map(arg => String(arg)).join(" "));
+    };
+    console.warn = (...args) => {
+        warnings.push(args.map(arg => String(arg)).join(" "));
+    };
+    console.error = (...args) => {
+        errors.push(args.map(arg => String(arg)).join(" "));
+    };
+
+    try {
+        await migrationFn({ values }, inputPath, outputDir);
+        return { error: null, logs, warnings, errors };
+    } catch (error) {
+        return {
+            error: error instanceof Error ? error : new Error(String(error)),
+            logs,
+            warnings,
+            errors,
+        };
+    } finally {
+        console.log = originalLog;
+        console.warn = originalWarn;
+        console.error = originalError;
     }
 }
 
