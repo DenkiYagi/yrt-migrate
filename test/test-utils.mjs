@@ -23,7 +23,7 @@ const testCaseDirCounters = new Map();
  * @param {import("node:child_process").ExecFileOptionsWithStringEncoding} options - 実行オプション
  * @returns {Promise<{stdout: string, stderr: string, exitCode: number}>}
  */
-export async function runYrtMigrate(args = [], options = {}) {
+export async function runYrtMigrate(args = [], options) {
     try {
         const { stdout, stderr } = await execFileAsync("node", [CLI_ENTRY_POINT_FILE_PATH, ...args], {
             cwd: path.resolve(process.cwd()),

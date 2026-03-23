@@ -40,7 +40,6 @@ function printHelp() {
     console.log(`Usage: npx yrt-migrate --from <schema_version> [options...] [input]
 
     --from <schema_version>    マイグレーション元のスキーマバージョンを指定します（必須）
-    -i, --input <input>        入力ファイルまたはディレクトリを指定します。このオプションを使用した場合は末尾の入力は省略できます
     -o, --output <output_dir>  出力ディレクトリを指定します。省略時はバージョンに応じたデフォルトディレクトリを作成します
     -d, --dry-run              変換結果を表示します。ファイルへは出力されません
     --diagnostics <file>       警告メッセージを標準エラー出力ではなく指定したファイルへ書き出します
@@ -63,10 +62,6 @@ async function main() {
             options: {
                 from: {
                     type: "string",
-                },
-                input: {
-                    type: "string",
-                    short: "i",
                 },
                 output: {
                     type: "string",
@@ -114,9 +109,7 @@ async function main() {
     }
 
     let inputPath;
-    if (args.values.input) {
-        inputPath = args.values.input;
-    } else if (args.positionals.length >= 1) {
+    if (args.positionals.length >= 1) {
         inputPath = args.positionals[0];
     } else {
         console.error("入力ファイルまたはディレクトリを指定してください");

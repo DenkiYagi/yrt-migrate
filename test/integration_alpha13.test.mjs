@@ -35,7 +35,7 @@ function defaultOutputDirFor(inputFilePath) {
     return join(parentDir, `${parsed.name}-v1.0`);
 }
 
-describe("yrt-migrate 統合テスト", () => {
+describe("`--from alpha13` 統合テスト", () => {
     before(async () => {
         await setupTestOutputDir(TEST_OUT_DIR);
     });

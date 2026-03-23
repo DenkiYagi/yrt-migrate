@@ -41,12 +41,12 @@ function defaultOutputDirFrom2025_1(inputPath, isDirectory) {
     return join(parentDir, `${baseName}-2026.1`);
 }
 
-describe("2025.1 integrationテスト", () => {
+describe("`--from 2025.1` 統合テスト", () => {
     before(async () => {
         await setupTestOutputDir(TEST_OUT_DIR);
     });
 
-    test("ディレクトリ入力で出力先省略時は-2026.1ディレクトリへ出力する", async () => {
+    test("ディレクトリ入力で出力先省略時は `-2026.1` ディレクトリへ出力する", async () => {
         const testCaseDir = await createTestCaseDir(TEST_OUT_DIR, "default-output-dir");
         const inputDir = join(testCaseDir, "input-v1.0");
         await mkdir(inputDir, { recursive: true });

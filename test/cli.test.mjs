@@ -9,8 +9,46 @@ import {
     setupTestOutputDir,
     prepareInputFile
 } from "./test-utils.mjs";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+
+/**
+ * Codex sandbox では child_process の stdout/stderr が空になることがあるため、
+ * 出力が取得できた環境でのみ文言を検証する。
+ * @param {import("node:test").TestContext} t
+ * @param {string[]} outputs
+ * @param {string[]} expectedSubstrings
+ */
+function assertOutputIncludesWhenAvailable(t, outputs, expectedSubstrings) {
+    const availableOutputs = outputs.filter(output => output.length > 0);
+    if (availableOutputs.length === 0) {
+        t.skip("stdout/stderr is empty in this environment");
+        return;
+    }
+
+    expectedSubstrings.forEach(expectedSubstring => {
+        assert(availableOutputs.some(output => output.includes(expectedSubstring)));
+    });
+}
+
+/**
+ * @param {import("node:test").TestContext} t
+ * @param {string[]} outputs
+ * @param {string[]} expectedAlternatives
+ */
+function assertOutputIncludesAnyWhenAvailable(t, outputs, expectedAlternatives) {
+    const availableOutputs = outputs.filter(output => output.length > 0);
+    if (availableOutputs.length === 0) {
+        t.skip("stdout/stderr is empty in this environment");
+        return;
+    }
+
+    assert(
+        expectedAlternatives.some(expectedAlternative =>
+            availableOutputs.some(output => output.includes(expectedAlternative))
+        )
+    );
+}
 
 describe("yrt-migrate CLIテスト", () => {
     const testOutDir = "test-out/cli";
@@ -19,7 +57,7 @@ describe("yrt-migrate CLIテスト", () => {
         await setupTestOutputDir(testOutDir);
     });
 
-    describe("CLI契約", () => {
+    describe("共通", () => {
         test("引数なしで実行すると、エラー終了する", async () => {
             const result = await runYrtMigrate([]);
             assert.strictEqual(result.exitCode, 1);
@@ -30,14 +68,47 @@ describe("yrt-migrate CLIテスト", () => {
             assert.strictEqual(result.exitCode, 0);
         });
 
-        test("未対応のスキーマバージョンを指定すると、失敗終了する", async () => {
+        test("未知のオプションを指定すると、usage付きで失敗終了する", async (t) => {
+            const result = await runYrtMigrate(["--unknown"]);
+            assert.strictEqual(result.exitCode, 1);
+            assertOutputIncludesWhenAvailable(t, [result.stdout], ["Usage: npx yrt-migrate"]);
+            assertOutputIncludesAnyWhenAvailable(t, [result.stderr], [
+                "ERR_PARSE_ARGS_UNKNOWN_OPTION",
+                "Unknown option"
+            ]);
+        });
+
+        test("未対応のスキーマバージョンを指定すると、失敗終了する", async (t) => {
             const result = await runYrtMigrate(["--from", "9999.1", "input.xml"]);
+            assert.strictEqual(result.exitCode, 1);
+            assertOutputIncludesWhenAvailable(t, [result.stderr], ["未対応のスキーマバージョンです"]);
+        });
+
+        test("migration が例外を投げたとき、CLI は失敗終了する", async () => {
+            const testCaseDir = await createTestCaseDir(testOutDir, "migration-error");
+            const inputFile = join(testCaseDir, "invalid.txt");
+            await writeFile(inputFile, "plain text", "utf8");
+
+            const result = await runYrtMigrate(["--from", "alpha13", inputFile]);
+
             assert.strictEqual(result.exitCode, 1);
         });
     });
 
-    describe("migration integration の smoke", () => {
-        test("alpha13 は位置引数入力を受け取り、指定出力先へ変換できる", async () => {
+    describe("`--from alpha13`", () => {
+        test("`--from alpha13` を指定してもファイル入力がなければ、失敗終了する", async (t) => {
+            const result = await runYrtMigrate(["--from", "alpha13"]);
+            assert.strictEqual(result.exitCode, 1);
+            assertOutputIncludesWhenAvailable(t, [result.stderr], ["入力ファイルまたはディレクトリを指定してください"]);
+        });
+
+        test("`--from alpha13` で存在しない入力ファイルを指定すると、失敗終了する", async (t) => {
+            const result = await runYrtMigrate(["--from", "alpha13", "missing.xml"]);
+            assert.strictEqual(result.exitCode, 1);
+            assertOutputIncludesWhenAvailable(t, [result.stderr], ["入力ファイルの検証に失敗しました"]);
+        });
+
+        test("`--from alpha13` は位置引数入力を受け取り、指定出力先へ変換できる", async () => {
             const testCaseDir = await createTestCaseDir(testOutDir, "alpha13-positional-smoke");
             const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir);
             const outputDir = join(testCaseDir, "out");
@@ -52,7 +123,67 @@ describe("yrt-migrate CLIテスト", () => {
             assert.strictEqual(await fileExists(join(outputDir, "layout-1.xml")), true);
         });
 
-        test("2025.1 は --input でディレクトリ入力を受け取り、指定出力先へ変換できる", async () => {
+        test("`--from alpha13` の dry-run は short option 経由でも出力せず結果だけ表示する", async (t) => {
+            const testCaseDir = await createTestCaseDir(testOutDir, "alpha13-dry-run-short-option");
+            const inputFile = await prepareInputFile("test/fixtures/legacy_minimal.xml", testCaseDir);
+            const outputDir = join(testCaseDir, "out");
+
+            const result = await runYrtMigrate([
+                "--from", "alpha13",
+                inputFile,
+                "-o", outputDir,
+                "-d"
+            ]);
+
+            assert.strictEqual(result.exitCode, 0);
+            assert.strictEqual(await fileExists(outputDir), false);
+            assertOutputIncludesWhenAvailable(t, [result.stdout], ["=== Layout 1 ==="]);
+        });
+
+        test("`--from alpha13` は CLI 経由で diagnostics ファイルへ警告を書き出せる", async () => {
+            const testCaseDir = await createTestCaseDir(testOutDir, "alpha13-diagnostics");
+            const inputFile = join(testCaseDir, "warning.xml");
+            const diagnosticsFile = join(testCaseDir, "warnings.log");
+            const xmlSource = [
+                '<?xml version="1.0" encoding="UTF-8"?>',
+                "<LayoutXml>",
+                '  <Grid foreach="${items}" hidden="flag">',
+                '    <GridCell col="0" row="0"/>',
+                "  </Grid>",
+                "</LayoutXml>"
+            ].join("\n");
+            await writeFile(inputFile, xmlSource, "utf8");
+
+            const result = await runYrtMigrate([
+                "--from", "alpha13",
+                inputFile,
+                "--diagnostics", diagnosticsFile,
+                "--dry-run"
+            ]);
+
+            assert.strictEqual(result.exitCode, 0);
+            assert.strictEqual(await fileExists(diagnosticsFile), true);
+            const diagnosticsContent = await readFile(diagnosticsFile, "utf8");
+            assert(diagnosticsContent.includes("[WARNING]"));
+            assert(diagnosticsContent.includes("foreach属性とhidden属性が同時に指定されている"));
+            assert(!result.stderr.includes("foreach属性とhidden属性が同時に指定されている"));
+        });
+    });
+
+    describe("`--from 2025.1`", () => {
+        test("`--from 2025.1` を指定してもファイル入力がなければ、失敗終了する", async (t) => {
+            const result = await runYrtMigrate(["--from", "2025.1"]);
+            assert.strictEqual(result.exitCode, 1);
+            assertOutputIncludesWhenAvailable(t, [result.stderr], ["入力ファイルまたはディレクトリを指定してください"]);
+        });
+
+        test("`--from 2025.1` で存在しない入力パスを指定すると、失敗終了する", async (t) => {
+            const result = await runYrtMigrate(["--from", "2025.1", "missing-v1.0/layout-1.xml"]);
+            assert.strictEqual(result.exitCode, 1);
+            assertOutputIncludesWhenAvailable(t, [result.stderr], ["入力パスが見つかりません"]);
+        });
+
+        test("`--from 2025.1` は位置引数でディレクトリ入力を受け取り、指定出力先へ変換できる", async () => {
             const testCaseDir = await createTestCaseDir(testOutDir, "2025_1-input-smoke");
             const inputDir = join(testCaseDir, "bundle-v1.0");
             const outputDir = join(testCaseDir, "out");
@@ -61,7 +192,7 @@ describe("yrt-migrate CLIテスト", () => {
 
             const result = await runYrtMigrate([
                 "--from", "2025.1",
-                "--input", inputDir,
+                inputDir,
                 "--output", outputDir
             ]);
 
@@ -69,14 +200,23 @@ describe("yrt-migrate CLIテスト", () => {
             assert.strictEqual(await fileExists(join(outputDir, "layout-1.xml")), true);
         });
 
-        test("migration が例外を投げたとき、CLI は失敗終了する", async () => {
-            const testCaseDir = await createTestCaseDir(testOutDir, "migration-error");
-            const inputFile = join(testCaseDir, "invalid.txt");
-            await writeFile(inputFile, "plain text", "utf8");
+        test("`--from 2025.1` の dry-run は short option 経由でも出力せず結果だけ表示する", async (t) => {
+            const testCaseDir = await createTestCaseDir(testOutDir, "2025_1-dry-run-short-option");
+            const inputDir = join(testCaseDir, "bundle-v1.0");
+            const outputDir = join(testCaseDir, "out");
+            await mkdir(inputDir, { recursive: true });
+            await writeFile(join(inputDir, "layout-1.xml"), '<StackLayout orientation="portrait"><LayoutBody/></StackLayout>', "utf8");
 
-            const result = await runYrtMigrate(["--from", "alpha13", inputFile]);
+            const result = await runYrtMigrate([
+                "--from", "2025.1",
+                inputDir,
+                "-o", outputDir,
+                "-d"
+            ]);
 
-            assert.strictEqual(result.exitCode, 1);
+            assert.strictEqual(result.exitCode, 0);
+            assert.strictEqual(await fileExists(outputDir), false);
+            assertOutputIncludesWhenAvailable(t, [result.stdout], ["=== layout-1.xml ==="]);
         });
     });
 });
