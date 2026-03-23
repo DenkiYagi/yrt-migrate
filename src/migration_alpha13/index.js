@@ -97,7 +97,7 @@ function migrate(legacyDocument, diagnostics) {
 function getDefaultOutputDir(inputFileName) {
     const parsed = path.parse(inputFileName);
     const parentDir = parsed.dir === "" ? "." : parsed.dir;
-    return path.join(parentDir, `${parsed.name}-v1.0`);
+    return path.join(parentDir, `${parsed.name}-2025.1`);
 }
 
 /**

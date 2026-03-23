@@ -32,7 +32,7 @@ const fixturePath = (...segments) => join(FIXTURES_DIR, ...segments);
 function defaultOutputDirFor(inputFilePath) {
     const parsed = parse(inputFilePath);
     const parentDir = parsed.dir === "" ? "." : parsed.dir;
-    return join(parentDir, `${parsed.name}-v1.0`);
+    return join(parentDir, `${parsed.name}-2025.1`);
 }
 
 describe("`--from alpha13` 統合テスト", () => {

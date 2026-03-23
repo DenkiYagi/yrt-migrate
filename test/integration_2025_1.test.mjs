@@ -8,13 +8,16 @@ import {
     createTestCaseDir,
     setupTestOutputDir,
     readMigratedLayoutXmls,
+    prepareInputFile,
 } from "./test-utils.mjs";
+import { migrateFromAlpha13 } from "../src/migration_alpha13/index.js";
 import { migrateFrom2025_1 } from "../src/migration_2025_1/index.js";
 import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, join, parse } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const TEST_OUT_DIR = fileURLToPath(new URL("../test-out/integration-2025_1", import.meta.url));
+const FIXTURES_DIR = fileURLToPath(new URL("./fixtures", import.meta.url));
 
 /**
  * @param {string} inputPath
@@ -26,7 +29,7 @@ function defaultOutputDirFrom2025_1(inputPath, isDirectory) {
         const normalized = inputPath.replace(/[/\\]+$/u, "");
         const { dir, base } = parse(normalized);
         const parentDir = dir === "" ? "." : dir;
-        const baseName = base.replace(/-v1\.0$/u, "");
+        const baseName = base.replace(/-(?:v1\.0|2025\.1)$/u, "");
         return join(parentDir, `${baseName}-2026.1`);
     }
 
@@ -37,13 +40,49 @@ function defaultOutputDirFrom2025_1(inputPath, isDirectory) {
 
     const inputDir = parsed.dir;
     const parentDir = dirname(inputDir) === "" ? "." : dirname(inputDir);
-    const baseName = basename(inputDir).replace(/-v1\.0$/u, "");
+    const baseName = basename(inputDir).replace(/-(?:v1\.0|2025\.1)$/u, "");
     return join(parentDir, `${baseName}-2026.1`);
 }
+
+/**
+ * @param  {...string} segments
+ * @returns {string}
+ */
+const fixturePath = (...segments) => join(FIXTURES_DIR, ...segments);
 
 describe("`--from 2025.1` 統合テスト", () => {
     before(async () => {
         await setupTestOutputDir(TEST_OUT_DIR);
+    });
+
+    test("alpha13入力から2025.1を経由して2026.1へ変換できる", async () => {
+        const testCaseDir = await createTestCaseDir(TEST_OUT_DIR, "alpha13-to-2026_1");
+        const inputFile = await prepareInputFile(fixturePath("legacy_minimal.xml"), testCaseDir);
+        const intermediateDir = join(testCaseDir, "bundle-v1.0");
+        const outputDir = join(testCaseDir, "bundle-2026.1");
+
+        const alpha13Result = await invokeMigration(migrateFromAlpha13, {
+            inputPath: inputFile,
+            outputDir: intermediateDir,
+        });
+        assert.strictEqual(alpha13Result.error, null, alpha13Result.error?.message);
+
+        const intermediateLayouts = await readMigratedLayoutXmls(intermediateDir);
+        assert.strictEqual(intermediateLayouts.length, 1);
+        assert(intermediateLayouts[0].includes("<StackLayout"));
+        assert(intermediateLayouts[0].includes("https://schemas.yagisan.app/2025.1/layout.xsd"));
+
+        const result2026_1 = await invokeMigration(migrateFrom2025_1, {
+            inputPath: intermediateDir,
+            outputDir,
+        });
+        assert.strictEqual(result2026_1.error, null, result2026_1.error?.message);
+
+        const layouts = await readMigratedLayoutXmls(outputDir);
+        assert.strictEqual(layouts.length, 1);
+        assert(layouts[0].includes("<StackLayout"));
+        assert(layouts[0].includes("https://schemas.yagisan.app/2026.1/layout.xsd"));
+        assert(!layouts[0].includes("https://schemas.yagisan.app/2025.1/layout.xsd"));
     });
 
     test("ディレクトリ入力で出力先省略時は `-2026.1` ディレクトリへ出力する", async () => {
@@ -59,6 +98,20 @@ describe("`--from 2025.1` 統合テスト", () => {
         assert.strictEqual(await fileExists(outputDir), true);
         const layouts = await readMigratedLayoutXmls(outputDir);
         assert(layouts[0].includes("https://schemas.yagisan.app/2026.1/layout.xsd"));
+    });
+
+    test("`-2025.1` ディレクトリ入力でも既定出力先を `-2026.1` に正規化する", async () => {
+        const testCaseDir = await createTestCaseDir(TEST_OUT_DIR, "default-output-dir-from-2025_1");
+        const inputDir = join(testCaseDir, "input-2025.1");
+        await mkdir(inputDir, { recursive: true });
+        await writeFile(join(inputDir, "layout-1.xml"), '<StackLayout orientation="portrait"><LayoutBody/></StackLayout>', "utf8");
+
+        const result = await invokeMigration(migrateFrom2025_1, { inputPath: inputDir });
+
+        assert.strictEqual(result.error, null, result.error?.message);
+        const outputDir = defaultOutputDirFrom2025_1(inputDir, true);
+        assert.strictEqual(await fileExists(join(outputDir, "layout-1.xml")), true);
+        assert.strictEqual(await fileExists(join(testCaseDir, "input-2025.1-2026.1")), false);
     });
 
     test("単一XML入力で出力先省略時は親ディレクトリ基準で出力する", async () => {

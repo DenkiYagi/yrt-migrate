@@ -29,7 +29,7 @@ function getDefaultOutputDir(inputPath, isDirectory) {
         const normalized = inputPath.replace(/[/\\]+$/u, "");
         const parentDir = path.dirname(normalized);
         const dirName = path.basename(normalized);
-        const baseName = dirName.replace(/-v1\.0$/u, "");
+        const baseName = dirName.replace(/-(?:v1\.0|2025\.1)$/u, "");
         return path.join(parentDir, `${baseName}-2026.1`);
     }
 
@@ -40,7 +40,7 @@ function getDefaultOutputDir(inputPath, isDirectory) {
 
     const parentDir = path.dirname(parsed.dir);
     const dirName = path.basename(parsed.dir);
-    const baseName = dirName.replace(/-v1\.0$/u, "");
+    const baseName = dirName.replace(/-(?:v1\.0|2025\.1)$/u, "");
     return path.join(parentDir, `${baseName}-2026.1`);
 }
 

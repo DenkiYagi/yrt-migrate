@@ -39,7 +39,7 @@ function printCliError(error) {
 function printHelp() {
     console.log(`Usage: npx yrt-migrate --from <schema_version> [options...] [input]
 
-    --from <schema_version>    マイグレーション元のスキーマバージョンを指定します（必須）
+    -f, --from <schema_version> マイグレーション元のスキーマバージョンを指定します（必須）
     -o, --output <output_dir>  出力ディレクトリを指定します。省略時はバージョンに応じたデフォルトディレクトリを作成します
     -d, --dry-run              変換結果を表示します。ファイルへは出力されません
     --diagnostics <file>       警告メッセージを標準エラー出力ではなく指定したファイルへ書き出します
@@ -51,8 +51,8 @@ function printHelp() {
     2026.1     v2.0
 
 マイグレーションパス:
-    --from alpha13   alpha13 → v1.0（スキーマ 2025.1）  入力: XMLファイル（<LayoutXml>ルート）
-    --from 2025.1    v1.0 → v2.0（スキーマ 2026.1）     入力: ディレクトリまたはXMLファイル`);
+    --from alpha13   alpha13 → 2025.1         入力: XMLファイル（<LayoutXml>ルート）
+    --from 2025.1    2025.1 → 2026.1 (最新)   入力: ディレクトリまたはXMLファイル`);
 }
 
 async function main() {
@@ -62,6 +62,7 @@ async function main() {
             options: {
                 from: {
                     type: "string",
+                    short: "f",
                 },
                 output: {
                     type: "string",
