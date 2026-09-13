@@ -11,7 +11,7 @@ npx github:DenkiYagi/yrt-migrate --from <schema_version> <input>
 ```
 
 - `-f, --from <schema_version>`: **[必須]** マイグレーション元のスキーマバージョンを指定します。
-  - `alpha13`, `2025.1` が指定可能です。
+  - `alpha13`, `2025.1`, `2026.1` が指定可能です。
 - `-o, --output <dir>`: 出力先ディレクトリーパスを指定します。
 - `-d, --dry-run`: ファイルを書き出さずに変換結果を標準出力に表示します。
 - `<input>`:  **[必須]** `--from alpha13` を指定した場合、XMLファイルパスを指定します。それ以外の場合は、XMLファイルパスの他にディレクトリパスも指定できます。
@@ -29,4 +29,5 @@ npx github:DenkiYagi/yrt-migrate --from <schema_version> <input>
 ```sh
 npx github:DenkiYagi/yrt-migrate --from alpha13 path/to/input.xml 
 npx github:DenkiYagi/yrt-migrate --from 2025.1 path/to/input-2025.1
+npx github:DenkiYagi/yrt-migrate --from 2026.1 path/to/input-2026.1
 ```

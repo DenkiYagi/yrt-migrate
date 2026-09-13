@@ -22,8 +22,9 @@ import * as path from "path";
 import * as util from "util";
 import { migrateFromAlpha13 } from "./migration_alpha13/index.js";
 import { migrateFrom2025_1 } from "./migration_2025_1/index.js";
+import { migrateFrom2026_1 } from "./migration_2026_1/index.js";
 
-const SUPPORTED_FROM_VERSIONS = ["alpha13", "2025.1"];
+const SUPPORTED_FROM_VERSIONS = ["alpha13", "2025.1", "2026.1"];
 
 /**
  * @param {unknown} error
@@ -49,10 +50,12 @@ function printHelp() {
     alpha13    v1.0.0-alpha.13
     2025.1     v1.0
     2026.1     v2.0
+    2026.2     v2.1
 
 マイグレーションパス:
     --from alpha13   alpha13 → 2025.1         入力: XMLファイル（<LayoutXml>ルート）
-    --from 2025.1    2025.1 → 2026.1 (最新)   入力: ディレクトリまたはXMLファイル`);
+    --from 2025.1    2025.1 → 2026.1          入力: ディレクトリまたはXMLファイル
+    --from 2026.1    2026.1 → 2026.2 (最新)   入力: ディレクトリまたはXMLファイル`);
 }
 
 async function main() {
@@ -126,6 +129,8 @@ async function main() {
             await migrateFromAlpha13(args, inputPath, outputDir);
         } else if (fromVersion === "2025.1") {
             await migrateFrom2025_1(args, inputPath, outputDir);
+        } else if (fromVersion === "2026.1") {
+            await migrateFrom2026_1(args, inputPath, outputDir);
         }
     } catch (error) {
         printCliError(error);

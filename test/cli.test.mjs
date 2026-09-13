@@ -84,6 +84,30 @@ function default2025_1OutputDir(inputPath, isDirectory) {
     return join(parentDir, `${baseName}-2026.1`);
 }
 
+/**
+ * @param {string} inputPath
+ * @param {boolean} isDirectory
+ * @returns {string}
+ */
+function default2026_1OutputDir(inputPath, isDirectory) {
+    if (isDirectory) {
+        const normalized = inputPath.replace(/[/\\]+$/u, "");
+        const { dir, base } = parse(normalized);
+        const parentDir = dir === "" ? "." : dir;
+        const baseName = base.replace(/-(?:v1\.0|2025\.1|2026\.1)$/u, "");
+        return join(parentDir, `${baseName}-2026.2`);
+    }
+
+    const parsed = parse(inputPath);
+    if (parsed.dir === "" || parsed.dir === ".") {
+        return join(".", `${parsed.name}-2026.2`);
+    }
+
+    const parentDir = dirname(parsed.dir) === "" ? "." : dirname(parsed.dir);
+    const baseName = basename(parsed.dir).replace(/-(?:v1\.0|2025\.1|2026\.1)$/u, "");
+    return join(parentDir, `${baseName}-2026.2`);
+}
+
 describe("yrt-migrate CLIテスト", () => {
     const testOutDir = "test-out/cli";
 
@@ -305,6 +329,75 @@ describe("yrt-migrate CLIテスト", () => {
 
             const result = await runYrtMigrate([
                 "--from", "2025.1",
+                inputDir,
+                "-o", outputDir,
+                "-d"
+            ]);
+
+            assert.strictEqual(result.exitCode, 0);
+            assert.strictEqual(await fileExists(outputDir), false);
+            assertOutputIncludesWhenAvailable(t, [result.stdout], ["=== layout-1.xml ==="]);
+        });
+    });
+
+    describe("`--from 2026.1`", () => {
+        test("`--from 2026.1` を指定してもファイル入力がなければ、失敗終了する", async (t) => {
+            const result = await runYrtMigrate(["--from", "2026.1"]);
+            assert.strictEqual(result.exitCode, 1);
+            assertOutputIncludesWhenAvailable(t, [result.stderr], ["入力ファイルまたはディレクトリを指定してください"]);
+        });
+
+        test("`--from 2026.1` で存在しない入力パスを指定すると、失敗終了する", async (t) => {
+            const result = await runYrtMigrate(["--from", "2026.1", "missing-2026.1/layout-1.xml"]);
+            assert.strictEqual(result.exitCode, 1);
+            assertOutputIncludesWhenAvailable(t, [result.stderr], ["入力パスが見つかりません"]);
+        });
+
+        test("`--from 2026.1` は `--output` で指定したパスへ出力できる", async () => {
+            const testCaseDir = await createTestCaseDir(testOutDir, "2026_1-input-smoke");
+            const inputDir = join(testCaseDir, "bundle-2026.1");
+            const outputDir = join(testCaseDir, "out");
+            await mkdir(inputDir, { recursive: true });
+            await writeFile(join(inputDir, "layout-1.xml"), '<StackLayout orientation="portrait"><LayoutBody/></StackLayout>', "utf8");
+
+            const result = await runYrtMigrate([
+                "--from", "2026.1",
+                inputDir,
+                "--output", outputDir
+            ]);
+
+            assert.strictEqual(result.exitCode, 0);
+            assert.strictEqual(await fileExists(join(outputDir, "layout-1.xml")), true);
+            const migratedXml = await readFile(join(outputDir, "layout-1.xml"), "utf8");
+            assert(migratedXml.includes("https://schemas.yagisan.app/2026.2/layout.xsd"));
+        });
+
+        test("`--from 2026.1` は `--output` 省略時に既定ディレクトリへ出力できる", async () => {
+            const testCaseDir = await createTestCaseDir(testOutDir, "2026_1-default-output");
+            const inputDir = join(testCaseDir, "bundle-2026.1");
+            const outputDir = default2026_1OutputDir(inputDir, true);
+            await mkdir(inputDir, { recursive: true });
+            await writeFile(join(inputDir, "layout-1.xml"), '<StackLayout orientation="portrait"><LayoutBody/></StackLayout>', "utf8");
+
+            const result = await runYrtMigrate([
+                "--from", "2026.1",
+                inputDir
+            ]);
+
+            assert.strictEqual(result.exitCode, 0);
+            assert.strictEqual(await fileExists(join(outputDir, "layout-1.xml")), true);
+            assert.strictEqual(await fileExists(join(testCaseDir, "bundle-2026.1-2026.2")), false);
+        });
+
+        test("`--from 2026.1` の dry-run は short option 経由でも出力せず結果だけ表示する", async (t) => {
+            const testCaseDir = await createTestCaseDir(testOutDir, "2026_1-dry-run-short-option");
+            const inputDir = join(testCaseDir, "bundle-2026.1");
+            const outputDir = join(testCaseDir, "out");
+            await mkdir(inputDir, { recursive: true });
+            await writeFile(join(inputDir, "layout-1.xml"), '<StackLayout orientation="portrait"><LayoutBody/></StackLayout>', "utf8");
+
+            const result = await runYrtMigrate([
+                "--from", "2026.1",
                 inputDir,
                 "-o", outputDir,
                 "-d"
